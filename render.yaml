@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: iphw-rate-calculator
+    runtime: static
+    buildCommand: ""
+    staticPublishPath: .
