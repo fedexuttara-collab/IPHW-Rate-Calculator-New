@@ -40,7 +40,7 @@
 .rate-help{font-size:10px;color:var(--muted);margin-top:7px;line-height:1.4}
 
 /* ===== Auth + Dashboard ===== */
-.authbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}.auth-user{font-size:11px;color:var(--muted);font-weight:700}.dash{display:none;margin-bottom:14px}.dash.show{display:block}.dash-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.stat{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px}.stat b{display:block;font-size:19px;color:var(--navy);margin-top:4px}.stat span{font-size:10px;color:var(--muted);font-weight:800}.dash-table{margin-top:12px;overflow:auto;border:1px solid var(--line);border-radius:9px}.dash-table table{min-width:850px}.dash-table th{background:#edf2f7}.auth-modal{position:fixed;inset:0;background:#0b1f3a99;z-index:10000;display:none;align-items:center;justify-content:center;padding:18px}.auth-modal.show{display:flex}.auth-box{background:#fff;width:min(430px,100%);border-radius:14px;padding:20px;box-shadow:0 20px 60px #0005}.auth-box h2{margin:0 0 12px}.auth-box input{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;margin:5px 0 10px}.auth-msg{font-size:11px;font-weight:800;min-height:18px;color:var(--red)}@media(max-width:900px){.dash-grid{grid-template-columns:repeat(2,1fr)}}
+.authbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}.auth-user{font-size:11px;color:var(--muted);font-weight:700}.dash{display:none;margin-bottom:14px}.dash.show{display:block}.dash-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.stat{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px}.stat b{display:block;font-size:19px;color:var(--navy);margin-top:4px}.stat span{font-size:10px;color:var(--muted);font-weight:800}.dash-table{margin-top:12px;overflow:auto;border:1px solid var(--line);border-radius:9px}.dash-table table{min-width:850px}.dash-head-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.dash-table th{background:#edf2f7}.auth-modal{position:fixed;inset:0;background:#0b1f3a99;z-index:10000;display:none;align-items:center;justify-content:center;padding:18px}.auth-modal.show{display:flex}.auth-box{background:#fff;width:min(430px,100%);border-radius:14px;padding:20px;box-shadow:0 20px 60px #0005}.auth-box h2{margin:0 0 12px}.auth-box input{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;margin:5px 0 10px}.auth-msg{font-size:11px;font-weight:800;min-height:18px;color:var(--red)}@media(max-width:900px){.dash-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -56,17 +56,7 @@
   <button class="btn secondary" id="logoutBtn" style="display:none">Logout</button>
   <span class="auth-user" id="authUser">Not logged in</span>
 </div>
-<section class="card dash" id="dashboard">
-  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">📊 Calculator Dashboard</h2><span class="source-tag" id="dashRole">User</span></div>
-  <div class="dash-grid" style="margin-top:12px">
-    <div class="stat"><span>TOTAL CALCULATIONS</span><b id="dTotal">0</b></div>
-    <div class="stat"><span>TOTAL SHIPMENTS</span><b id="dShipments">0</b></div>
-    <div class="stat"><span>TOTAL ODA CHARGE</span><b id="dOda">৳0.00</b></div>
-    <div class="stat"><span>TOTAL VAT</span><b id="dVat">৳0.00</b></div>
-    <div class="stat"><span>GRAND TOTAL</span><b id="dGrand">৳0.00</b></div>
-  </div>
-  <div class="dash-table"><table><thead><tr><th>Date</th><th>Email</th><th>Service</th><th>Country</th><th>Weight</th><th>ODA</th><th>Grand Total</th></tr></thead><tbody id="dashRows"><tr><td colspan="7">Login to load calculations.</td></tr></tbody></table></div>
-</section>
+
 
 <div class="onlinebar">
   <div class="online-title">International Postage Rate Calculator</div>
@@ -116,6 +106,7 @@
     <div class="result"><span>ODA Charge (USD)</span><strong id="odaUsd">—</strong></div>
     <div class="result"><span>ODA Charge (BDT)</span><strong id="odaBdt">—</strong></div>
     <div class="result"><span>ODA Fuel Surcharge (BDT)</span><strong id="odaFuel">—</strong></div>
+    <div class="result"><span>TOTAL ODA (Charge + Fuel)</span><strong id="totalOda">—</strong></div>
     <div class="result"><span>Subtotal Without VAT</span><strong id="subtotal">—</strong></div>
     <div class="result"><span>VAT Amount</span><strong id="vatAmount">—</strong></div>
   </div>
@@ -168,6 +159,17 @@
   </div>
 </div>
 
+<section class="card dash" id="dashboard">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">📊 Calculator Dashboard</h2><div style="display:flex;align-items:center;gap:8px"><span class="source-tag" id="dashRole">User</span><button class="btn secondary" id="downloadHistory">⬇ Download History</button></div></div>
+  <div class="dash-grid" style="margin-top:12px">
+    <div class="stat"><span>TOTAL CALCULATIONS</span><b id="dTotal">0</b></div>
+    <div class="stat"><span>TOTAL SHIPMENTS</span><b id="dShipments">0</b></div>
+    <div class="stat"><span>TOTAL ODA CHARGE</span><b id="dOda">৳0.00</b></div>
+    <div class="stat"><span>TOTAL VAT</span><b id="dVat">৳0.00</b></div>
+    <div class="stat"><span>GRAND TOTAL</span><b id="dGrand">৳0.00</b></div>
+  </div>
+  <div class="dash-table"><table><thead><tr><th>Date</th><th>Email</th><th>ODA Type</th><th>Country</th><th>Weight</th><th>ODA</th><th>Grand Total</th></tr></thead><tbody id="dashRows"><tr><td colspan="7">Login to load calculations.</td></tr></tbody></table></div>
+</section>
 <div class="auth-modal" id="authModal">
   <div class="auth-box">
     <div style="display:flex;justify-content:space-between;align-items:center"><h2>Login / Register</h2><button class="rate-close" id="authClose">✕</button></div>
@@ -266,7 +268,8 @@ function calculate(){
   $('odaUsd').textContent=usd(odaUsd);
   $('odaBdt').textContent=money(odaBdt);
   $('odaFuel').textContent=money(odaFuelBdt);
-  if(base==null){['subtotal','vatAmount','grandNoVat','grandVat'].forEach(id=>$(id).textContent='—');}
+  $('totalOda').textContent=money(odaBdt+odaFuelBdt);
+  if(base==null){['totalOda','subtotal','vatAmount','grandNoVat','grandVat'].forEach(id=>$(id).textContent='—');}
   else{
     const subtotal=base+odaFuel*fx;
     const vatAmount=subtotal*vat/100;
@@ -453,7 +456,7 @@ async function loadSharedRates(){
 }
 async function loadDashboard(){
   if(!sb||!currentUser)return;
-  let q=sb.from('calculations').select('created_at,email,service,country,weight,oda_charge_bdt,grand_total_with_vat,vat,grand_total');
+  let q=sb.from('calculations').select('id,user_id,created_at,email,service,country,postal,city,weight,oda_charge_bdt,oda_fuel_surcharge_bdt,grand_total_with_vat,vat,grand_total');
   if(!currentProfile?.is_admin) q=q.eq('user_id',currentUser.id);
   const {data,error}=await q.order('created_at',{ascending:false}).limit(100);
   if(error){$('dashRows').innerHTML='<tr><td colspan="7">Dashboard error: '+esc(error.message)+'</td></tr>';return;}
@@ -463,17 +466,38 @@ async function loadDashboard(){
   $('dOda').textContent=bdt(rows.reduce((a,r)=>a+n(r.oda_charge_bdt),0));
   $('dVat').textContent=bdt(rows.reduce((a,r)=>a+n(r.vat),0));
   $('dGrand').textContent=bdt(rows.reduce((a,r)=>a+n(r.grand_total_with_vat ?? r.grand_total),0));
-  $('dashRows').innerHTML=rows.length?rows.map(r=>`<tr><td>${new Date(r.created_at).toLocaleString()}</td><td>${esc(r.email||'')}</td><td>${esc(r.service||'')}</td><td>${esc(r.country||'')}</td><td>${n(r.weight)}</td><td>${bdt(r.oda_charge_bdt)}</td><td>${bdt(r.grand_total_with_vat ?? r.grand_total)}</td></tr>`).join(''):'<tr><td colspan="7">No calculations yet.</td></tr>';
+  $('dashRows').innerHTML=rows.length?rows.map(r=>{const odaType=(r.service==='Postal'||r.service==='Postal Code')?'Postal Code':(r.service==='City'?'City':(String(r.postal||'').trim()?'Postal Code':(String(r.city||'').trim()?'City':'')));return `<tr><td>${new Date(r.created_at).toLocaleString()}</td><td>${esc(r.email||'')}</td><td>${esc(odaType)}</td><td>${esc(r.country||'')}</td><td>${n(r.weight)}</td><td>${bdt(n(r.oda_charge_bdt)+n(r.oda_fuel_surcharge_bdt))}</td><td>${bdt(r.grand_total_with_vat ?? r.grand_total)}</td></tr>`}).join(''):'<tr><td colspan="7">No calculations yet.</td></tr>';
 }
 async function saveCalculation(){
   if(!sb||!currentUser)return;
   const rawWeight=n($('weight').value), country=canonicalCountry($('country').value), postal=$('postal').value.trim(), city=$('city').value.trim();
   const rr=rateFor(country,rawWeight), oda=findODA(country,postal,city), fx=n($('fx').value), fuel=n($('fuel').value), odaBase=n($('odaBase').value), vatRate=n($('vat').value);
   const base=rr.rate!=null?rr.rounded*rr.rate:0, odaUsd=oda.matched.length?Math.max(odaBase,rr.rounded*0.5):0, odaFuel=odaUsd*(1+fuel/100), odaBdt=odaUsd*fx, odaFuelBdt=odaFuel*fx-odaBdt, subtotal=base+odaFuel*fx, vatAmount=subtotal*vatRate/100, grandVat=subtotal+vatAmount;
-  const payload={user_id:currentUser.id,email:currentUser.email,service:document.querySelector('.service.active')?.dataset.service||'EMS',country,postal,city,weight:rawWeight,oda_status:oda.matched.length?'ODA':'No ODA',oda_charge_usd:odaUsd,oda_charge_bdt:odaBdt,oda_fuel_surcharge_bdt:odaFuelBdt,subtotal,vat:vatAmount,grand_total:subtotal,grand_total_with_vat:grandVat};
+  const payload={user_id:currentUser.id,email:currentUser.email,service:(oda.matched.length ? (oda.matchedBy.includes('Postal') ? 'Postal' : (oda.matchedBy==='City' ? 'City' : '')) : ''),country,postal,city,weight:rawWeight,oda_status:oda.matched.length?'ODA':'No ODA',oda_charge_usd:odaUsd,oda_charge_bdt:odaBdt,oda_fuel_surcharge_bdt:odaFuelBdt,subtotal,vat:vatAmount,grand_total:subtotal,grand_total_with_vat:grandVat};
   const {error}=await sb.from('calculations').insert(payload);
   if(error)console.warn('Calculation save failed:',error.message); else await loadDashboard();
 }
+async function downloadHistoryAndClear(){
+  if(!sb||!currentUser){alert('Please login first.');return;}
+  let q=sb.from('calculations').select('id,user_id,created_at,email,service,country,postal,city,weight,oda_charge_bdt,oda_fuel_surcharge_bdt,grand_total_with_vat,grand_total');
+  if(!currentProfile?.is_admin) q=q.eq('user_id',currentUser.id);
+  const {data,error}=await q.order('created_at',{ascending:false}).limit(1000);
+  if(error){alert('History download failed: '+error.message);return;}
+  const rows=data||[];
+  if(!rows.length){alert('No history available to download.');return;}
+  const escCsv=v=>'\"'+String(v??'').replace(/\"/g,'\"\"')+'\"';
+  const csvRows=[['Date','Email','ODA Type','Country','Weight','ODA','Grand Total'],...rows.map(r=>[new Date(r.created_at).toLocaleString(),r.email||'',(r.service==='Postal'||r.service==='Postal Code')?'Postal Code':(r.service==='City'?'City':(String(r.postal||'').trim()?'Postal Code':(String(r.city||'').trim()?'City':''))),r.country||'',n(r.weight),bdt(n(r.oda_charge_bdt)+n(r.oda_fuel_surcharge_bdt)),bdt(r.grand_total_with_vat??r.grand_total)])];
+  const csv=csvRows.map(row=>row.map(escCsv).join(',')).join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='IPHW-History-'+new Date().toISOString().slice(0,10)+'.csv';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(a.href);
+  const ids=rows.map(r=>r.id).filter(Boolean);
+  if(ids.length){
+    const {error:delError}=await sb.from('calculations').delete().in('id',ids);
+    if(delError){alert('History downloaded, but database history could not be deleted: '+delError.message);return;}
+  }
+  await loadDashboard();
+}
+$('downloadHistory').addEventListener('click',downloadHistoryAndClear);
 $('loginBtn').addEventListener('click',()=>{$('authMsg').textContent='';$('authModal').classList.add('show')});
 $('authClose').addEventListener('click',()=>$('authModal').classList.remove('show'));
 $('doLogin').addEventListener('click',async()=>{if(!sb){$('authMsg').textContent='Supabase ANON KEY বসান আগে।';return}const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||!password){$('authMsg').textContent='Email ও password দিন।';return}const {error}=await sb.auth.signInWithPassword({email,password});$('authMsg').textContent=error?error.message:'';if(!error)$('authModal').classList.remove('show')});
