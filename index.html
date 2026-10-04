@@ -38,15 +38,36 @@
 .rate-editor{overflow:auto;border:1px solid var(--line);border-radius:9px;max-height:58vh}.rate-editor table{min-width:1050px}.rate-editor th{background:#edf2f7}.rate-editor input{width:78px;padding:6px;border:1px solid #cbd5e1;border-radius:6px;font-size:11px}
 .rate-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.rate-msg{font-size:11px;color:var(--green);font-weight:800;margin-top:8px;min-height:14px}
 .rate-help{font-size:10px;color:var(--muted);margin-top:7px;line-height:1.4}
+
+/* ===== Auth + Dashboard ===== */
+.authbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}.auth-user{font-size:11px;color:var(--muted);font-weight:700}.dash{display:none;margin-bottom:14px}.dash.show{display:block}.dash-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.stat{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px}.stat b{display:block;font-size:19px;color:var(--navy);margin-top:4px}.stat span{font-size:10px;color:var(--muted);font-weight:800}.dash-table{margin-top:12px;overflow:auto;border:1px solid var(--line);border-radius:9px}.dash-table table{min-width:850px}.dash-table th{background:#edf2f7}.auth-modal{position:fixed;inset:0;background:#0b1f3a99;z-index:10000;display:none;align-items:center;justify-content:center;padding:18px}.auth-modal.show{display:flex}.auth-box{background:#fff;width:min(430px,100%);border-radius:14px;padding:20px;box-shadow:0 20px 60px #0005}.auth-box h2{margin:0 0 12px}.auth-box input{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;margin:5px 0 10px}.auth-msg{font-size:11px;font-weight:800;min-height:18px;color:var(--red)}@media(max-width:900px){.dash-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <header class="top"><div class="top-inner">
   <div class="brand"><div class="brand-mark">IPHW</div><div><h1>IPHW Rate Calculator</h1><p>Designed &amp; Developed by <b>Amir Hamza</b></p></div></div>
-  <div style="display:flex;align-items:center;gap:10px"><button class="btn secondary" id="rateUpdateBtn" style="background:#c9a84c;color:#0b1f3a">⚙ Rate Update</button><div class="header-badge"><b>IPHW Online-Style Calculator</b><br>IPHW Rate A/B + ODA • Live-style workflow</div></div>
+  <div style="display:flex;align-items:center;gap:10px"><button class="btn secondary" id="rateUpdateBtn" style="background:#c9a84c;color:#0b1f3a;display:none">⚙ Rate Update</button><div class="header-badge"><b>IPHW Online-Style Calculator</b><br>IPHW Rate A/B + ODA • Live-style workflow</div></div>
 </div></header>
 
 <main class="wrap">
+<div class="authbar">
+  <button class="btn primary" id="loginBtn">🔐 Login / Register</button>
+  <button class="btn secondary" id="logoutBtn" style="display:none">Logout</button>
+  <span class="auth-user" id="authUser">Not logged in</span>
+</div>
+<section class="card dash" id="dashboard">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">📊 Calculator Dashboard</h2><span class="source-tag" id="dashRole">User</span></div>
+  <div class="dash-grid" style="margin-top:12px">
+    <div class="stat"><span>TOTAL CALCULATIONS</span><b id="dTotal">0</b></div>
+    <div class="stat"><span>TOTAL SHIPMENTS</span><b id="dShipments">0</b></div>
+    <div class="stat"><span>TOTAL ODA CHARGE</span><b id="dOda">৳0.00</b></div>
+    <div class="stat"><span>TOTAL VAT</span><b id="dVat">৳0.00</b></div>
+    <div class="stat"><span>GRAND TOTAL</span><b id="dGrand">৳0.00</b></div>
+  </div>
+  <div class="dash-table"><table><thead><tr><th>Date</th><th>Email</th><th>Service</th><th>Country</th><th>Weight</th><th>ODA</th><th>Grand Total</th></tr></thead><tbody id="dashRows"><tr><td colspan="7">Login to load calculations.</td></tr></tbody></table></div>
+</section>
+
 <div class="onlinebar">
   <div class="online-title">International Postage Rate Calculator</div>
   <div class="servicebar">
@@ -144,6 +165,16 @@
     </div>
     <div class="rate-msg" id="rateMsg"></div>
     <div class="rate-help">Note: এই version static HTML হওয়ায় Save Rates browser-localStorage-এ save হয়। সব user-এর জন্য shared permanent update করতে পরে backend/database লাগবে।</div>
+  </div>
+</div>
+
+<div class="auth-modal" id="authModal">
+  <div class="auth-box">
+    <div style="display:flex;justify-content:space-between;align-items:center"><h2>Login / Register</h2><button class="rate-close" id="authClose">✕</button></div>
+    <label style="font-size:11px;font-weight:800">EMAIL</label><input id="authEmail" type="email" placeholder="you@example.com">
+    <label style="font-size:11px;font-weight:800">PASSWORD</label><input id="authPassword" type="password" placeholder="Minimum 6 characters">
+    <div class="actions"><button class="btn primary" id="doLogin">Login</button><button class="btn secondary" id="doRegister">Register</button></div>
+    <div class="auth-msg" id="authMsg"></div>
   </div>
 </div>
 
@@ -276,6 +307,7 @@ function showCitySuggest(){
   box.style.display=list.length?'block':'none';
   box.querySelectorAll('button').forEach(b=>b.addEventListener('mousedown',e=>{e.preventDefault();$('city').value=b.dataset.v;box.style.display='none';calculate();}));
 }
+document.querySelectorAll('.service').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.service').forEach(x=>x.classList.remove('active'));b.classList.add('active');}));
 document.querySelectorAll('.plan').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.plan').forEach(x=>x.classList.remove('active'));b.classList.add('active');currentPlan=b.dataset.plan;renderRates($('rateSearch').value);calculate();}));
 ['weight','postal','city','fx','vat','fuel','odaBase'].forEach(id=>$(id).addEventListener('input',()=>{if(id==='city')showCitySuggest();calculate();}));
 $('country').addEventListener('input',()=>{showCountrySuggest();calculate()});
@@ -310,7 +342,7 @@ function renderRateEditor(){
     return `<td><input type="number" step="0.01" data-ri="${ri}" data-ci="${ci}" value="${esc(v)}"></td>`;
   }).join('')+'</tr>').join('');
 }
-function saveRates(){
+async function saveRates(){
   const rows=editPlan==='A'?DATA.ratesA:DATA.ratesB;
   document.querySelectorAll('#editRateBody input').forEach(inp=>{
     const ri=Number(inp.dataset.ri),ci=Number(inp.dataset.ci),v=Number(inp.value);
@@ -320,7 +352,12 @@ function saveRates(){
   localStorage.setItem('iphw_rates_v1',JSON.stringify(payload));
   renderRates($('rateSearch').value);
   calculate();
-  $('rateMsg').textContent='✓ Rates saved successfully in this browser.';
+  $('rateMsg').textContent='✓ Rates saved locally.';
+  if(sb&&currentUser&&currentProfile?.is_admin){
+    const {error}=await sb.from('rates').insert({rate_data:{A:DATA.ratesA,B:DATA.ratesB},updated_by:currentUser.id});
+    if(error)$('rateMsg').textContent='⚠ Local save হয়েছে, database save failed: '+error.message;
+    else $('rateMsg').textContent='✓ Rates saved to shared database.';
+  }
 }
 function restoreRates(){
   if(!confirm('Restore default Rate A and Rate B?'))return;
@@ -366,6 +403,90 @@ $('importRates').addEventListener('change',e=>{
   reader.readAsText(file);
 });
 loadSavedRates();
+
+/* ===== Supabase Authentication + Dashboard ===== */
+const SUPABASE_URL = 'https://yyoaoegwrssbeiqtmenm.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_JyK4HRE-g9K8RIw4sJtXWA_dHtdNasB';
+let sb = null;
+let currentUser = null;
+let currentProfile = null;
+let lastCalculation = null;
+
+function initSupabase(){
+  if(window.supabase && SUPABASE_ANON_KEY && !SUPABASE_ANON_KEY.includes('PASTE_')){
+    sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+    sb.auth.getSession().then(({data})=>handleSession(data.session));
+    sb.auth.onAuthStateChange((_event,session)=>handleSession(session));
+  }else{
+    $('authUser').textContent='Supabase key not configured';
+  }
+}
+async function handleSession(session){
+  currentUser=session?.user||null;
+  if(currentUser){
+    $('loginBtn').style.display='none';$('logoutBtn').style.display='inline-block';
+    $('authUser').textContent=currentUser.email||'Logged in';
+    await loadProfile();
+    await loadSharedRates();
+    await loadDashboard();
+    $('dashboard').classList.add('show');
+    if(currentProfile?.is_admin){$('dashRole').textContent='ADMIN';$('rateUpdateBtn').style.display='inline-block';}
+    else{$('dashRole').textContent='USER';$('rateUpdateBtn').style.display='none';}
+  }else{
+    $('loginBtn').style.display='inline-block';$('logoutBtn').style.display='none';$('authUser').textContent='Not logged in';$('dashboard').classList.remove('show');$('rateUpdateBtn').style.display='none';currentProfile=null;
+  }
+}
+async function loadProfile(){
+  if(!sb||!currentUser)return;
+  const {data,error}=await sb.from('profiles').select('id,email,is_admin').eq('id',currentUser.id).maybeSingle();
+  if(error){console.warn(error);return;}
+  currentProfile=data||{id:currentUser.id,email:currentUser.email,is_admin:false};
+}
+function n(v){return Number(v)||0}
+function bdt(v){return '৳'+n(v).toLocaleString('en-BD',{minimumFractionDigits:2,maximumFractionDigits:2})}
+async function loadSharedRates(){
+  if(!sb)return;
+  const {data,error}=await sb.from('rates').select('rate_data').order('updated_at',{ascending:false}).limit(1).maybeSingle();
+  if(error||!data?.rate_data)return;
+  const d=data.rate_data;
+  if(Array.isArray(d.A)&&Array.isArray(d.B)){DATA.ratesA=d.A;DATA.ratesB=d.B;localStorage.setItem('iphw_rates_v1',JSON.stringify({A:d.A,B:d.B}));renderRates($('rateSearch').value);calculate();}
+}
+async function loadDashboard(){
+  if(!sb||!currentUser)return;
+  let q=sb.from('calculations').select('created_at,email,service,country,weight,oda_charge_bdt,grand_total_with_vat,vat,grand_total');
+  if(!currentProfile?.is_admin) q=q.eq('user_id',currentUser.id);
+  const {data,error}=await q.order('created_at',{ascending:false}).limit(100);
+  if(error){$('dashRows').innerHTML='<tr><td colspan="7">Dashboard error: '+esc(error.message)+'</td></tr>';return;}
+  const rows=data||[];
+  $('dTotal').textContent=rows.length;
+  $('dShipments').textContent=rows.length;
+  $('dOda').textContent=bdt(rows.reduce((a,r)=>a+n(r.oda_charge_bdt),0));
+  $('dVat').textContent=bdt(rows.reduce((a,r)=>a+n(r.vat),0));
+  $('dGrand').textContent=bdt(rows.reduce((a,r)=>a+n(r.grand_total_with_vat ?? r.grand_total),0));
+  $('dashRows').innerHTML=rows.length?rows.map(r=>`<tr><td>${new Date(r.created_at).toLocaleString()}</td><td>${esc(r.email||'')}</td><td>${esc(r.service||'')}</td><td>${esc(r.country||'')}</td><td>${n(r.weight)}</td><td>${bdt(r.oda_charge_bdt)}</td><td>${bdt(r.grand_total_with_vat ?? r.grand_total)}</td></tr>`).join(''):'<tr><td colspan="7">No calculations yet.</td></tr>';
+}
+async function saveCalculation(){
+  if(!sb||!currentUser)return;
+  const rawWeight=n($('weight').value), country=canonicalCountry($('country').value), postal=$('postal').value.trim(), city=$('city').value.trim();
+  const rr=rateFor(country,rawWeight), oda=findODA(country,postal,city), fx=n($('fx').value), fuel=n($('fuel').value), odaBase=n($('odaBase').value), vatRate=n($('vat').value);
+  const base=rr.rate!=null?rr.rounded*rr.rate:0, odaUsd=oda.matched.length?Math.max(odaBase,rr.rounded*0.5):0, odaFuel=odaUsd*(1+fuel/100), odaBdt=odaUsd*fx, odaFuelBdt=odaFuel*fx-odaBdt, subtotal=base+odaFuel*fx, vatAmount=subtotal*vatRate/100, grandVat=subtotal+vatAmount;
+  const payload={user_id:currentUser.id,email:currentUser.email,service:document.querySelector('.service.active')?.dataset.service||'EMS',country,postal,city,weight:rawWeight,oda_status:oda.matched.length?'ODA':'No ODA',oda_charge_usd:odaUsd,oda_charge_bdt:odaBdt,oda_fuel_surcharge_bdt:odaFuelBdt,subtotal,vat:vatAmount,grand_total:subtotal,grand_total_with_vat:grandVat};
+  const {error}=await sb.from('calculations').insert(payload);
+  if(error)console.warn('Calculation save failed:',error.message); else await loadDashboard();
+}
+$('loginBtn').addEventListener('click',()=>{$('authMsg').textContent='';$('authModal').classList.add('show')});
+$('authClose').addEventListener('click',()=>$('authModal').classList.remove('show'));
+$('doLogin').addEventListener('click',async()=>{if(!sb){$('authMsg').textContent='Supabase ANON KEY বসান আগে।';return}const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||!password){$('authMsg').textContent='Email ও password দিন।';return}const {error}=await sb.auth.signInWithPassword({email,password});$('authMsg').textContent=error?error.message:'';if(!error)$('authModal').classList.remove('show')});
+$('doRegister').addEventListener('click',async()=>{if(!sb){$('authMsg').textContent='Supabase ANON KEY বসান আগে।';return}const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||password.length<6){$('authMsg').textContent='Valid email এবং কমপক্ষে 6 character password দিন।';return}const {error}=await sb.auth.signUp({email,password});$('authMsg').textContent=error?error.message:'Registration successful. Email verification লাগলে email check করুন.'});
+$('logoutBtn').addEventListener('click',async()=>{if(sb)await sb.auth.signOut()});
+const originalCalculate=calculate;
+calculate=originalCalculate;
+$('calculate').removeEventListener('click',calculate);
+$('calculate').addEventListener('click',async()=>{calculate();await saveCalculation();});
+
+/* Admin can open Rate Update only after profile check */
+const originalRateOpen=$('rateUpdateBtn').onclick;
+initSupabase();
 
 renderRates();renderZones();renderODA();calculate();
 </script>
