@@ -67,6 +67,18 @@ body>.wrap>.authbar,body>.wrap>.onlinebar{display:none}
 .admin-mobile-brand{display:none}
 @media(max-width:900px){.admin-sidebar{width:70px}.admin-brand{justify-content:center;padding:0}.admin-brand-title,.admin-brand-sub,.admin-user-email,.admin-user-role,.admin-nav button span:not(.nav-icon),.admin-logout span{display:none}.admin-user{padding:14px 15px}.admin-nav button{justify-content:center}.admin-logout{display:grid;place-items:center;padding:11px}.admin-topbar{left:70px}body>.wrap{margin-left:70px}}
 
+
+/* ===== Attached top bar branding ===== */
+.admin-topbar{height:70px;padding:0 20px;background:#0b2f5b;box-shadow:none;border-bottom:1px solid #174676}
+.admin-top-brand{display:flex;align-items:center;gap:15px;height:100%}
+.admin-top-fedex{font-weight:1000;font-style:italic;font-size:31px;letter-spacing:-2.5px;line-height:1;color:#fff;white-space:nowrap}
+.admin-top-fedex i{font-style:normal;color:#ff6200}
+.admin-top-brand-copy{display:flex;flex-direction:column;justify-content:center}
+.admin-top-title{font-size:20px;font-weight:900;line-height:1.05;color:#fff}
+.admin-top-sub{font-size:10px;font-weight:600;color:#fff;margin-top:5px;line-height:1}
+.admin-top-sub b{font-weight:800;color:#fff}
+@media(max-width:600px){.admin-topbar{padding:0 12px}.admin-top-brand{gap:10px}.admin-top-fedex{font-size:25px}.admin-top-title{font-size:16px}.admin-top-sub{font-size:8px}.admin-top-status{display:none}}
+
 /* ===== Strict Login / Role Access Control ===== */
 body.auth-locked > *:not(.auth-modal):not(.forgot-modal):not(.reset-modal){filter:blur(2px);pointer-events:none;user-select:none}
 .access-gate{position:fixed;inset:0;background:rgba(8,23,43,.72);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px}
@@ -120,18 +132,89 @@ body.auth-locked > *:not(.auth-modal):not(.forgot-modal):not(.reset-modal){filte
 .grand-row{background:#f8fafc;font-weight:800}.grand-row span,.grand-row strong{font-size:12px;font-weight:900;color:#111827}
 @media (min-width:951px){.rate-result-card{padding:11px}.rate-result-card>h2{margin-bottom:7px;font-size:15px}.auto-row{min-height:29px;font-size:10.5px}.auto-row strong{font-size:10.5px}.auto-row em{font-size:9px}.auto-head{min-height:25px;font-size:8px}.grand-row span,.grand-row strong{font-size:11.5px}}
 @media (max-width:950px){.auto-row{grid-template-columns:minmax(0,1.45fr) minmax(100px,1fr) 62px}}
+
+/* ===== Attached FedEx UI color theme ===== */
+:root{--navy:#0b2f5b;--blue:#1267c9;--gold:#ffcc00;--bg:#f3f7fc;--card:#ffffff;--line:#d7e2ef;--muted:#64748b;--green:#0b8f67;--red:#c92a2a;--soft:#eef4fb}
+body{background:#f3f7fc;color:#172b4d}
+.admin-sidebar{background:linear-gradient(180deg,#0b2f5b 0%,#08264b 100%);border-right:1px solid #174676;box-shadow:4px 0 18px rgba(5,30,60,.18)}
+.admin-brand{border-bottom:1px solid rgba(255,255,255,.12)}
+.admin-brand-mark{color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.2)}
+.admin-brand-title{color:#fff}
+.admin-brand-sub{color:#bfd0e4}
+.admin-user{border-bottom:1px solid rgba(255,255,255,.12)}
+.admin-avatar{background:#173f70;color:#fff}
+.admin-user-email{color:#fff}
+.admin-user-role{color:#b8cbe0}
+.admin-nav button{color:#d5e2f0}
+.admin-nav button:hover{background:rgba(37,99,199,.28);color:#fff}
+.admin-nav button.active{background:linear-gradient(90deg,#1769ce,#2b78d7);color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.16)}
+.admin-nav .nav-icon{color:inherit}
+.admin-logout{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#fff}
+.admin-logout:hover{background:rgba(220,38,38,.2);border-color:rgba(255,255,255,.28)}
+.admin-topbar{background:linear-gradient(90deg,#0b2f5b,#123f76);border-bottom:1px solid #174676;box-shadow:0 2px 10px rgba(5,30,60,.12)}
+.admin-top-title{color:#fff}
+.admin-top-status{color:#d6e3f2}
+.admin-dot{background:#18c77a;box-shadow:0 0 0 3px rgba(24,199,122,.12)}
+.card{border-color:#d7e2ef;box-shadow:0 5px 18px rgba(15,55,95,.07)}
+.card h2,.online-title{color:#173b68}
+.field label{color:#49627e}
+.field input:focus,.field select:focus{border-color:#1769ce;box-shadow:0 0 0 3px rgba(23,105,206,.14)}
+.primary{background:#1267c9;color:#fff}
+.primary:hover{background:#0f5db7}
+.secondary{background:#eef4fb;color:#1c426b}
+.plan{border-color:#d5e1ee;background:#fff;color:#35516f}
+.plan.active{background:#1267c9;color:#fff;border-color:#1267c9}
+.tab.active,.rate-tab.active{background:#1267c9;color:#fff;border-color:#1267c9}
+.service{border-color:#d7e2ef;color:#36516f}.service.active{background:#1267c9;color:#fff;border-color:#1267c9}
+.source-tag{background:#eaf2fb;color:#42617f}
+.settings{background:#f7faff}
+th{background:#edf4fb}
+.grand{color:#0b376c!important}
+.total{background:#eaf6ff}
+.fedex-heading{background:none;-webkit-text-fill-color:initial;color:#1267c9;text-shadow:none}
+.fedex-mark{background:#1267c9;color:#fff;box-shadow:0 6px 18px rgba(18,103,201,.25)}
+.fedex-badge{border:1px solid #cfe0f3;background:#edf5fd}
+.fedex-badge b{background:none;-webkit-text-fill-color:initial;color:#1267c9}
+.rate-perm input{accent-color:#1267c9}
 </style>
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>window.addEventListener("load",function(){if(!window.supabase){var s=document.createElement("script");s.src="https://unpkg.com/@supabase/supabase-js@2";s.onload=function(){if(typeof initSupabase==="function")initSupabase();};document.head.appendChild(s);}});</script>
+<style id="final-header-branding-fix">
+/* Final header branding: match the attached FedEx-style header */
+header.top .brand .fedex-heading{
+  color:#ffffff !important;
+  background:none !important;
+  -webkit-text-fill-color:#ffffff !important;
+  text-shadow:none !important;
+  margin:0 !important;
+}
+header.top .brand p{color:#ffffff !important;}
+header.top .brand p b{color:#ffffff !important;}
+</style>
+<style id="force-fedex-header-branding">
+/* FINAL: exact requested header branding */
+header.top .brand .fedex-heading, header.top .brand .fedex-heading *{
+  color:#fff !important;
+  background:#fff !important;
+  background-image:none !important;
+  -webkit-background-clip:initial !important;
+  background-clip:initial !important;
+  -webkit-text-fill-color:#fff !important;
+  text-shadow:none !important;
+}
+header.top .brand p, header.top .brand p b{color:#fff !important;-webkit-text-fill-color:#fff !important;}
+.admin-brand-title{color:#fff !important;}
+.admin-brand-sub{color:#d9e7f7 !important;}
+</style>
 </head>
 <body class="auth-locked">
 <div class="access-gate" id="accessGate"><div class="access-gate-box"><div class="lock">🔐</div><h2>Login Required</h2><p>You must login with an authorized Supabase account to use the IPHW Rate Calculator, Dashboard, Rate Update and Calculation Logs.</p><button type="button" class="btn primary" onclick="openAuthModal()">🔐 Login / Register</button></div></div>
 <aside class="admin-sidebar">
   <div class="admin-brand">
     <div class="admin-brand-mark">FedEx</div>
-    <div><div class="admin-brand-title">IPHW Rate Calculator</div><div class="admin-brand-sub">FedEx Admin Portal</div></div>
+    <div><div class="admin-brand-title">FedEx Rate Calculator</div><div class="admin-brand-sub">Designed &amp; Developed by Amir Hamza</div></div>
   </div>
   <div class="admin-user">
     <div class="admin-user-row"><div class="admin-avatar">♙</div><div><div class="admin-user-email" id="sidebarUser">amir.hamza@bdexpress.com</div><div class="admin-user-role">Admin</div></div></div>
@@ -146,7 +229,7 @@ body.auth-locked > *:not(.auth-modal):not(.forgot-modal):not(.reset-modal){filte
   </nav>
   <button type="button" class="admin-logout" id="sidebarLogout"><span>⇥</span> <span>Logout</span></button>
 </aside>
-<div class="admin-topbar"><div class="admin-top-title">FedEx</div><div class="admin-top-status"><span class="admin-dot"></span> Connected to Supabase</div></div>
+<div class="admin-topbar"><div class="admin-top-brand"><div class="admin-top-fedex"><span>Fed</span><i>Ex</i></div><div class="admin-top-brand-copy"><div class="admin-top-title">FedEx Rate Calculator</div><div class="admin-top-sub">Designed &amp; Developed by <b>Amir Hamza</b></div></div></div><div class="admin-top-status"><span class="admin-dot"></span> Connected to Supabase</div></div>
 
 <header class="top"><div class="top-inner">
   <div class="brand"><div class="brand-mark fedex-mark">FEDEX</div><div><h1 class="fedex-heading">FedEx Rate Calculator</h1><p>Designed &amp; Developed by <b>Amir Hamza</b></p></div></div>
