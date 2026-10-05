@@ -67,18 +67,6 @@ body>.wrap>.authbar,body>.wrap>.onlinebar{display:none}
 .admin-mobile-brand{display:none}
 @media(max-width:900px){.admin-sidebar{width:70px}.admin-brand{justify-content:center;padding:0}.admin-brand-title,.admin-brand-sub,.admin-user-email,.admin-user-role,.admin-nav button span:not(.nav-icon),.admin-logout span{display:none}.admin-user{padding:14px 15px}.admin-nav button{justify-content:center}.admin-logout{display:grid;place-items:center;padding:11px}.admin-topbar{left:70px}body>.wrap{margin-left:70px}}
 
-
-/* ===== Attached top bar branding ===== */
-.admin-topbar{height:70px;padding:0 20px;background:#0b2f5b;box-shadow:none;border-bottom:1px solid #174676}
-.admin-top-brand{display:flex;align-items:center;gap:15px;height:100%}
-.admin-top-fedex{font-weight:1000;font-style:italic;font-size:31px;letter-spacing:-2.5px;line-height:1;color:#fff;white-space:nowrap}
-.admin-top-fedex i{font-style:normal;color:#ff6200}
-.admin-top-brand-copy{display:flex;flex-direction:column;justify-content:center}
-.admin-top-title{font-size:20px;font-weight:900;line-height:1.05;color:#fff}
-.admin-top-sub{font-size:10px;font-weight:600;color:#fff;margin-top:5px;line-height:1}
-.admin-top-sub b{font-weight:800;color:#fff}
-@media(max-width:600px){.admin-topbar{padding:0 12px}.admin-top-brand{gap:10px}.admin-top-fedex{font-size:25px}.admin-top-title{font-size:16px}.admin-top-sub{font-size:8px}.admin-top-status{display:none}}
-
 /* ===== Strict Login / Role Access Control ===== */
 body.auth-locked > *:not(.auth-modal):not(.forgot-modal):not(.reset-modal){filter:blur(2px);pointer-events:none;user-select:none}
 .access-gate{position:fixed;inset:0;background:rgba(8,23,43,.72);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px}
@@ -229,7 +217,7 @@ header.top .brand p, header.top .brand p b{color:#fff !important;-webkit-text-fi
   </nav>
   <button type="button" class="admin-logout" id="sidebarLogout"><span>⇥</span> <span>Logout</span></button>
 </aside>
-<div class="admin-topbar"><div class="admin-top-brand"><div class="admin-top-fedex"><span>Fed</span><i>Ex</i></div><div class="admin-top-brand-copy"><div class="admin-top-title">FedEx Rate Calculator</div><div class="admin-top-sub">Designed &amp; Developed by <b>Amir Hamza</b></div></div></div><div class="admin-top-status"><span class="admin-dot"></span> Connected to Supabase</div></div>
+<div class="admin-topbar"><div class="admin-top-title">FedEx</div><div class="admin-top-status"><span class="admin-dot"></span> Connected to Supabase</div></div>
 
 <header class="top"><div class="top-inner">
   <div class="brand"><div class="brand-mark fedex-mark">FEDEX</div><div><h1 class="fedex-heading">FedEx Rate Calculator</h1><p>Designed &amp; Developed by <b>Amir Hamza</b></p></div></div>
@@ -832,42 +820,42 @@ let currentUser = null;
 let currentProfile = null;
 let lastCalculation = null;
 
-window.openAuthModal=function(){
-  try{
-    const modal=document.getElementById('authModal');
-    const msg=document.getElementById('authMsg');
-    if(msg) msg.textContent='';
-    if(modal) modal.classList.add('show');
-    if(typeof initSupabase==='function') initSupabase();
-  }catch(err){
-    console.error('Open login modal failed:',err);
-  }
-};
-
-function initSupabase(){
-  if(sb)return;
-  try{
-    if(window.supabase && SUPABASE_URL && SUPABASE_ANON_KEY && !SUPABASE_ANON_KEY.includes('PASTE_')){
-      sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-      $('authUser').textContent='Ready to login';
-      sb.auth.getSession().then(({data,error})=>{
-        if(error){console.warn('Supabase session error:',error);$('authUser').textContent='Login ready';return;}
-        handleSession(data?.session||null);
-        if(window.location.hash.includes('type=recovery')) setTimeout(()=>openResetModal(),250);
-      }).catch(err=>{console.warn('Supabase getSession error:',err);$('authUser').textContent='Login ready';});
-      sb.auth.onAuthStateChange((event,session)=>{
-        handleSession(session).catch(err=>console.warn('Session handler error:',err));
-        if(event==='PASSWORD_RECOVERY') setTimeout(()=>openResetModal(),100);
+let supabaseLoadingPromise=null;
+async function ensureSupabase(){
+  if(sb) return sb;
+  if(!window.supabase){
+    if(!supabaseLoadingPromise){
+      supabaseLoadingPromise=new Promise((resolve,reject)=>{
+        const existing=document.querySelector('script[data-supabase-loader]');
+        if(existing){existing.addEventListener('load',()=>resolve(window.supabase));existing.addEventListener('error',()=>reject(new Error('Supabase library failed to load.')));return;}
+        const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'; s.async=true; s.dataset.supabaseLoader='1';
+        s.onload=()=>window.supabase?resolve(window.supabase):reject(new Error('Supabase library loaded but is unavailable.'));
+        s.onerror=()=>reject(new Error('Supabase library failed to load.')); document.head.appendChild(s);
       });
-    }else{
-      $('authUser').textContent='Login service unavailable';
     }
-  }catch(err){
-    console.error('Supabase init failed:',err);
-    sb=null;
-    $('authUser').textContent='Login service unavailable';
+    try{await supabaseLoadingPromise;}catch(e){console.error(e);throw e;}
   }
+  if(!window.supabase) throw new Error('Supabase library is unavailable.');
+  if(!SUPABASE_URL || !SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.includes('PASTE_')) throw new Error('Supabase configuration is missing.');
+  sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+  $('authUser').textContent='Ready to login';
+  sb.auth.getSession().then(({data,error})=>{
+    if(error){console.warn('Supabase session error:',error);return;}
+    handleSession(data?.session||null);
+    if(window.location.hash.includes('type=recovery')) setTimeout(()=>openResetModal(),250);
+  }).catch(err=>console.warn('Supabase getSession error:',err));
+  sb.auth.onAuthStateChange((event,session)=>{
+    handleSession(session).catch(err=>console.warn('Session handler error:',err));
+    if(event==='PASSWORD_RECOVERY') setTimeout(()=>openResetModal(),100);
+  });
+  return sb;
 }
+window.openAuthModal=async function(){
+  const modal=document.getElementById('authModal'); const msg=document.getElementById('authMsg');
+  if(msg) msg.textContent=''; if(modal) modal.classList.add('show');
+  try{await ensureSupabase();}catch(err){if(msg) msg.textContent='Login service load হয়নি: '+err.message;}
+};
+function initSupabase(){ ensureSupabase().catch(err=>console.warn('Supabase init failed:',err)); }
 async function handleSession(session){
   currentUser=session?.user||null;
   const gate=document.getElementById('accessGate');
@@ -1039,7 +1027,7 @@ $('updatePassword').addEventListener('click',async()=>{
 });
 $('doLogin').addEventListener('click',async()=>{
   const btn=$('doLogin');
-  if(!sb){initSupabase();setTimeout(()=>{if(!sb)$('authMsg').textContent='Login service load হয়নি. Page refresh করে আবার চেষ্টা করুন.';},800);return;}
+  try{await ensureSupabase();}catch(err){$('authMsg').textContent='Login service load হয়নি: '+err.message;return;}
   const email=$('authEmail').value.trim(),password=$('authPassword').value;
   if(!email||!password){$('authMsg').textContent='Email ও password দিন।';return;}
   btn.disabled=true;btn.textContent='Logging in...';$('authMsg').textContent='';
@@ -1055,7 +1043,7 @@ $('doLogin').addEventListener('click',async()=>{
   finally{btn.disabled=false;btn.textContent='Login';}
 });
 $('doRegister').addEventListener('click',async()=>{
-  if(!sb){initSupabase();$('authMsg').textContent='Login service load হচ্ছে—একটু পরে আবার চেষ্টা করুন.';return}
+  try{await ensureSupabase();}catch(err){$('authMsg').textContent='Login service load হয়নি: '+err.message;return;}
   const email=$('authEmail').value.trim(),password=$('authPassword').value;
   if(!email||password.length<6){$('authMsg').textContent='Valid email এবং কমপক্ষে 6 character password দিন।';return}
   const btn=$('doRegister');btn.disabled=true;btn.textContent='Registering...';
