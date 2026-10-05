@@ -18,7 +18,6 @@
 .planbar{display:flex;gap:7px;margin-bottom:12px;align-items:center}.plan{border:1px solid var(--line);background:#fff;padding:8px 15px;border-radius:8px;cursor:pointer;font-weight:800}.plan.active{background:var(--navy);color:#fff}.source-tag{margin-left:auto;font-size:10px;color:var(--muted);background:var(--soft);padding:6px 9px;border-radius:999px}
 .result-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 20px}.result{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid #edf1f5;font-size:12px}.result span:first-child{color:#526174}.result strong{text-align:right}.status{display:inline-block;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:900}.oda{background:#e7f7f0;color:var(--green)}.nooda{background:#fcebec;color:var(--red)}.neutral{background:#eef2f7;color:#526174}
 .total{margin-top:12px;padding:11px;border-radius:9px;background:#f7f2e4}.grand{font-size:16px!important;color:var(--navy)!important;font-weight:900}
-.normal-only{display:none}.normal-result{margin-top:8px}
 .tabs{display:flex;gap:7px;margin:14px 0 9px}.tab{border:1px solid var(--line);background:#fff;padding:8px 11px;border-radius:8px;cursor:pointer;font-weight:800;font-size:12px}.tab.active{background:var(--navy);color:#fff}.panel{display:none}.panel.active{display:block}
 .toolbar{display:flex;gap:8px;align-items:center;margin-bottom:8px}.search{flex:1;padding:9px 10px;border:1px solid var(--line);border-radius:8px}.tablewrap{overflow:auto;max-height:410px;border:1px solid var(--line);border-radius:9px}table{border-collapse:collapse;width:100%;font-size:11px;background:#fff}th{position:sticky;top:0;background:#edf2f7;text-align:left;padding:8px;border-bottom:1px solid #cbd5e1;z-index:1}td{padding:7px;border-bottom:1px solid #eef2f6}tr:hover td{background:#fafcff}
 .settings{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:11px;padding:10px;background:#f8fafc;border:1px solid var(--line);border-radius:9px}.settings label{font-size:10px;font-weight:800;color:#526174}.settings input{width:100%;padding:7px;border:1px solid #cbd5e1;border-radius:7px;margin-top:3px}
@@ -42,13 +41,18 @@
 
 /* ===== Auth + Dashboard ===== */
 .authbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}.auth-user{font-size:11px;color:var(--muted);font-weight:700}.dash{display:none;margin-bottom:14px}.dash.show{display:block}.dash-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.stat{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px}.stat b{display:block;font-size:19px;color:var(--navy);margin-top:4px}.stat span{font-size:10px;color:var(--muted);font-weight:800}.dash-table{margin-top:12px;overflow:auto;border:1px solid var(--line);border-radius:9px}.dash-table table{min-width:850px}.dash-head-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.dash-table th{background:#edf2f7}.auth-modal{position:fixed;inset:0;background:#0b1f3a99;z-index:10000;display:none;align-items:center;justify-content:center;padding:18px}.auth-modal.show{display:flex}.auth-box{background:#fff;width:min(430px,100%);border-radius:14px;padding:20px;box-shadow:0 20px 60px #0005}.auth-box h2{margin:0 0 12px}.auth-box input{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;margin:5px 0 10px}.auth-msg{font-size:11px;font-weight:800;min-height:18px;color:var(--red)}@media(max-width:900px){.dash-grid{grid-template-columns:repeat(2,1fr)}}
+
+.fedex-heading{font-weight:900;letter-spacing:.2px;background:linear-gradient(90deg,#4b0082 0%,#7b2cbf 22%,#e91e63 45%,#ff7a00 68%,#009688 86%,#1565c0 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 1px 8px rgba(0,0,0,.08)}
+.fedex-mark{font-weight:1000;font-size:16px;letter-spacing:.5px;background:linear-gradient(135deg,#4b0082,#e91e63,#ff7a00,#009688,#1565c0);color:#fff;box-shadow:0 6px 18px rgba(75,0,130,.28)}
+.fedex-badge{border:1px solid rgba(233,30,99,.28);background:linear-gradient(135deg,rgba(75,0,130,.10),rgba(233,30,99,.10),rgba(255,122,0,.10),rgba(0,150,136,.10));}
+.fedex-badge b{background:linear-gradient(90deg,#4b0082,#e91e63,#ff7a00,#009688,#1565c0);-webkit-background-clip:text;background-clip:text;color:transparent;font-size:15px}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <header class="top"><div class="top-inner">
-  <div class="brand"><div class="brand-mark">IPHW</div><div><h1>IPHW Rate Calculator</h1><p>Designed &amp; Developed by <b>Amir Hamza</b></p></div></div>
-  <div style="display:flex;align-items:center;gap:10px"><button class="btn secondary" id="rateUpdateBtn" style="background:#c9a84c;color:#0b1f3a;display:none">⚙ Rate Update</button><div class="header-badge"><b>IPHW Online-Style Calculator</b><br>IPHW Rate A/B/Normal + ODA • Live-style workflow</div></div>
+  <div class="brand"><div class="brand-mark fedex-mark">FEDEX</div><div><h1 class="fedex-heading">FedEx Rate Calculator</h1><p>Designed &amp; Developed by <b>Amir Hamza</b></p></div></div>
+  <div style="display:flex;align-items:center;gap:10px"><button class="btn secondary" id="rateUpdateBtn" style="background:#c9a84c;color:#0b1f3a;display:none">⚙ Rate Update</button><div class="header-badge fedex-badge"><b>FedEx Rate Calculator</b><br>Rate A / Rate B / Normal Rate + ODA • Live-style workflow</div></div>
 </div></header>
 
 <main class="wrap">
@@ -61,8 +65,9 @@
 
 <div class="onlinebar">
   <div class="online-title">FedEx Rate Calculator</div>
- </div>
-  
+  <div class="servicebar">
+    <div class="fedex-title">FedEx Rate Calculator</div>
+  </div>
   <div class="online-note">Online-style service selection. Final tariff is calculated from Rate A / Rate B / Normal Rate and the supplied ODA data.</div>
 </div>
 <div class="grid">
@@ -75,7 +80,7 @@
     <span class="source-tag">IPHW RATE</span>
   </div>
   <div class="formgrid">
-    <div class="field"><label>WEIGHT (KG)</label><input id="weight" type="number" step="0.1" min="0" value="10"><div class="note">Rate A/B: manual KG. Normal Rate: select the supplied package/weight option below.</div></div>
+    <div class="field"><label>WEIGHT (KG)</label><input id="weight" type="number" step="0.5" min="10" value="10"><div class="note">Rate A/B: manual KG. Normal Rate: select the supplied package/weight option below.</div></div>
     <div class="field" id="normalPackageWrap" style="display:none"><label>NORMAL RATE PACKAGE / WEIGHT (MANUAL)</label><input id="normalPackage" list="normalPackageList" value="0.5" autocomplete="off" placeholder="e.g. 0.5P, 1P, 1.5P, 5"><datalist id="normalPackageList"><option value="0.5E">Documents / FedEx Envelope</option><option value="0.5P">FedEx PAK</option><option value="1P">FedEx PAK</option><option value="1.5P">FedEx PAK</option><option value="2P">FedEx PAK</option><option value="2.5P">FedEx PAK</option><option value="0.5">Carton/Box</option><option value="1">Carton/Box</option><option value="1.5">Carton/Box</option><option value="2">Carton/Box</option><option value="2.5">Carton/Box</option><option value="3">Carton/Box</option><option value="3.5">Carton/Box</option><option value="4">Carton/Box</option><option value="4.5">Carton/Box</option><option value="5">Carton/Box</option><option value="5.5">Carton/Box</option><option value="6">Carton/Box</option><option value="6.5">Carton/Box</option><option value="7">Carton/Box</option><option value="7.5">Carton/Box</option><option value="8">Carton/Box</option><option value="8.5">Carton/Box</option><option value="9">Carton/Box</option><option value="9.5">Carton/Box</option><option value="10">Carton/Box</option><option value="10.5">Carton/Box</option><option value="11">Carton/Box</option><option value="11.5">Carton/Box</option><option value="12">Carton/Box</option><option value="12.5">Carton/Box</option><option value="13">Carton/Box</option><option value="13.5">Carton/Box</option><option value="14">Carton/Box</option><option value="14.5">Carton/Box</option><option value="15">Carton/Box</option><option value="15.5">Carton/Box</option><option value="16">Carton/Box</option><option value="16.5">Carton/Box</option><option value="17">Carton/Box</option><option value="17.5">Carton/Box</option><option value="18">Carton/Box</option><option value="18.5">Carton/Box</option><option value="19">Carton/Box</option><option value="19.5">Carton/Box</option><option value="20">Carton/Box</option><option value="20.5">Carton/Box</option><option value="21">Carton/Box</option><option value="21.5">Carton/Box</option><option value="22">Carton/Box</option><option value="22.5">Carton/Box</option><option value="23">Carton/Box</option><option value="23.5">Carton/Box</option><option value="24">Carton/Box</option><option value="24.5">Carton/Box</option><option value="25">Carton/Box</option><option value="25.5">Carton/Box</option><option value="26">Carton/Box</option><option value="26.5">Carton/Box</option><option value="27">Carton/Box</option><option value="27.5">Carton/Box</option><option value="28">Carton/Box</option><option value="28.5">Carton/Box</option><option value="29">Carton/Box</option><option value="29.5">Carton/Box</option><option value="30">Carton/Box</option></datalist><div class="note">Manual input accepted: 0.5E, 0.5P, 1P, 1.5P, 2P, 2.5P or 0.5–30 KG.</div></div>
     <div class="field"><label>DESTINATION COUNTRY</label><input id="country" autocomplete="off" placeholder="Select / type destination country"><div id="countrySuggest" class="suggest"></div></div>
     <div class="field"><label>RECIPIENT POSTAL CODE</label><input id="postal" placeholder="Enter postal code"></div>
@@ -93,23 +98,22 @@
 
 <section class="card">
   <h2>Rate Result</h2>
-  <div id="standardResults">
   <div class="result-grid">
-    <div class="result"><span>Service</span><strong id="serviceResult">EMS</strong></div>
+    <div class="result"><span>Rate Type</span><strong id="serviceResult">A</strong></div>
     <div class="result"><span>Rate Plan</span><strong id="planResult">A</strong></div>
     <div class="result"><span>Rounded Weight</span><strong id="roundedWeight">—</strong></div>
     <div class="result"><span>Destination Zone</span><strong id="zone">—</strong></div>
     <div class="result"><span>Rate / KG (BDT)</span><strong id="perKg">—</strong></div>
     <div class="result"><span>Base Tariff</span><strong id="base">—</strong></div>
-    <div class="result"><span>Demand Charge (USD)</span><strong id="demandUsd">—</strong></div>
-    <div class="result"><span>Demand Charge (BDT)</span><strong id="demandBdt">—</strong></div>
+    <div class="result" id="demandUsdRow"><span>Demand Charge (USD)</span><strong id="demandUsd">—</strong></div>
+    <div class="result" id="demandBdtRow"><span>Demand Charge (BDT)</span><strong id="demandBdt">—</strong></div>
     <div class="result"><span>Fuel Surcharge (BDT)</span><strong id="fuelBdt">—</strong></div>
     <div class="result"><span>ODA Type</span><strong id="odaType">—</strong></div>
     <div class="result"><span>ODA Status</span><strong id="odaStatus">—</strong></div>
     <div class="result"><span>ODA Charge (USD)</span><strong id="odaUsd">—</strong></div>
     <div class="result"><span>ODA Charge (BDT)</span><strong id="odaBdt">—</strong></div>
     <div class="result"><span>ODA Fuel Surcharge (BDT)</span><strong id="odaFuel">—</strong></div>
-    <div class="result"><span>TOTAL ODA (Charge + Fuel)</span><strong id="totalOda">—</strong></div>
+    <div class="result"><span>Total ODA Charge (BDT)</span><strong id="totalOda">—</strong></div>
     <div class="result"><span>Subtotal Without VAT</span><strong id="subtotal">—</strong></div>
     <div class="result"><span>VAT Amount</span><strong id="vatAmount">—</strong></div>
   </div>
@@ -118,30 +122,6 @@
     <div class="result" style="border:0"><span class="grand">GRAND TOTAL WITH VAT</span><strong class="grand" id="grandVat">—</strong></div>
   </div>
   <div class="note" id="matchInfo"></div>
-  </div>
-
-  <div id="normalResults" class="normal-only normal-result">
-    <div class="result-grid">
-      <div class="result"><span>Destination Zone</span><strong id="nZone">—</strong></div>
-      <div class="result"><span>Base Rate (USD)</span><strong id="nBaseUsd">—</strong></div>
-      <div class="result"><span>Demand Charge (USD)</span><strong id="nDemandUsd">—</strong></div>
-      <div class="result"><span>Customs Fee (USD)</span><strong id="nCustomsUsd">—</strong></div>
-      <div class="result"><span>ODA Status</span><strong id="nOdaStatus">—</strong></div>
-      <div class="result"><span>ODA + Fuel (USD)</span><strong id="nOdaFuelUsd">—</strong></div>
-      <div class="result"><span>Base + Demand (BDT)</span><strong id="nBaseDemandBdt">—</strong></div>
-      <div class="result"><span>Fuel Surcharge (BDT)</span><strong id="nFuelBdt">—</strong></div>
-      <div class="result"><span>Customs Fee (BDT)</span><strong id="nCustomsBdt">—</strong></div>
-      <div class="result"><span>ODA Charge (BDT)</span><strong id="nOdaBdt">—</strong></div>
-      <div class="result"><span>Govt. Fee (BDT)</span><strong id="nGovtFee">—</strong></div>
-      <div class="result"><span>Subtotal / Without VAT</span><strong id="nSubtotal">—</strong></div>
-      <div class="result"><span>VAT Amount</span><strong id="nVat">—</strong></div>
-    </div>
-    <div class="total">
-      <div class="result"><span class="grand">GRAND TOTAL WITHOUT VAT</span><strong class="grand" id="nGrandNoVat">—</strong></div>
-      <div class="result" style="border:0"><span class="grand">GRAND TOTAL WITH VAT</span><strong class="grand" id="nGrandVat">—</strong></div>
-    </div>
-    <div class="note" id="nMatchInfo"></div>
-  </div>
 
   <div class="tabs">
     <button class="tab active" data-tab="ratePanel">Rate Chart</button>
@@ -187,7 +167,7 @@
 </div>
 
 <section class="card dash" id="dashboard">
-  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">📊 Calculator Dashboard</h2><div style="display:flex;align-items:center;gap:8px"><span class="source-tag" id="dashRole">User</span><button class="btn secondary" id="downloadHistory">⬇ Download History</button></div></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">📊 Calculator Dashboard</h2><div style="display:flex;align-items:center;gap:8px"><span class="source-tag" id="dashRole">User</span><button class="btn secondary" id="downloadHistory">⬇ Download History</button><button class="btn secondary" id="adminClearData" style="display:none;background:#dc2626;color:#fff;border-color:#dc2626">🗑 Admin Clear All Data</button></div></div>
   <div class="dash-grid" style="margin-top:12px">
     <div class="stat"><span>TOTAL CALCULATIONS</span><b id="dTotal">0</b></div>
     <div class="stat"><span>TOTAL SHIPMENTS</span><b id="dShipments">0</b></div>
@@ -240,10 +220,13 @@ const DATA={"zones":{"Afghanistan":"I","Albania":"J","Algeria":"J","American Sam
 
 let selectedService='EMS';
 document.querySelectorAll('.service').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.service').forEach(x=>x.classList.remove('active'));btn.classList.add('active');selectedService=btn.dataset.service;const el=document.getElementById('serviceResult');if(el)el.textContent=selectedService;}));
-document.querySelectorAll('.plan').forEach(btn=>btn.addEventListener('click',()=>{currentPlan=btn.dataset.plan;document.querySelectorAll('.plan').forEach(x=>x.classList.toggle('active',x.dataset.plan===currentPlan));const el=document.getElementById('planResult');if(el)el.textContent=currentPlan;syncPlanInputs();calculate();}));
+document.querySelectorAll('.plan').forEach(btn=>btn.addEventListener('click',()=>{currentPlan=btn.dataset.plan;document.querySelectorAll('.plan').forEach(x=>x.classList.toggle('active',x.dataset.plan===currentPlan));const el=document.getElementById('planResult');if(el)el.textContent=rateTypeText();syncPlanInputs();calculate();}));
 let currentPlan='A';
+const rateTypeLabel={A:'Rate A',B:'Rate B',NORMAL:'Normal Rate'};
+const rateTypeText=()=>rateTypeLabel[currentPlan]||currentPlan;
 
 const $=id=>document.getElementById(id);
+const initialRateType=$('serviceResult'); if(initialRateType) initialRateType.textContent=rateTypeText();
 const money=n=>Number.isFinite(n)?n.toLocaleString('en-BD',{minimumFractionDigits:2,maximumFractionDigits:2})+' BDT':'—';
 const usd=n=>Number.isFinite(n)?n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' USD':'—';
 const norm=s=>String(s??'').trim().toLowerCase();
@@ -322,74 +305,19 @@ function syncPlanInputs(){
   $('normalPackageWrap').style.display=normal?'block':'none';
   $('weight').disabled=normal;
   $('weight').style.opacity=normal?'0.6':'1';
+  $('weight').placeholder=normal?'Not required for Normal Rate':'Enter weight in KG';
+  $('demandUsdRow').style.display=normal?'':'none';
+  $('demandBdtRow').style.display=normal?'':'none';
   if(normal){
     const code=$('normalPackage').value;
     const n=Number(String(code).replace(/[EP]$/i,''));
-    $('weight').value=Number.isFinite(n)?n:0;
+    $('weight').value='';
   }
 }
-function showResultPlan(){
-  const normal=currentPlan==='NORMAL';
-  $('standardResults').style.display=normal?'none':'block';
-  $('normalResults').style.display=normal?'block':'none';
-}
-function calculateNormal(){
-  const packageCode=$('normalPackage').value.trim();
-  const country=canonicalCountry($('country').value);
-  const postal=$('postal').value.trim();
-  const city=$('city').value.trim();
-  const fx=Number($('fx').value)||0, vat=Number($('vat').value)||0, fuel=Number($('fuel').value)||0, odaBase=Number($('odaBase').value)||0;
-  const rr=rateFor(country,Number(String(packageCode).replace(/[EP]$/i,'')));
-  const weight=Number(rr.rounded)||0;
-  const demandUsd=rr.zone?demandChargeFor(rr.zone,weight):0;
-  const baseUsd=rr.rate!=null?Number(rr.rate):0;
-  const customsUsd=2.65;
-  const oda=findODA(country,postal,city);
-  const postalHit=String(postal).trim()?oda.rows.filter(r=>postalMatches(postal,r[2],r[3])):[];
-  const cityHit=String(city).trim()?oda.rows.filter(r=>norm(r[1])===norm(city)):[];
-  let odaType='No ODA';
-  if(postalHit.length) odaType='Postal Code'; else if(cityHit.length) odaType='City';
-  updateOdaFieldState(odaType);
-  const odaApplies=odaType!=='No ODA';
-  const odaUsd=odaApplies?Math.max(odaBase,weight*0.5):0;
-  const odaFuelUsd=odaUsd*fuel/100;
-  const odaPlusFuelUsd=odaUsd+odaFuelUsd;
-  const baseDemandBdt=(baseUsd+demandUsd)*fx;
-  const fuelBdt=baseDemandBdt*fuel/100;
-  const customsBdt=customsUsd*fx;
-  const odaBdt=odaUsd*fx;
-  const govtFee=6;
-  const subtotal=baseDemandBdt+fuelBdt+customsBdt+odaBdt+odaFuelUsd*fx+govtFee;
-  const vatAmount=subtotal*vat/100;
-  const grandVat=subtotal+vatAmount;
-  $('nZone').textContent=rr.zone||'Country not found';
-  $('nBaseUsd').textContent=rr.rate!=null?usd(baseUsd):'—';
-  $('nDemandUsd').textContent=rr.zone?usd(demandUsd):'—';
-  $('nCustomsUsd').textContent=usd(customsUsd);
-  $('nOdaStatus').innerHTML=odaApplies?'<span class="status oda">ODA applies</span>':'<span class="status nooda">No ODA</span>';
-  $('nOdaFuelUsd').textContent=usd(odaPlusFuelUsd);
-  $('nBaseDemandBdt').textContent=money(baseDemandBdt);
-  $('nFuelBdt').textContent=money(fuelBdt);
-  $('nCustomsBdt').textContent=money(customsBdt);
-  $('nOdaBdt').textContent=money(odaBdt);
-  $('nGovtFee').textContent=money(govtFee);
-  $('nSubtotal').textContent=money(subtotal);
-  $('nVat').textContent=money(vatAmount);
-  $('nGrandNoVat').textContent=money(subtotal);
-  $('nGrandVat').textContent=money(grandVat);
-  const warn=$('warning');
-  if(!rr.zone){warn.textContent='Country not found in the supplied workbook zone list.';warn.classList.add('show');}
-  else if(rr.rate==null){warn.textContent='Normal Rate requires an exact package/weight option from the supplied Rate Chart (0.5E, 0.5P, 1P, 1.5P, 2P, 2.5P or 0.5–30 KG).';warn.classList.add('show');}
-  else {warn.textContent='';warn.classList.remove('show');}
-  $('nMatchInfo').textContent=`Rate Type: Normal Rate • Package/Weight: ${rr.packageCode||packageCode} • ODA Type: ${odaType}`;
-}
 function calculate(){
-  showResultPlan();
-  if(currentPlan==='NORMAL'){ calculateNormal(); return; }
   const packageCode=currentPlan==='NORMAL'?$('normalPackage').value:'';
   const rawWeight=currentPlan==='NORMAL'?Number(String(packageCode).replace(/[EP]$/i,'')):Number($('weight').value), country=canonicalCountry($('country').value), postal=$('postal').value.trim(), city=$('city').value.trim();
   const fx=Number($('fx').value)||0, vat=Number($('vat').value)||0, fuel=Number($('fuel').value)||0, odaBase=Number($('odaBase').value)||0;
-  const govtFee=currentPlan==='NORMAL'?6:0;
   const rr=rateFor(country,rawWeight);
   $('roundedWeight').textContent=currentPlan==='NORMAL'?(rr.packageCode||packageCode):((rr.rounded||rr.rounded===0)?rr.rounded+' KG':'—');
   $('zone').textContent=rr.zone||'Country not found';
@@ -418,10 +346,10 @@ function calculate(){
   const base=rr.rate!=null?(rr.usd?rr.rate*fx:rr.rounded*rr.rate):null;
   $('base').textContent=base!=null?money(base):'—';
 
-  const demandUsd=rr.zone?demandChargeFor(rr.zone,rawWeight):0;
+  const demandUsd=currentPlan==='NORMAL' && rr.zone?demandChargeFor(rr.zone,rawWeight):0;
   const demandBdt=demandUsd*fx;
-  $('demandUsd').textContent=rr.zone?usd(demandUsd):'—';
-  $('demandBdt').textContent=rr.zone?money(demandBdt):'—';
+  $('demandUsd').textContent=currentPlan==='NORMAL' && rr.zone?usd(demandUsd):'—';
+  $('demandBdt').textContent=currentPlan==='NORMAL' && rr.zone?money(demandBdt):'—';
 
   const oda=findODA(country,postal,city);
   const postalHit=String(postal).trim()?oda.rows.filter(r=>postalMatches(postal,r[2],r[3])):[];
@@ -444,13 +372,26 @@ function calculate(){
 
   if(base==null){
     ['totalOda','subtotal','vatAmount','grandNoVat','grandVat','fuelBdt'].forEach(id=>$(id).textContent='—');
+  }else if(currentPlan!=='NORMAL'){
+    // Rate A / Rate B: Base Tariff + Total ODA Charge only.
+    // ODA Fuel Surcharge is calculated on the ODA charge and included in Total ODA.
+    const totalOdaBdt=odaBdt+odaFuelBdt;
+    const subtotal=base+totalOdaBdt;
+    const vatAmount=subtotal*vat/100;
+    $('fuelBdt').textContent=money(odaFuelBdt);
+    $('totalOda').textContent=money(totalOdaBdt);
+    $('subtotal').textContent=money(subtotal);
+    $('vatAmount').textContent=money(vatAmount);
+    $('grandNoVat').textContent=money(subtotal);
+    $('grandVat').textContent=money(subtotal+vatAmount);
   }else{
-    const fuelOnBaseDemand=0;
-    const odaFuelBdt=odaBdt*fuel/100;
-    const totalFuelBdt=odaFuelBdt;
-    const subtotal=base+demandBdt+odaBdt+odaFuelBdt+govtFee;
+    // Normal Rate: retain the existing Normal Rate calculation path.
+    const odaFuelBdtNormal=odaBdt*fuel/100;
+    const totalFuelBdt=odaFuelBdtNormal;
+    const subtotal=base+demandBdt+odaBdt+odaFuelBdtNormal;
     const vatAmount=subtotal*vat/100;
     $('fuelBdt').textContent=money(totalFuelBdt);
+    $('totalOda').textContent=money(odaBdt+odaFuelBdtNormal);
     $('subtotal').textContent=money(subtotal);
     $('vatAmount').textContent=money(vatAmount);
     $('grandNoVat').textContent=money(subtotal);
@@ -495,11 +436,11 @@ function showCitySuggest(){
   box.querySelectorAll('button').forEach(b=>b.addEventListener('mousedown',e=>{e.preventDefault();$('city').value=b.dataset.v;box.style.display='none';calculate();}));
 }
 document.querySelectorAll('.service').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.service').forEach(x=>x.classList.remove('active'));b.classList.add('active');}));
-document.querySelectorAll('.plan').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.plan').forEach(x=>x.classList.remove('active'));b.classList.add('active');currentPlan=b.dataset.plan;showResultPlan();renderRates($('rateSearch').value);calculate();}));
+document.querySelectorAll('.plan').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.plan').forEach(x=>x.classList.remove('active'));b.classList.add('active');currentPlan=b.dataset.plan;renderRates($('rateSearch').value);calculate();}));
 ['weight','postal','city','fx','vat','fuel','odaBase'].forEach(id=>$(id).addEventListener('input',()=>{if(id==='city')showCitySuggest();calculate();}));
 $('country').addEventListener('input',()=>{showCountrySuggest();calculate()});
 $('calculate').addEventListener('click',calculate);
-$('normalPackage').addEventListener('input',()=>{syncPlanInputs();calculate();});
+$('normalPackage').addEventListener('change',()=>{syncPlanInputs();calculate();});
 $('reset').addEventListener('click',()=>{currentPlan='A';document.querySelectorAll('.plan').forEach(x=>x.classList.toggle('active',x.dataset.plan==='A'));$('weight').value=10;$('normalPackage').value='0.5';$('country').value='';$('postal').value='';$('city').value='';$('fx').value=123.65;$('vat').value=15;$('fuel').value=53.25;$('odaBase').value=25;syncPlanInputs();calculate();renderRates();});
 $('rateSearch').addEventListener('input',e=>renderRates(e.target.value));
 $('zoneSearch').addEventListener('input',e=>renderZones(e.target.value));
@@ -630,10 +571,10 @@ async function handleSession(session){
     await loadSharedRates();
     await loadDashboard();
     $('dashboard').classList.add('show');
-    if(currentProfile?.is_admin){$('dashRole').textContent='ADMIN';$('rateUpdateBtn').style.display='inline-block';}
-    else{$('dashRole').textContent='USER';$('rateUpdateBtn').style.display='none';}
+    if(currentProfile?.is_admin){$('dashRole').textContent='ADMIN';$('rateUpdateBtn').style.display='inline-block';$('adminClearData').style.display='inline-block';}
+    else{$('dashRole').textContent='USER';$('rateUpdateBtn').style.display='none';$('adminClearData').style.display='none';}
   }else{
-    $('loginBtn').style.display='inline-block';$('logoutBtn').style.display='none';$('authUser').textContent='Not logged in';$('dashboard').classList.remove('show');$('rateUpdateBtn').style.display='none';currentProfile=null;
+    $('loginBtn').style.display='inline-block';$('logoutBtn').style.display='none';$('authUser').textContent='Not logged in';$('dashboard').classList.remove('show');$('rateUpdateBtn').style.display='none';$('adminClearData').style.display='none';currentProfile=null;
   }
 }
 async function loadProfile(){
@@ -667,29 +608,10 @@ async function loadDashboard(){
 }
 async function saveCalculation(){
   if(!sb||!currentUser)return;
-  const country=canonicalCountry($('country').value), postal=$('postal').value.trim(), city=$('city').value.trim();
-  const fx=n($('fx').value), fuel=n($('fuel').value), odaBase=n($('odaBase').value), vatRate=n($('vat').value);
-  let rawWeight=n($('weight').value), rr, oda, odaUsd, odaBdt, odaFuelBdt, subtotal, vatAmount, grandVat, service='';
-  if(currentPlan==='NORMAL'){
-    const packageCode=$('normalPackage').value.trim();
-    rawWeight=Number(String(packageCode).replace(/[EP]$/i,''));
-    rr=rateFor(country,rawWeight);
-    oda=findODA(country,postal,city);
-    const postalHit=String(postal).trim()?oda.rows.filter(r=>postalMatches(postal,r[2],r[3])):[];
-    const cityHit=String(city).trim()?oda.rows.filter(r=>norm(r[1])===norm(city)):[];
-    const odaType=postalHit.length?'Postal Code':(cityHit.length?'City':'No ODA');
-    odaUsd=odaType!=='No ODA'?Math.max(odaBase,rawWeight*0.5):0;
-    odaBdt=odaUsd*fx;
-    odaFuelBdt=odaUsd*fuel/100*fx;
-    const baseUsd=rr.rate!=null?rr.rate:0, demandUsd=rr.zone?demandChargeFor(rr.zone,rawWeight):0, customsBdt=2.65*fx, baseDemandBdt=(baseUsd+demandUsd)*fx, fuelBdt=baseDemandBdt*fuel/100;
-    subtotal=baseDemandBdt+fuelBdt+customsBdt+odaBdt+odaFuelBdt+6;
-    vatAmount=subtotal*vatRate/100; grandVat=subtotal+vatAmount; service=odaType==='Postal Code'?'Postal':(odaType==='City'?'City':'');
-  }else{
-    rr=rateFor(country,rawWeight); oda=findODA(country,postal,city);
-    odaUsd=oda.matched.length?Math.max(odaBase,rr.rounded*0.5):0; odaBdt=odaUsd*fx; odaFuelBdt=odaUsd*fuel/100*fx;
-    const base=rr.rate!=null?rr.rounded*rr.rate:0; const demandUsd=rr.zone?demandChargeFor(rr.zone,rawWeight):0; const demandBdt=demandUsd*fx; subtotal=base+demandBdt+odaBdt+odaFuelBdt; vatAmount=subtotal*vatRate/100; grandVat=subtotal+vatAmount; service=oda.matched.length?(oda.matchedBy.includes('Postal')?'Postal':(oda.matchedBy==='City'?'City':'')):'';
-  }
-  const payload={user_id:currentUser.id,email:currentUser.email,service,country,postal,city,weight:rawWeight,oda_status:odaUsd?'ODA':'No ODA',oda_charge_usd:odaUsd,oda_charge_bdt:odaBdt,oda_fuel_surcharge_bdt:odaFuelBdt,subtotal,vat:vatAmount,grand_total:subtotal,grand_total_with_vat:grandVat};
+  const rawWeight=n($('weight').value), country=canonicalCountry($('country').value), postal=$('postal').value.trim(), city=$('city').value.trim();
+  const rr=rateFor(country,rawWeight), oda=findODA(country,postal,city), fx=n($('fx').value), fuel=n($('fuel').value), odaBase=n($('odaBase').value), vatRate=n($('vat').value);
+  const base=rr.rate!=null?rr.rounded*rr.rate:0, odaUsd=oda.matched.length?Math.max(odaBase,rr.rounded*0.5):0, odaFuel=odaUsd*(1+fuel/100), odaBdt=odaUsd*fx, odaFuelBdt=odaFuel*fx-odaBdt, subtotal=base+odaFuel*fx, vatAmount=subtotal*vatRate/100, grandVat=subtotal+vatAmount;
+  const payload={user_id:currentUser.id,email:currentUser.email,service:(oda.matched.length ? (oda.matchedBy.includes('Postal') ? 'Postal' : (oda.matchedBy==='City' ? 'City' : '')) : ''),country,postal,city,weight:rawWeight,oda_status:oda.matched.length?'ODA':'No ODA',oda_charge_usd:odaUsd,oda_charge_bdt:odaBdt,oda_fuel_surcharge_bdt:odaFuelBdt,subtotal,vat:vatAmount,grand_total:subtotal,grand_total_with_vat:grandVat};
   const {error}=await sb.from('calculations').insert(payload);
   if(error)console.warn('Calculation save failed:',error.message); else await loadDashboard();
 }
@@ -714,6 +636,21 @@ async function downloadHistoryAndClear(){
   await loadDashboard();
 }
 $('downloadHistory').addEventListener('click',downloadHistoryAndClear);
+async function adminClearAllData(){
+  if(!sb||!currentUser){alert('Please login first.');return;}
+  if(!currentProfile?.is_admin){alert('Admin access required.');return;}
+  const ok=confirm('WARNING: This will permanently delete ALL calculation history for ALL users. Continue?');
+  if(!ok)return;
+  const {data:rows,error:fetchError}=await sb.from('calculations').select('id').limit(10000);
+  if(fetchError){alert('Data clear failed: '+fetchError.message);return;}
+  const ids=(rows||[]).map(r=>r.id).filter(Boolean);
+  if(!ids.length){alert('No calculation data found.');await loadDashboard();return;}
+  const {error:delError}=await sb.from('calculations').delete().in('id',ids);
+  if(delError){alert('Data clear failed. Please check Supabase DELETE policy for admin users: '+delError.message);return;}
+  alert('All calculation data has been cleared successfully.');
+  await loadDashboard();
+}
+$('adminClearData').addEventListener('click',adminClearAllData);
 $('loginBtn').addEventListener('click',()=>{$('authMsg').textContent='';$('authModal').classList.add('show')});
 $('authClose').addEventListener('click',()=>$('authModal').classList.remove('show'));
 $('forgotPasswordLink').addEventListener('click',(e)=>{e.preventDefault();$('authModal').classList.remove('show');$('forgotEmail').value=$('authEmail').value.trim();$('forgotMsg').textContent='';$('forgotModal').classList.add('show');});
