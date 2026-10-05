@@ -360,7 +360,7 @@ function syncPlanInputs(){
   $('govtFeeWrap').style.display=normal?'':'none';
   $('demandBdtRow').style.display=normal?'none':'none';
   $('fuelBdtRow').style.display=normal?'none':'';
-  $('odaBdtRow').style.display=normal?'none':'';
+  const odaBdtRow=document.getElementById('odaBdtRow'); if(odaBdtRow) odaBdtRow.style.display=normal?'none':'';
   $('totalOdaRow').style.display=normal?'none':'';
   if(normal){
     const code=$('normalPackage').value;
@@ -754,8 +754,8 @@ async function adminClearAllData(){
 }
 $('adminClearData').addEventListener('click',adminClearAllData);
 const loginButton=document.getElementById('loginBtn'); if(loginButton) loginButton.addEventListener('click',window.openAuthModal);
-$('authClose').addEventListener('click',()=>$('authModal').classList.remove('show'));
-$('forgotPasswordLink').addEventListener('click',(e)=>{e.preventDefault();$('authModal').classList.remove('show');$('forgotEmail').value=$('authEmail').value.trim();$('forgotMsg').textContent='';$('forgotModal').classList.add('show');});
+const authCloseBtn=document.getElementById('authClose'); if(authCloseBtn) authCloseBtn.addEventListener('click',()=>document.getElementById('authModal')?.classList.remove('show'));
+const forgotPasswordLink=document.getElementById('forgotPasswordLink'); if(forgotPasswordLink) forgotPasswordLink.addEventListener('click',(e)=>{e.preventDefault();document.getElementById('authModal')?.classList.remove('show');const fe=document.getElementById('forgotEmail'),ae=document.getElementById('authEmail'),fm=document.getElementById('forgotMsg'),md=document.getElementById('forgotModal');if(fe&&ae)fe.value=ae.value.trim();if(fm)fm.textContent='';if(md)md.classList.add('show');});
 $('forgotClose').addEventListener('click',()=>$('forgotModal').classList.remove('show'));
 $('resetClose').addEventListener('click',()=>$('resetModal').classList.remove('show'));
 function openResetModal(){
