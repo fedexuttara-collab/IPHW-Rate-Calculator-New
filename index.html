@@ -89,6 +89,7 @@
 </style>
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>window.addEventListener("load",function(){if(!window.supabase){var s=document.createElement("script");s.src="https://unpkg.com/@supabase/supabase-js@2";s.onload=function(){if(typeof initSupabase==="function")initSupabase();};document.head.appendChild(s);}});</script>
 </head>
 <body>
 <header class="top"><div class="top-inner">
@@ -98,8 +99,8 @@
 
 <main class="wrap">
 <div class="authbar">
-  <button class="btn primary" id="loginBtn">🔐 Login / Register</button>
-  <button class="btn secondary" id="logoutBtn" style="display:none">Logout</button>
+  <button type="button" class="btn primary" id="loginBtn" onclick="openAuthModal()">🔐 Login / Register</button>
+  <button type="button" class="btn secondary" id="logoutBtn" style="display:none">Logout</button>
   <span class="auth-user" id="authUser">Not logged in</span>
 </div>
 
@@ -227,10 +228,10 @@
 </section>
 <div class="auth-modal" id="authModal">
   <div class="auth-box">
-    <div style="display:flex;justify-content:space-between;align-items:center"><h2>Login / Register</h2><button class="rate-close" id="authClose">✕</button></div>
+    <div style="display:flex;justify-content:space-between;align-items:center"><h2>Login / Register</h2><button type="button" class="rate-close" id="authClose">✕</button></div>
     <label style="font-size:11px;font-weight:800">EMAIL</label><input id="authEmail" type="email" placeholder="you@example.com">
     <label style="font-size:11px;font-weight:800">PASSWORD</label><input id="authPassword" type="password" placeholder="Minimum 6 characters">
-    <div class="actions"><button class="btn primary" id="doLogin">Login</button><button class="btn secondary" id="doRegister">Register</button></div>
+    <div class="actions"><button type="button" class="btn primary" id="doLogin">Login</button><button type="button" class="btn secondary" id="doRegister">Register</button></div>
     <div style="text-align:center;margin-top:8px"><a href="#" id="forgotPasswordLink" style="font-size:11px;font-weight:800;color:#0b5ed7;text-decoration:none">Forgot Password?</a></div>
     <div class="auth-msg" id="authMsg"></div>
   </div>
@@ -238,24 +239,24 @@
 
 <div class="auth-modal" id="forgotModal">
   <div class="auth-box">
-    <div style="display:flex;justify-content:space-between;align-items:center"><h2>Forgot Password</h2><button class="rate-close" id="forgotClose">✕</button></div>
+    <div style="display:flex;justify-content:space-between;align-items:center"><h2>Forgot Password</h2><button type="button" class="rate-close" id="forgotClose">✕</button></div>
     <p style="font-size:11px;color:#64748b;margin-top:0">Enter your registered email. We will send a password reset link.</p>
     <label style="font-size:11px;font-weight:800">EMAIL</label>
     <input id="forgotEmail" type="email" placeholder="you@example.com">
-    <button class="btn primary" id="sendReset">Send Reset Link</button>
+    <button type="button" class="btn primary" id="sendReset">Send Reset Link</button>
     <div class="auth-msg" id="forgotMsg"></div>
   </div>
 </div>
 
 <div class="auth-modal" id="resetModal">
   <div class="auth-box">
-    <div style="display:flex;justify-content:space-between;align-items:center"><h2>Reset Password</h2><button class="rate-close" id="resetClose">✕</button></div>
+    <div style="display:flex;justify-content:space-between;align-items:center"><h2>Reset Password</h2><button type="button" class="rate-close" id="resetClose">✕</button></div>
     <p style="font-size:11px;color:#64748b;margin-top:0">Enter and confirm your new password.</p>
     <label style="font-size:11px;font-weight:800">NEW PASSWORD</label>
     <input id="newPassword" type="password" placeholder="Minimum 8 characters" minlength="8">
     <label style="font-size:11px;font-weight:800">CONFIRM PASSWORD</label>
     <input id="confirmPassword" type="password" placeholder="Repeat new password" minlength="8">
-    <button class="btn primary" id="updatePassword">Update Password</button>
+    <button type="button" class="btn primary" id="updatePassword">Update Password</button>
     <div class="auth-msg" id="resetMsg"></div>
   </div>
 </div>
@@ -621,23 +622,40 @@ let currentUser = null;
 let currentProfile = null;
 let lastCalculation = null;
 
+window.openAuthModal=function(){
+  try{
+    const modal=document.getElementById('authModal');
+    const msg=document.getElementById('authMsg');
+    if(msg) msg.textContent='';
+    if(modal) modal.classList.add('show');
+    if(typeof initSupabase==='function') initSupabase();
+  }catch(err){
+    console.error('Open login modal failed:',err);
+  }
+};
+
 function initSupabase(){
-  if(window.supabase && SUPABASE_ANON_KEY && !SUPABASE_ANON_KEY.includes('PASTE_')){
-    sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-    sb.auth.getSession().then(({data})=>{
-      handleSession(data.session);
-      if(window.location.hash.includes('type=recovery')){
-        setTimeout(()=>openResetModal(),250);
-      }
-    });
-    sb.auth.onAuthStateChange((event,session)=>{
-      handleSession(session);
-      if(event==='PASSWORD_RECOVERY'){
-        setTimeout(()=>openResetModal(),100);
-      }
-    });
-  }else{
-    $('authUser').textContent='Supabase key not configured';
+  if(sb)return;
+  try{
+    if(window.supabase && SUPABASE_URL && SUPABASE_ANON_KEY && !SUPABASE_ANON_KEY.includes('PASTE_')){
+      sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+      $('authUser').textContent='Ready to login';
+      sb.auth.getSession().then(({data,error})=>{
+        if(error){console.warn('Supabase session error:',error);$('authUser').textContent='Login ready';return;}
+        handleSession(data?.session||null);
+        if(window.location.hash.includes('type=recovery')) setTimeout(()=>openResetModal(),250);
+      }).catch(err=>{console.warn('Supabase getSession error:',err);$('authUser').textContent='Login ready';});
+      sb.auth.onAuthStateChange((event,session)=>{
+        handleSession(session).catch(err=>console.warn('Session handler error:',err));
+        if(event==='PASSWORD_RECOVERY') setTimeout(()=>openResetModal(),100);
+      });
+    }else{
+      $('authUser').textContent='Login service unavailable';
+    }
+  }catch(err){
+    console.error('Supabase init failed:',err);
+    sb=null;
+    $('authUser').textContent='Login service unavailable';
   }
 }
 async function handleSession(session){
@@ -735,7 +753,7 @@ async function adminClearAllData(){
   await loadDashboard();
 }
 $('adminClearData').addEventListener('click',adminClearAllData);
-$('loginBtn').addEventListener('click',()=>{$('authMsg').textContent='';$('authModal').classList.add('show')});
+const loginButton=document.getElementById('loginBtn'); if(loginButton) loginButton.addEventListener('click',window.openAuthModal);
 $('authClose').addEventListener('click',()=>$('authModal').classList.remove('show'));
 $('forgotPasswordLink').addEventListener('click',(e)=>{e.preventDefault();$('authModal').classList.remove('show');$('forgotEmail').value=$('authEmail').value.trim();$('forgotMsg').textContent='';$('forgotModal').classList.add('show');});
 $('forgotClose').addEventListener('click',()=>$('forgotModal').classList.remove('show'));
@@ -770,8 +788,32 @@ $('updatePassword').addEventListener('click',async()=>{
   $('resetMsg').textContent='Password updated successfully. Redirecting to login...';
   setTimeout(async()=>{await sb.auth.signOut();window.history.replaceState({},document.title,window.location.pathname);$('resetModal').classList.remove('show');$('authModal').classList.add('show');},1200);
 });
-$('doLogin').addEventListener('click',async()=>{if(!sb){$('authMsg').textContent='Supabase ANON KEY বসান আগে।';return}const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||!password){$('authMsg').textContent='Email ও password দিন।';return}const {error}=await sb.auth.signInWithPassword({email,password});$('authMsg').textContent=error?error.message:'';if(!error)$('authModal').classList.remove('show')});
-$('doRegister').addEventListener('click',async()=>{if(!sb){$('authMsg').textContent='Supabase ANON KEY বসান আগে।';return}const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||password.length<6){$('authMsg').textContent='Valid email এবং কমপক্ষে 6 character password দিন।';return}const {error}=await sb.auth.signUp({email,password});$('authMsg').textContent=error?error.message:'Registration successful. Email verification লাগলে email check করুন.'});
+$('doLogin').addEventListener('click',async()=>{
+  const btn=$('doLogin');
+  if(!sb){initSupabase();setTimeout(()=>{if(!sb)$('authMsg').textContent='Login service load হয়নি. Page refresh করে আবার চেষ্টা করুন.';},800);return;}
+  const email=$('authEmail').value.trim(),password=$('authPassword').value;
+  if(!email||!password){$('authMsg').textContent='Email ও password দিন।';return;}
+  btn.disabled=true;btn.textContent='Logging in...';$('authMsg').textContent='';
+  try{
+    const {data,error}=await sb.auth.signInWithPassword({email,password});
+    if(error){
+      $('authMsg').textContent=error.message||'Login failed.';
+      return;
+    }
+    if(data?.session){$('authModal').classList.remove('show');$('authMsg').textContent='';}
+    else $('authMsg').textContent='Login হয়নি. Email verification/check required হতে পারে.';
+  }catch(err){$('authMsg').textContent=err?.message||'Login failed. Please try again.';}
+  finally{btn.disabled=false;btn.textContent='Login';}
+});
+$('doRegister').addEventListener('click',async()=>{
+  if(!sb){initSupabase();$('authMsg').textContent='Login service load হচ্ছে—একটু পরে আবার চেষ্টা করুন.';return}
+  const email=$('authEmail').value.trim(),password=$('authPassword').value;
+  if(!email||password.length<6){$('authMsg').textContent='Valid email এবং কমপক্ষে 6 character password দিন।';return}
+  const btn=$('doRegister');btn.disabled=true;btn.textContent='Registering...';
+  try{const {data,error}=await sb.auth.signUp({email,password});$('authMsg').textContent=error?error.message:(data?.session?'Registration & login successful.':'Registration successful. Email verification লাগলে email check করুন.');}
+  catch(err){$('authMsg').textContent=err?.message||'Registration failed.';}
+  finally{btn.disabled=false;btn.textContent='Register';}
+});
 $('logoutBtn').addEventListener('click',async()=>{if(sb)await sb.auth.signOut()});
 const originalCalculate=calculate;
 calculate=originalCalculate;
