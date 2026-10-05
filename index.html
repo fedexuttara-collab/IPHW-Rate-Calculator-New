@@ -39,6 +39,40 @@
 .rate-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.rate-msg{font-size:11px;color:var(--green);font-weight:800;margin-top:8px;min-height:14px}
 .rate-help{font-size:10px;color:var(--muted);margin-top:7px;line-height:1.4}
 
+
+/* ===== FedEx Admin Shell UI (visual only; calculation logic unchanged) ===== */
+body{background:#f4f7fb}
+.admin-sidebar{position:fixed;left:0;top:0;bottom:0;width:250px;background:#fff;border-right:1px solid #e2e8f0;z-index:9000;display:flex;flex-direction:column;box-shadow:4px 0 18px #0b1f3a0d}
+.admin-brand{height:78px;padding:0 22px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #edf2f7}
+.admin-brand-mark{font-weight:1000;font-style:italic;font-size:22px;letter-spacing:-1.5px;color:#ff6200}
+.admin-brand-title{font-weight:900;font-size:16px;color:#0b1f3a;line-height:1.15}
+.admin-brand-sub{font-size:9px;color:#94a3b8;margin-top:3px}
+.admin-user{padding:18px 18px 14px;border-bottom:1px solid #edf2f7}
+.admin-user-row{display:flex;align-items:center;gap:11px}
+.admin-avatar{width:40px;height:40px;border-radius:50%;background:#eef2f7;display:grid;place-items:center;color:#475569;font-size:18px}
+.admin-user-email{font-size:11px;font-weight:900;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px}
+.admin-user-role{font-size:10px;color:#64748b;margin-top:2px}
+.admin-nav{padding:14px 10px;display:flex;flex-direction:column;gap:4px;flex:1}
+.admin-nav button{width:100%;border:0;background:transparent;color:#475569;text-align:left;padding:11px 13px;border-radius:8px;font-weight:800;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:11px}
+.admin-nav button:hover,.admin-nav button.active{background:#fff3ed;color:#ff6200}
+.admin-nav .nav-icon{width:20px;text-align:center;font-size:16px}
+.admin-logout{margin:10px;padding:11px 13px;border:1px solid #fecaca;background:#fff5f5;color:#dc2626;border-radius:8px;font-weight:900;cursor:pointer}
+.admin-topbar{position:fixed;left:250px;right:0;top:0;height:64px;background:#fff;border-bottom:1px solid #e2e8f0;z-index:8000;display:flex;align-items:center;justify-content:space-between;padding:0 24px}
+.admin-top-title{font-size:18px;font-weight:900;color:#0b1f3a}
+.admin-top-status{display:flex;align-items:center;gap:8px;font-size:11px;color:#64748b;font-weight:800}
+.admin-dot{width:8px;height:8px;border-radius:50%;background:#16a34a}
+body>.top{display:none!important}
+body>.wrap{margin-left:250px;padding-top:88px}
+body>.wrap>.authbar,body>.wrap>.onlinebar{display:none}
+.admin-mobile-brand{display:none}
+@media(max-width:900px){.admin-sidebar{width:70px}.admin-brand{justify-content:center;padding:0}.admin-brand-title,.admin-brand-sub,.admin-user-email,.admin-user-role,.admin-nav button span:not(.nav-icon),.admin-logout span{display:none}.admin-user{padding:14px 15px}.admin-nav button{justify-content:center}.admin-logout{display:grid;place-items:center;padding:11px}.admin-topbar{left:70px}body>.wrap{margin-left:70px}}
+
+/* ===== Strict Login / Role Access Control ===== */
+body.auth-locked > *:not(.auth-modal):not(.forgot-modal):not(.reset-modal){filter:blur(2px);pointer-events:none;user-select:none}
+.access-gate{position:fixed;inset:0;background:rgba(8,23,43,.72);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px}
+.access-gate-box{background:#fff;border-radius:16px;width:min(460px,100%);padding:28px;box-shadow:0 24px 80px rgba(0,0,0,.3);text-align:center}
+.access-gate-box .lock{font-size:38px;margin-bottom:8px}.access-gate-box h2{margin:0 0 8px;color:#0b1f3a}.access-gate-box p{margin:0 0 16px;color:#64748b;font-size:12px;line-height:1.5}
+.admin-only{display:none!important}.admin-only.show{display:inline-flex!important}.admin-section{margin-top:14px}.rate-perm{display:inline-flex;align-items:center;gap:5px;margin:2px 4px 2px 0;padding:4px 7px;border:1px solid #dbe2ea;border-radius:6px;background:#fff;font-size:10px;font-weight:800}.rate-perm input{accent-color:#ff6200}.rate-denied{opacity:.45;pointer-events:none}.user-table{margin-top:10px;overflow:auto;border:1px solid var(--line);border-radius:9px}.user-table table{min-width:650px}
 /* ===== Auth + Dashboard ===== */
 .authbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}.auth-user{font-size:11px;color:var(--muted);font-weight:700}.dash{display:none;margin-bottom:14px}.dash.show{display:block}.dash-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.stat{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px}.stat b{display:block;font-size:19px;color:var(--navy);margin-top:4px}.stat span{font-size:10px;color:var(--muted);font-weight:800}.dash-table{margin-top:12px;overflow:auto;border:1px solid var(--line);border-radius:9px}.dash-table table{min-width:850px}.dash-head-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.dash-table th{background:#edf2f7}.auth-modal{position:fixed;inset:0;background:#0b1f3a99;z-index:10000;display:none;align-items:center;justify-content:center;padding:18px}.auth-modal.show{display:flex}.auth-box{background:#fff;width:min(430px,100%);border-radius:14px;padding:20px;box-shadow:0 20px 60px #0005}.auth-box h2{margin:0 0 12px}.auth-box input{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;margin:5px 0 10px}.auth-msg{font-size:11px;font-weight:800;min-height:18px;color:var(--red)}@media(max-width:900px){.dash-grid{grid-template-columns:repeat(2,1fr)}}
 
@@ -89,9 +123,31 @@
 </style>
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>window.addEventListener("load",function(){if(!window.supabase){var s=document.createElement("script");s.src="https://unpkg.com/@supabase/supabase-js@2";s.onload=function(){if(typeof initSupabase==="function")initSupabase();};document.head.appendChild(s);}});</script>
 </head>
-<body>
+<body class="auth-locked">
+<div class="access-gate" id="accessGate"><div class="access-gate-box"><div class="lock">🔐</div><h2>Login Required</h2><p>You must login with an authorized Supabase account to use the IPHW Rate Calculator, Dashboard, Rate Update and Calculation Logs.</p><button type="button" class="btn primary" onclick="openAuthModal()">🔐 Login / Register</button></div></div>
+<aside class="admin-sidebar">
+  <div class="admin-brand">
+    <div class="admin-brand-mark">FedEx</div>
+    <div><div class="admin-brand-title">IPHW Rate Calculator</div><div class="admin-brand-sub">FedEx Admin Portal</div></div>
+  </div>
+  <div class="admin-user">
+    <div class="admin-user-row"><div class="admin-avatar">♙</div><div><div class="admin-user-email" id="sidebarUser">amir.hamza@bdexpress.com</div><div class="admin-user-role">Admin</div></div></div>
+  </div>
+  <nav class="admin-nav">
+    <button type="button" class="active" data-admin-nav="dashboard"><span class="nav-icon">⌂</span><span>Dashboard</span></button>
+    <button type="button" data-admin-nav="calculator"><span class="nav-icon">▣</span><span>Calculator</span></button>
+    <button type="button" data-admin-nav="rate" class="admin-only"><span class="nav-icon">⚙</span><span>Rate Update</span></button>
+    <button type="button" data-admin-nav="logs"><span class="nav-icon">▤</span><span>Calculation Logs</span></button>
+    <button type="button" data-admin-nav="users" class="admin-only"><span class="nav-icon">♙</span><span>Users</span></button>
+    <button type="button" data-admin-nav="settings"><span class="nav-icon">⚙</span><span>Settings</span></button>
+  </nav>
+  <button type="button" class="admin-logout" id="sidebarLogout"><span>⇥</span> <span>Logout</span></button>
+</aside>
+<div class="admin-topbar"><div class="admin-top-title">FedEx</div><div class="admin-top-status"><span class="admin-dot"></span> Connected to Supabase</div></div>
+
 <header class="top"><div class="top-inner">
   <div class="brand"><div class="brand-mark fedex-mark">FEDEX</div><div><h1 class="fedex-heading">FedEx Rate Calculator</h1><p>Designed &amp; Developed by <b>Amir Hamza</b></p></div></div>
   <div style="display:flex;align-items:center;gap:10px"><button class="btn secondary" id="rateUpdateBtn" style="background:#c9a84c;color:#0b1f3a;display:none">⚙ Rate Update</button><div class="header-badge fedex-badge"><b>FedEx Rate Calculator</b><br>Rate A / Rate B / Normal Rate + ODA • Live-style workflow</div></div>
@@ -126,7 +182,7 @@
     <div class="field" id="normalPackageWrap" style="display:none"><label>WEIGHT / PACKAGE CODE</label><input id="normalPackage" list="normalPackageList" value="0.5E" autocomplete="off" placeholder="e.g. 0.5P, 1P, 1.5P, 5"><datalist id="normalPackageList"><option value="0.5E">Documents / FedEx Envelope</option><option value="0.5P">FedEx PAK</option><option value="1P">FedEx PAK</option><option value="1.5P">FedEx PAK</option><option value="2P">FedEx PAK</option><option value="2.5P">FedEx PAK</option><option value="0.5">Carton/Box</option><option value="1">Carton/Box</option><option value="1.5">Carton/Box</option><option value="2">Carton/Box</option><option value="2.5">Carton/Box</option><option value="3">Carton/Box</option><option value="3.5">Carton/Box</option><option value="4">Carton/Box</option><option value="4.5">Carton/Box</option><option value="5">Carton/Box</option><option value="5.5">Carton/Box</option><option value="6">Carton/Box</option><option value="6.5">Carton/Box</option><option value="7">Carton/Box</option><option value="7.5">Carton/Box</option><option value="8">Carton/Box</option><option value="8.5">Carton/Box</option><option value="9">Carton/Box</option><option value="9.5">Carton/Box</option><option value="10">Carton/Box</option><option value="10.5">Carton/Box</option><option value="11">Carton/Box</option><option value="11.5">Carton/Box</option><option value="12">Carton/Box</option><option value="12.5">Carton/Box</option><option value="13">Carton/Box</option><option value="13.5">Carton/Box</option><option value="14">Carton/Box</option><option value="14.5">Carton/Box</option><option value="15">Carton/Box</option><option value="15.5">Carton/Box</option><option value="16">Carton/Box</option><option value="16.5">Carton/Box</option><option value="17">Carton/Box</option><option value="17.5">Carton/Box</option><option value="18">Carton/Box</option><option value="18.5">Carton/Box</option><option value="19">Carton/Box</option><option value="19.5">Carton/Box</option><option value="20">Carton/Box</option><option value="20.5">Carton/Box</option><option value="21">Carton/Box</option><option value="21.5">Carton/Box</option><option value="22">Carton/Box</option><option value="22.5">Carton/Box</option><option value="23">Carton/Box</option><option value="23.5">Carton/Box</option><option value="24">Carton/Box</option><option value="24.5">Carton/Box</option><option value="25">Carton/Box</option><option value="25.5">Carton/Box</option><option value="26">Carton/Box</option><option value="26.5">Carton/Box</option><option value="27">Carton/Box</option><option value="27.5">Carton/Box</option><option value="28">Carton/Box</option><option value="28.5">Carton/Box</option><option value="29">Carton/Box</option><option value="29.5">Carton/Box</option><option value="30">Carton/Box</option></datalist><div class="note">Manual input accepted: 0.5E, 0.5P, 1P, 1.5P, 2P, 2.5P or 0.5–30 KG.</div></div>
     <div class="field"><label>DESTINATION COUNTRY</label><input id="country" autocomplete="off" placeholder="Select / type destination country"><div id="countrySuggest" class="suggest"></div></div>
     <div class="field"><label>RECIPIENT POSTAL CODE</label><input id="postal" placeholder="Enter postal code"></div>
-    <div class="field"><label>RECIPIENT CITY</label><input id="city" autocomplete="off" placeholder="Enter city"><div id="citySuggest" class="suggest"></div></div>
+    <div class="field"><label>RECIPIENT CITY</label><div style="display:flex;gap:10px;align-items:stretch"><div style="flex:1;min-width:0"><input id="city" autocomplete="off" placeholder="Enter city"><div id="citySuggest" class="suggest"></div></div><div id="icpcUsedBox" style="min-width:190px;padding:9px 12px;border:1px solid #d9dfe7;border-radius:8px;background:#f8fafc;display:flex;flex-direction:column;justify-content:center"><small style="font-size:11px;color:#6b7280;font-weight:700;text-transform:uppercase">ICPC Used</small><strong id="icpcUsed" style="font-size:15px;color:#111827">—</strong></div></div></div>
   </div>
   <div class="settings">
     <div><label>Exchange Rate (BDT/USD)<input id="fx" type="number" step="0.01" value="123.65"></label></div>
@@ -144,7 +200,7 @@
 
   <div class="auto-calc-table">
     <div class="auto-row auto-head"><span>Calculation</span><span>Value</span><span>Unit / Status</span></div>
-    <div class="auto-row"><span>Destination Zone</span><strong id="zone">—</strong><em>Auto</em></div>
+    <div class="auto-row"><span>Destination Zone</span><strong id="zone">—</strong><em id="perKgCell">Per KG: <b id="perKg">—</b></em></div>
     <div class="auto-row normal-only"><span>Base Rate (USD)</span><strong id="normalBaseUsd">—</strong><em>USD</em></div>
     <div class="auto-row normal-only"><span>Demand Charge (USD)</span><strong id="normalDemandUsd">—</strong><em>USD</em></div>
     <div class="auto-row normal-only"><span>Customs Fee (USD)</span><strong id="normalCustomUsd">—</strong><em>USD</em></div>
@@ -166,7 +222,7 @@
     <span id="normalOdaFuelUsdRow"></span><span id="normalBaseDemandBdtRow"></span><span id="normalFuelBdtRow"></span>
     <span id="normalCustomBdtRow"></span><span id="normalOdaBdtRow"></span><span id="normalMatchesRow"></span><span id="normalCityPostalRow"></span>
     <span id="normalMatches">—</span><span id="normalCityPostal">—</span>
-    <span id="serviceResult">A</span><span id="planResult">A</span><span id="roundedWeight">—</span><span id="perKg">—</span><span id="base">—</span>
+    <span id="serviceResult">A</span><span id="planResult">A</span><span id="roundedWeight">—</span><span id="base">—</span>
     <span id="demandUsdRow"></span><span id="demandBdtRow"></span><span id="fuelBdtRow"></span><span id="demandUsd">—</span><span id="demandBdt">—</span><span id="fuelBdt">—</span>
     <span id="odaType">—</span><span id="odaUsdRow"></span><span id="odaUsd">—</span><span id="odaFuelRow"></span><span id="odaFuel">—</span><span id="totalOdaRow"></span><span id="totalOda">—</span>
     <span id="matchInfo"></span>
@@ -207,8 +263,10 @@
     <div class="rate-actions">
       <button class="btn primary" id="saveRates">Save Rates</button>
       <button class="btn secondary" id="restoreRates">Restore Default</button>
-      <button class="btn secondary" id="exportRates">Export Backup</button>
-      <label class="btn secondary" style="display:inline-block">Import Backup<input id="importRates" type="file" accept=".json" style="display:none"></label>
+      <button class="btn secondary" id="exportRates">Export JSON Backup</button>
+      <button class="btn secondary" id="exportRatesExcel">⬇ Export Excel</button>
+      <label class="btn secondary" style="display:inline-block">Import JSON<input id="importRates" type="file" accept=".json" style="display:none"></label>
+      <label class="btn secondary" style="display:inline-block">⬆ Update from Excel<input id="importRatesExcel" type="file" accept=".xlsx,.xls" style="display:none"></label>
     </div>
     <div class="rate-msg" id="rateMsg"></div>
     <div class="rate-help">Note: এই version static HTML হওয়ায় Save Rates browser-localStorage-এ save হয়। সব user-এর জন্য shared permanent update করতে পরে backend/database লাগবে।</div>
@@ -224,7 +282,11 @@
     <div class="stat"><span>TOTAL VAT</span><b id="dVat">৳0.00</b></div>
     <div class="stat"><span>GRAND TOTAL</span><b id="dGrand">৳0.00</b></div>
   </div>
-  <div class="dash-table"><table><thead><tr><th>Date</th><th>Email</th><th>ODA Type</th><th>Country</th><th>Weight</th><th>ODA</th><th>Grand Total</th></tr></thead><tbody id="dashRows"><tr><td colspan="7">Login to load calculations.</td></tr></tbody></table></div>
+  <div class="dash-table"><table><thead><tr><th>Date</th><th>Email</th><th>ODA Type</th><th>Country</th><th>Weight</th><th>ODA</th><th>Grand Total</th><th class="admin-only-col">Action</th></tr></thead><tbody id="dashRows"><tr><td colspan="8">Login to load calculations.</td></tr></tbody></table></div>
+</section>
+<section class="card admin-section admin-only" id="usersPanel">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">♙ User Access Control</h2><button class="btn secondary" id="refreshUsers">↻ Refresh Users</button></div>
+  <div class="user-table"><table><thead><tr><th>Email</th><th>Role</th><th>User ID</th><th>Rate Access</th><th>Save</th></tr></thead><tbody id="userRows"><tr><td colspan="5">Admin only.</td></tr></tbody></table></div>
 </section>
 <div class="auth-modal" id="authModal">
   <div class="auth-box">
@@ -261,7 +323,7 @@
   </div>
 </div>
 
-<div class="footer">Bangladesh Post online-style workflow • IPHW Rate Calculator • <b>Designed &amp; Developed by Amir Hamza</b></div>
+<div class="footer">FedEx • IPHW Rate Calculator • <b>Designed &amp; Developed by Amir Hamza</b></div>
 </main>
 
 <script>
@@ -358,6 +420,8 @@ function syncPlanInputs(){
   $('demandUsdRow').style.display=normal?'none':'none';
   document.querySelectorAll('.normal-only').forEach(el=>el.style.display=normal?'':'none');
   $('govtFeeWrap').style.display=normal?'':'none';
+  const perKgCell=$('perKgCell');
+  if(perKgCell) perKgCell.style.display=normal?'none':'block';
   $('demandBdtRow').style.display=normal?'none':'none';
   $('fuelBdtRow').style.display=normal?'none':'';
   $('totalOdaRow').style.display=normal?'none':'';
@@ -367,6 +431,17 @@ function syncPlanInputs(){
     $('weight').value='';
   }
 }
+function updateIcpcUsed(){
+  const zone=String($('zone')?.textContent||'').trim().toUpperCase();
+  const normalCode=currentPlan==='NORMAL'?String($('normalPackage')?.value||''):'';
+  const weight=currentPlan==='NORMAL'?Number(normalCode.replace(/[EP]$/i,'')):Number($('weight')?.value||0);
+  let icpc='799699109';
+  if(zone==='B' && Number.isFinite(weight) && weight>0 && weight<=40) icpc='806659533';
+  else if(zone==='G' && Number.isFinite(weight) && weight>=41) icpc='629048715';
+  const el=$('icpcUsed');
+  if(el) el.textContent=icpc;
+  return icpc;
+}
 function calculate(){
   const packageCode=currentPlan==='NORMAL'?$('normalPackage').value:'';
   const rawWeight=currentPlan==='NORMAL'?Number(String(packageCode).replace(/[EP]$/i,'')):Number($('weight').value), country=canonicalCountry($('country').value), postal=$('postal').value.trim(), city=$('city').value.trim();
@@ -374,7 +449,8 @@ function calculate(){
   const rr=rateFor(country,rawWeight);
   $('roundedWeight').textContent=currentPlan==='NORMAL'?(rr.packageCode||packageCode):((rr.rounded||rr.rounded===0)?rr.rounded+' KG':'—');
   $('zone').textContent=rr.zone||'Country not found';
-  const rateDisplay=rr.rate!=null?(rr.usd?usd(rr.rate):money(rr.rate)):rr.range;
+  updateIcpcUsed();
+  const rateDisplay=rr.rate!=null?(currentPlan==='NORMAL'?'—':usd(rr.rate)):rr.range;
   $('perKg').textContent=rateDisplay;
 
   const warn=$('warning');
@@ -515,7 +591,7 @@ function showCitySuggest(){
   box.querySelectorAll('button').forEach(b=>b.addEventListener('mousedown',e=>{e.preventDefault();$('city').value=b.dataset.v;box.style.display='none';calculate();}));
 }
 document.querySelectorAll('.service').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.service').forEach(x=>x.classList.remove('active'));b.classList.add('active');}));
-document.querySelectorAll('.plan').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.plan').forEach(x=>x.classList.remove('active'));b.classList.add('active');currentPlan=b.dataset.plan;renderRates($('rateSearch').value);calculate();}));
+document.querySelectorAll('.plan').forEach(b=>b.addEventListener('click',()=>{const plan=b.dataset.plan;if(!hasRateAccess(plan)){alert('You do not have access to '+rateTypeLabel[plan]+'. Please contact Admin.');return;}document.querySelectorAll('.plan').forEach(x=>x.classList.remove('active'));b.classList.add('active');currentPlan=plan;renderRates($('rateSearch').value);calculate();}));
 ['weight','postal','city','fx','vat','fuel','odaBase','govtFee'].forEach(id=>$(id).addEventListener('input',()=>{if(id==='city')showCitySuggest();calculate();}));
 $('country').addEventListener('input',()=>{showCountrySuggest();calculate()});
 $('calculate').addEventListener('click',calculate);
@@ -552,6 +628,7 @@ function renderRateEditor(){
   }).join('')+'</tr>').join('');
 }
 async function saveRates(){
+  if(!currentProfile?.is_admin){alert('Admin access required.');return;}
   const rows=editPlan==='A'?DATA.ratesA:DATA.ratesB;
   document.querySelectorAll('#editRateBody input').forEach(inp=>{
     const ri=Number(inp.dataset.ri),ci=Number(inp.dataset.ci),v=Number(inp.value);
@@ -611,6 +688,56 @@ $('importRates').addEventListener('change',e=>{
   };
   reader.readAsText(file);
 });
+async function loadUsers(){
+  if(!sb||!currentProfile?.is_admin)return;
+  const {data,error}=await sb.from('profiles').select('id,email,is_admin,rate_access').order('email',{ascending:true});
+  if(error){$('userRows').innerHTML='<tr><td colspan="5">User access error: '+esc(error.message)+'</td></tr>';return;}
+  $('userRows').innerHTML=(data||[]).map(u=>{
+    const admin=!!u.is_admin;
+    const access=Array.isArray(u.rate_access)?u.rate_access.map(String):['NORMAL'];
+    const normal=true;
+    const a=admin||access.includes('A'), b=admin||access.includes('B');
+    return `<tr><td>${esc(u.email||'')}</td><td><b>${admin?'ADMIN':'USER'}</b></td><td style="font-size:9px">${esc(u.id)}</td><td>
+      <label class="rate-perm"><input type="checkbox" data-user="${esc(u.id)}" data-rate="NORMAL" checked disabled> Normal Rate</label>
+      <label class="rate-perm"><input type="checkbox" data-user="${esc(u.id)}" data-rate="A" ${a?'checked':''} ${admin?'disabled':''}> Rate A</label>
+      <label class="rate-perm"><input type="checkbox" data-user="${esc(u.id)}" data-rate="B" ${b?'checked':''} ${admin?'disabled':''}> Rate B</label>
+    </td><td>${admin?'<span style="font-size:10px;color:#16a34a;font-weight:900">FULL ACCESS</span>':`<button class="btn secondary" style="padding:5px 9px" onclick="saveUserRateAccess('${esc(u.id)}')">Save</button>`}</td></tr>`;
+  }).join('')||'<tr><td colspan="5">No users found.</td></tr>';
+}
+async function saveUserRateAccess(userId){
+  if(!currentProfile?.is_admin||!sb){alert('Admin access required.');return;}
+  const vals=['NORMAL'];
+  document.querySelectorAll(`input[data-user="${CSS.escape(userId)}"][data-rate]`).forEach(x=>{if(x.checked&&!x.disabled)vals.push(x.dataset.rate);});
+  const {error}=await sb.from('profiles').update({rate_access:[...new Set(vals)]}).eq('id',userId);
+  if(error){alert('Access update failed: '+error.message);return;}
+  alert('User rate access updated successfully.');
+  await loadUsers();
+}
+window.saveUserRateAccess=saveUserRateAccess;
+$('refreshUsers')?.addEventListener('click',loadUsers);
+function exportRatesExcel(){
+  if(!currentProfile?.is_admin){alert('Admin access required.');return;}
+  if(!window.XLSX){alert('Excel library is still loading. Please try again.');return;}
+  const wb=XLSX.utils.book_new();
+  [['Rate A',DATA.ratesA],['Rate B',DATA.ratesB]].forEach(([name,rows])=>{
+    const ws=XLSX.utils.aoa_to_sheet([DATA.rateHeaders,...rows]); XLSX.utils.book_append_sheet(wb,ws,name);
+  });
+  XLSX.writeFile(wb,'IPHW-Rate-A-B.xlsx'); $('rateMsg').textContent='✓ Excel exported.';
+}
+function importRatesExcel(file){
+  if(!currentProfile?.is_admin){alert('Admin access required.');return;}
+  if(!window.XLSX){alert('Excel library is still loading.');return;}
+  const reader=new FileReader(); reader.onload=e=>{try{
+    const wb=XLSX.read(e.target.result,{type:'array'});
+    function parseSheet(name){const ws=wb.Sheets[name];if(!ws)return null;const aoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});if(aoa.length<2)throw new Error(name+' sheet is empty');return aoa.slice(1).filter(r=>String(r[0]).trim()).map(r=>r.map((v,i)=>i===0?String(v).trim():Number(v)||0));}
+    const A=parseSheet('Rate A')||parseSheet('A'); const B=parseSheet('Rate B')||parseSheet('B'); if(!A||!B)throw new Error('Excel must contain Rate A and Rate B sheets');
+    DATA.ratesA=A;DATA.ratesB=B;renderRateEditor();renderRates($('rateSearch').value);calculate();
+    $('rateMsg').textContent='✓ Excel imported. Click Save Rates to publish to all users.';
+  }catch(err){$('rateMsg').textContent='✕ Excel import failed: '+err.message;} finally{document.getElementById('importRatesExcel').value='';}}; reader.readAsArrayBuffer(file);
+}
+$('exportRatesExcel')?.addEventListener('click',exportRatesExcel);
+$('importRatesExcel')?.addEventListener('change',e=>{if(e.target.files[0])importRatesExcel(e.target.files[0]);});
+
 loadSavedRates();
 syncPlanInputs();
 
@@ -660,24 +787,58 @@ function initSupabase(){
 }
 async function handleSession(session){
   currentUser=session?.user||null;
+  const gate=document.getElementById('accessGate');
   if(currentUser){
     $('loginBtn').style.display='none';$('logoutBtn').style.display='inline-block';
     $('authUser').textContent=currentUser.email||'Logged in';
     await loadProfile();
+    if(!currentProfile){ currentProfile={id:currentUser.id,email:currentUser.email,is_admin:false}; }
     await loadSharedRates();
     await loadDashboard();
     $('dashboard').classList.add('show');
-    if(currentProfile?.is_admin){$('dashRole').textContent='ADMIN';$('rateUpdateBtn').style.display='inline-block';$('adminClearData').style.display='inline-block';}
-    else{$('dashRole').textContent='USER';$('rateUpdateBtn').style.display='none';$('adminClearData').style.display='none';}
+    document.body.classList.remove('auth-locked'); if(gate)gate.style.display='none';
+    const admin=!!currentProfile?.is_admin;
+    $('dashRole').textContent=admin?'ADMIN':'USER';
+    $('rateUpdateBtn').style.display=admin?'inline-block':'none';
+    $('adminClearData').style.display=admin?'inline-block':'none';
+    document.querySelectorAll('.admin-only').forEach(el=>el.classList.toggle('show',admin));
+    document.querySelectorAll('[data-admin-nav="rate"],[data-admin-nav="users"]').forEach(el=>el.style.display=admin?'flex':'none');
+    if(admin) await loadUsers();
+    applyRateAccessUI();
   }else{
     $('loginBtn').style.display='inline-block';$('logoutBtn').style.display='none';$('authUser').textContent='Not logged in';$('dashboard').classList.remove('show');$('rateUpdateBtn').style.display='none';$('adminClearData').style.display='none';currentProfile=null;
+    document.body.classList.add('auth-locked'); if(gate)gate.style.display='flex';
+    document.querySelectorAll('.admin-only').forEach(el=>{el.classList.remove('show');if(el.tagName==='BUTTON')el.style.display='none';});
+    document.querySelectorAll('.plan').forEach(b=>{b.style.display='none';});
   }
 }
+function getRateAccess(){
+  if(currentProfile?.is_admin)return ['NORMAL','A','B'];
+  const a=Array.isArray(currentProfile?.rate_access)?currentProfile.rate_access.map(String):['NORMAL'];
+  return [...new Set(a.includes('NORMAL')?a:['NORMAL',...a])];
+}
+function hasRateAccess(plan){return getRateAccess().includes(plan);}
+function applyRateAccessUI(){
+  document.querySelectorAll('.plan').forEach(b=>{
+    const allowed=hasRateAccess(b.dataset.plan);
+    b.style.display=allowed?'inline-flex':'none';
+    b.disabled=!allowed;
+    b.classList.toggle('rate-denied',!allowed);
+  });
+  if(!hasRateAccess(currentPlan)){
+    currentPlan=hasRateAccess('A')?'A':(hasRateAccess('B')?'B':'NORMAL');
+  }
+  document.querySelectorAll('.plan').forEach(b=>b.classList.toggle('active',b.dataset.plan===currentPlan));
+  syncPlanInputs(); renderRates($('rateSearch').value); calculate();
+}
+
 async function loadProfile(){
   if(!sb||!currentUser)return;
-  const {data,error}=await sb.from('profiles').select('id,email,is_admin').eq('id',currentUser.id).maybeSingle();
+  const {data,error}=await sb.from('profiles').select('id,email,is_admin,rate_access').eq('id',currentUser.id).maybeSingle();
   if(error){console.warn(error);return;}
-  currentProfile=data||{id:currentUser.id,email:currentUser.email,is_admin:false};
+  currentProfile=data||{id:currentUser.id,email:currentUser.email,is_admin:false,rate_access:['NORMAL']};
+  if(String(currentUser.email||'').trim().toLowerCase()==='amir.hamza@bdexpress.com'){currentProfile.is_admin=true;currentProfile.rate_access=['NORMAL','A','B'];}
+  if(!Array.isArray(currentProfile.rate_access))currentProfile.rate_access=['NORMAL'];
 }
 function n(v){return Number(v)||0}
 function bdt(v){return '৳'+n(v).toLocaleString('en-BD',{minimumFractionDigits:2,maximumFractionDigits:2})}
@@ -692,16 +853,22 @@ async function loadDashboard(){
   if(!sb||!currentUser)return;
   let q=sb.from('calculations').select('id,user_id,created_at,email,service,country,postal,city,weight,oda_charge_bdt,oda_fuel_surcharge_bdt,grand_total_with_vat,vat,grand_total');
   if(!currentProfile?.is_admin) q=q.eq('user_id',currentUser.id);
-  const {data,error}=await q.order('created_at',{ascending:false}).limit(100);
-  if(error){$('dashRows').innerHTML='<tr><td colspan="7">Dashboard error: '+esc(error.message)+'</td></tr>';return;}
+  const {data,error}=await q.order('created_at',{ascending:false}).limit(1000);
+  if(error){$('dashRows').innerHTML='<tr><td colspan="8">Dashboard error: '+esc(error.message)+'</td></tr>';return;}
   const rows=data||[];
-  $('dTotal').textContent=rows.length;
-  $('dShipments').textContent=rows.length;
-  $('dOda').textContent=bdt(rows.reduce((a,r)=>a+n(r.oda_charge_bdt),0));
-  $('dVat').textContent=bdt(rows.reduce((a,r)=>a+n(r.vat),0));
-  $('dGrand').textContent=bdt(rows.reduce((a,r)=>a+n(r.grand_total_with_vat ?? r.grand_total),0));
-  $('dashRows').innerHTML=rows.length?rows.map(r=>{const odaType=(r.service==='Postal'||r.service==='Postal Code')?'Postal Code':(r.service==='City'?'City':(String(r.postal||'').trim()?'Postal Code':(String(r.city||'').trim()?'City':'')));return `<tr><td>${new Date(r.created_at).toLocaleString()}</td><td>${esc(r.email||'')}</td><td>${esc(odaType)}</td><td>${esc(r.country||'')}</td><td>${n(r.weight)}</td><td>${bdt(n(r.oda_charge_bdt)+n(r.oda_fuel_surcharge_bdt))}</td><td>${bdt(r.grand_total_with_vat ?? r.grand_total)}</td></tr>`}).join(''):'<tr><td colspan="7">No calculations yet.</td></tr>';
+  $('dTotal').textContent=rows.length;$('dShipments').textContent=rows.length;$('dOda').textContent=bdt(rows.reduce((a,r)=>a+n(r.oda_charge_bdt)+n(r.oda_fuel_surcharge_bdt),0));$('dVat').textContent=bdt(rows.reduce((a,r)=>a+n(r.vat),0));$('dGrand').textContent=bdt(rows.reduce((a,r)=>a+n(r.grand_total_with_vat ?? r.grand_total),0));
+  const admin=!!currentProfile?.is_admin;
+  $('dashRows').innerHTML=rows.length?rows.map(r=>{const odaType=(r.service==='Postal'||r.service==='Postal Code')?'Postal Code':(r.service==='City'?'City':(String(r.postal||'').trim()?'Postal Code':(String(r.city||'').trim()?'City':'')));return `<tr><td>${new Date(r.created_at).toLocaleString()}</td><td>${esc(r.email||'')}</td><td>${esc(odaType)}</td><td>${esc(r.country||'')}</td><td>${n(r.weight)}</td><td>${bdt(n(r.oda_charge_bdt)+n(r.oda_fuel_surcharge_bdt))}</td><td>${bdt(r.grand_total_with_vat ?? r.grand_total)}</td>${admin?`<td><button class="btn secondary" style="padding:5px 8px;color:#dc2626" onclick="deleteCalculation('${r.id}')">Delete</button></td>`:'<td></td>'}</tr>`}).join(''):'<tr><td colspan="8">No calculations yet.</td></tr>';
 }
+async function deleteCalculation(id){
+  if(!currentProfile?.is_admin){alert('Admin access required.');return;}
+  if(!confirm('Delete this calculation record?'))return;
+  const {error}=await sb.from('calculations').delete().eq('id',id);
+  if(error){alert('Delete failed: '+error.message);return;}
+  await loadDashboard();
+}
+window.deleteCalculation=deleteCalculation;
+
 async function saveCalculation(){
   if(!sb||!currentUser)return;
   const rawWeight=n($('weight').value), country=canonicalCountry($('country').value), postal=$('postal').value.trim(), city=$('city').value.trim();
@@ -724,10 +891,9 @@ async function downloadHistoryAndClear(){
   const csv=csvRows.map(row=>row.map(escCsv).join(',')).join('\r\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='IPHW-History-'+new Date().toISOString().slice(0,10)+'.csv';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(a.href);
-  const ids=rows.map(r=>r.id).filter(Boolean);
-  if(ids.length){
-    const {error:delError}=await sb.from('calculations').delete().in('id',ids);
-    if(delError){alert('History downloaded, but database history could not be deleted: '+delError.message);return;}
+  if(currentProfile?.is_admin){
+    const del=confirm('Excel/CSV downloaded. Delete the downloaded records from the database too?');
+    if(del){const ids=rows.map(r=>r.id).filter(Boolean);if(ids.length){const {error:delError}=await sb.from('calculations').delete().in('id',ids);if(delError){alert('Download complete, but delete failed: '+delError.message);return;}}}
   }
   await loadDashboard();
 }
@@ -748,7 +914,7 @@ async function adminClearAllData(){
     sessionStorage.removeItem('iphw_calculation_history');
     sessionStorage.removeItem('iphw_dashboard_cache');
   }catch(e){}
-  $('dashRows').innerHTML='<tr><td colspan="7">No calculations yet.</td></tr>';
+  $('dashRows').innerHTML='<tr><td colspan="8">No calculations yet.</td></tr>';
   alert('All calculation data has been cleared successfully.');
   await loadDashboard();
 }
@@ -825,5 +991,26 @@ const originalRateOpen=$('rateUpdateBtn').onclick;
 initSupabase();
 
 renderRates();renderZones();renderODA();calculate();
+
+// FedEx admin shell navigation: visual/navigation only; calculation functions remain untouched.
+document.addEventListener('DOMContentLoaded',()=>{
+  ['weight','normalPackage','country'].forEach(id=>$(id)?.addEventListener('input',()=>{ if($('zone')?.textContent && $('zone').textContent!=='—') updateIcpcUsed(); }));
+  const nav=(key)=>{
+    document.querySelectorAll('.admin-nav button').forEach(b=>b.classList.toggle('active',b.dataset.adminNav===key));
+    if(key==='calculator') document.querySelector('.grid')?.scrollIntoView({behavior:'smooth',block:'start'});
+    else if(key==='dashboard') document.querySelector('#dashboard')?.scrollIntoView({behavior:'smooth',block:'start'});
+    else if(key==='rate') document.querySelector('#rateUpdateBtn')?.click();
+    else if(key==='logs') document.querySelector('#dashboard')?.scrollIntoView({behavior:'smooth',block:'start'});
+    else if(key==='users') alert('Users management is available for Admin access.');
+    else if(key==='settings') document.querySelector('#fx')?.scrollIntoView({behavior:'smooth',block:'center'});
+  };
+  document.querySelectorAll('[data-admin-nav]').forEach(b=>b.addEventListener('click',()=>nav(b.dataset.adminNav)));
+  document.querySelector('#sidebarLogout')?.addEventListener('click',()=>document.querySelector('#logoutBtn')?.click());
+  const src=document.querySelector('#authUser'), dst=document.querySelector('#sidebarUser');
+  if(src&&dst){
+    const sync=()=>{ const v=(src.textContent||'').trim(); if(v && v!=='Not logged in') dst.textContent=v; };
+    sync(); new MutationObserver(sync).observe(src,{childList:true,characterData:true,subtree:true});
+  }
+});
 </script>
 </body></html>
