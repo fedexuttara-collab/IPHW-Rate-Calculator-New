@@ -46,6 +46,47 @@
 .fedex-mark{font-weight:1000;font-size:16px;letter-spacing:.5px;background:linear-gradient(135deg,#4b0082,#e91e63,#ff7a00,#009688,#1565c0);color:#fff;box-shadow:0 6px 18px rgba(75,0,130,.28)}
 .fedex-badge{border:1px solid rgba(233,30,99,.28);background:linear-gradient(135deg,rgba(75,0,130,.10),rgba(233,30,99,.10),rgba(255,122,0,.10),rgba(0,150,136,.10));}
 .fedex-badge b{background:linear-gradient(90deg,#4b0082,#e91e63,#ff7a00,#009688,#1565c0);-webkit-background-clip:text;background-clip:text;color:transparent;font-size:15px}
+<style>
+.normal-only{display:none}
+.normal-only strong{font-weight:900}
+.normal-only span{font-weight:700}
+.rate-result-card .result-section{margin:0 0 18px;padding:16px;border:1px solid #e5e7eb;border-radius:14px;background:#fff}
+.rate-result-card .result-section h3{margin:0 0 12px;font-size:15px;font-weight:800;color:#374151}
+.rate-result-card .result-grid{margin:0}
+.rate-result-card .totals-section{margin-bottom:12px}
+.rate-result-card .total{margin-top:14px}
+
+/* Compact one-screen Rate Result layout — calculation/formulas unchanged */
+@media (min-width:951px){
+  .wrap{margin-top:8px}
+  .grid{gap:10px}
+  .card{padding:12px}
+  .rate-result-card{padding:11px}
+  .rate-result-card > h2{margin-bottom:7px;font-size:15px}
+  .rate-result-card .result-section{margin:0 0 7px;padding:8px 10px;border-radius:9px}
+  .rate-result-card .result-section h3{margin:0 0 5px;font-size:12px}
+  .rate-result-card .result-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:0 14px}
+  .rate-result-card .result{padding:5px 0;font-size:10.5px;line-height:1.15}
+  .rate-result-card .result strong{font-size:10.5px}
+  .rate-result-card .status{padding:3px 6px;font-size:10px}
+  .rate-result-card .totals-section{margin-bottom:5px}
+  .rate-result-card .total{margin-top:6px;padding:7px 9px}
+  .rate-result-card .grand{font-size:12.5px!important}
+  .rate-result-card .note{font-size:9px;margin-top:4px}
+  .rate-result-card .tabs{margin:7px 0 6px}
+  .rate-result-card .tab{padding:6px 9px;font-size:10px}
+}
+
+.auto-calc-table{border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;background:#fff}
+.auto-row{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(120px,1fr) 78px;align-items:center;min-height:32px;padding:0 10px;border-bottom:1px solid #edf0f3;font-size:12px}
+.auto-row:last-child{border-bottom:0}
+.auto-row span{color:#374151}.auto-row strong{text-align:right;font-size:12px;color:#111827}.auto-row em{text-align:right;font-style:normal;color:#6b7280;font-size:10px}
+.auto-head{min-height:28px;background:#f8fafc;font-weight:800;color:#6b7280;text-transform:uppercase;font-size:9px;letter-spacing:.04em}
+.auto-head span:nth-child(2),.auto-head span:nth-child(3){text-align:right}
+.grand-row{background:#f8fafc;font-weight:800}.grand-row span,.grand-row strong{font-size:12px;font-weight:900;color:#111827}
+@media (min-width:951px){.rate-result-card{padding:11px}.rate-result-card>h2{margin-bottom:7px;font-size:15px}.auto-row{min-height:29px;font-size:10.5px}.auto-row strong{font-size:10.5px}.auto-row em{font-size:9px}.auto-head{min-height:25px;font-size:8px}.grand-row span,.grand-row strong{font-size:11.5px}}
+@media (max-width:950px){.auto-row{grid-template-columns:minmax(0,1.45fr) minmax(100px,1fr) 62px}}
+</style>
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -72,7 +113,7 @@
 </div>
 <div class="grid">
 <section class="card">
-  <h2>Item Information</h2>
+  <h2>Editable Inputs</h2>
   <div class="planbar">
     <button class="plan active" data-plan="A">Rate A</button>
     <button class="plan" data-plan="B">Rate B</button>
@@ -91,37 +132,44 @@
     <div><label>VAT (%)<input id="vat" type="number" step="0.01" value="15"></label></div>
     <div><label>Fuel Surcharge (%)<input id="fuel" type="number" step="0.01" value="53.25"></label></div>
     <div><label>ODA Base (USD)<input id="odaBase" type="number" step="0.01" value="25"></label></div>
+    <div id="govtFeeWrap"><label>Govt. Fee (BDT)<input id="govtFee" type="number" step="0.01" value="6"></label></div>
   </div>
   <div class="actions"><button class="btn primary" id="calculate">Calculate Rate</button><button class="btn secondary" id="reset">Clear</button></div>
   <div id="warning" class="warn"></div>
 </section>
 
-<section class="card">
-  <h2>Rate Result</h2>
-  <div class="result-grid">
-    <div class="result"><span>Rate Type</span><strong id="serviceResult">A</strong></div>
-    <div class="result"><span>Rate Plan</span><strong id="planResult">A</strong></div>
-    <div class="result"><span>Rounded Weight</span><strong id="roundedWeight">—</strong></div>
-    <div class="result"><span>Destination Zone</span><strong id="zone">—</strong></div>
-    <div class="result"><span>Rate / KG (BDT)</span><strong id="perKg">—</strong></div>
-    <div class="result"><span>Base Tariff</span><strong id="base">—</strong></div>
-    <div class="result" id="demandUsdRow"><span>Demand Charge (USD)</span><strong id="demandUsd">—</strong></div>
-    <div class="result" id="demandBdtRow"><span>Demand Charge (BDT)</span><strong id="demandBdt">—</strong></div>
-    <div class="result"><span>Fuel Surcharge (BDT)</span><strong id="fuelBdt">—</strong></div>
-    <div class="result"><span>ODA Type</span><strong id="odaType">—</strong></div>
-    <div class="result"><span>ODA Status</span><strong id="odaStatus">—</strong></div>
-    <div class="result"><span>ODA Charge (USD)</span><strong id="odaUsd">—</strong></div>
-    <div class="result"><span>ODA Charge (BDT)</span><strong id="odaBdt">—</strong></div>
-    <div class="result"><span>ODA Fuel Surcharge (BDT)</span><strong id="odaFuel">—</strong></div>
-    <div class="result"><span>Total ODA Charge (BDT)</span><strong id="totalOda">—</strong></div>
-    <div class="result"><span>Subtotal Without VAT</span><strong id="subtotal">—</strong></div>
-    <div class="result"><span>VAT Amount</span><strong id="vatAmount">—</strong></div>
+<section class="card rate-result-card">
+  <h2>Automatic Calculation</h2>
+
+  <div class="auto-calc-table">
+    <div class="auto-row auto-head"><span>Calculation</span><span>Value</span><span>Unit / Status</span></div>
+    <div class="auto-row"><span>Destination Zone</span><strong id="zone">—</strong><em>Auto</em></div>
+    <div class="auto-row normal-only"><span>Base Rate (USD)</span><strong id="normalBaseUsd">—</strong><em>USD</em></div>
+    <div class="auto-row normal-only"><span>Demand Charge (USD)</span><strong id="normalDemandUsd">—</strong><em>USD</em></div>
+    <div class="auto-row normal-only"><span>Customs Fee (USD)</span><strong id="normalCustomUsd">—</strong><em>USD</em></div>
+    <div class="auto-row"><span>ODA Status</span><strong id="odaStatus">—</strong><em>Auto</em></div>
+    <div class="auto-row normal-only"><span>ODA + Fuel (USD)</span><strong id="normalOdaFuelUsd">—</strong><em>USD</em></div>
+    <div class="auto-row normal-only"><span>Base + Demand (BDT)</span><strong id="normalBaseDemandBdt">—</strong><em>BDT</em></div>
+    <div class="auto-row normal-only"><span>Fuel Surcharge (BDT)</span><strong id="normalFuelBdt">—</strong><em>BDT</em></div>
+    <div class="auto-row normal-only"><span>Customs Fee (BDT)</span><strong id="normalCustomBdt">—</strong><em>BDT</em></div>
+    <div class="auto-row"><span>ODA Charge (BDT)</span><strong id="odaBdt">—</strong><em>BDT</em></div>
+    <div class="auto-row"><span>Subtotal / Without VAT</span><strong id="subtotal">—</strong><em>BDT</em></div>
+    <div class="auto-row"><span>VAT Amount</span><strong id="vatAmount">—</strong><em>BDT</em></div>
+    <div class="auto-row grand-row"><span>GRAND TOTAL WITHOUT VAT</span><strong id="grandNoVat">—</strong><em>BDT</em></div>
+    <div class="auto-row grand-row"><span>GRAND TOTAL WITH VAT</span><strong id="grandVat">—</strong><em>BDT</em></div>
   </div>
-  <div class="total">
-    <div class="result"><span class="grand">GRAND TOTAL WITHOUT VAT</span><strong class="grand" id="grandNoVat">—</strong></div>
-    <div class="result" style="border:0"><span class="grand">GRAND TOTAL WITH VAT</span><strong class="grand" id="grandVat">—</strong></div>
+
+  <!-- Hidden compatibility rows keep existing calculation/display IDs and formulas intact. -->
+  <div style="display:none" aria-hidden="true">
+    <span id="normalBaseUsdRow"></span><span id="normalDemandUsdRow"></span><span id="normalCustomUsdRow"></span>
+    <span id="normalOdaFuelUsdRow"></span><span id="normalBaseDemandBdtRow"></span><span id="normalFuelBdtRow"></span>
+    <span id="normalCustomBdtRow"></span><span id="normalOdaBdtRow"></span><span id="normalMatchesRow"></span><span id="normalCityPostalRow"></span>
+    <span id="normalMatches">—</span><span id="normalCityPostal">—</span>
+    <span id="serviceResult">A</span><span id="planResult">A</span><span id="roundedWeight">—</span><span id="perKg">—</span><span id="base">—</span>
+    <span id="demandUsdRow"></span><span id="demandBdtRow"></span><span id="fuelBdtRow"></span><span id="demandUsd">—</span><span id="demandBdt">—</span><span id="fuelBdt">—</span>
+    <span id="odaType">—</span><span id="odaUsdRow"></span><span id="odaUsd">—</span><span id="odaFuelRow"></span><span id="odaFuel">—</span><span id="totalOdaRow"></span><span id="totalOda">—</span>
+    <span id="matchInfo"></span>
   </div>
-  <div class="note" id="matchInfo"></div>
 
   <div class="tabs">
     <button class="tab active" data-tab="ratePanel">Rate Chart</button>
@@ -138,7 +186,7 @@
   </div>
   <div id="odaPanel" class="panel">
     <div class="toolbar"><input id="odaSearch" class="search" placeholder="Search ODA country or city"></div>
-    <div class="tablewrap"><table><thead><tr><th>Country</th><th>City</th><th>Begin Postal</th><th>End Postal</th></tr></thead><tbody id="odaBody"></tbody></table></div>
+    <div class="tablewrap"><table><thead id="odaHead"></thead><tbody id="odaBody"></tbody></table></div>
   </div>
 </section>
 </div>
@@ -306,8 +354,13 @@ function syncPlanInputs(){
   $('weight').disabled=normal;
   $('weight').style.opacity=normal?'0.6':'1';
   $('weight').placeholder=normal?'Not required for Normal Rate':'Enter weight in KG';
-  $('demandUsdRow').style.display=normal?'':'none';
-  $('demandBdtRow').style.display=normal?'':'none';
+  $('demandUsdRow').style.display=normal?'none':'none';
+  document.querySelectorAll('.normal-only').forEach(el=>el.style.display=normal?'':'none');
+  $('govtFeeWrap').style.display=normal?'':'none';
+  $('demandBdtRow').style.display=normal?'none':'none';
+  $('fuelBdtRow').style.display=normal?'none':'';
+  $('odaBdtRow').style.display=normal?'none':'';
+  $('totalOdaRow').style.display=normal?'none':'';
   if(normal){
     const code=$('normalPackage').value;
     const n=Number(String(code).replace(/[EP]$/i,''));
@@ -370,7 +423,44 @@ function calculate(){
   $('odaFuel').textContent=money(odaFuelBdt);
   $('totalOda').textContent=money(odaBdt+odaFuelBdt);
 
-  if(base==null){
+  if(currentPlan==='NORMAL'){
+    // Normal Rate: always calculate the final totals from the Normal Rate components.
+    // This block must not be skipped by the generic base==null check used by Rate A/B.
+    const govtFee=Number($('govtFee').value)||0;
+    const US_CUSTOMS_COUNTRIES=new Set(['Austria','Belgium','Bulgaria','Croatia','Cyprus','Czech Republic','Denmark','Estonia','Finland','France','Germany','Greece','Hungary','Ireland','Italy','Latvia','Lithuania','Luxembourg','Malta','Netherlands','Poland','Portugal','Romania','Slovakia','Slovak Republic','Slovenia','Spain','Sweden','U.S.A']);
+    const customsUsd=US_CUSTOMS_COUNTRIES.has(country)?2.65:0;
+    const baseUsd=rr.rate!=null?Number(rr.rate):0;
+    const baseDemandBdt=(baseUsd+demandUsd)*fx;
+    const fuelBdtNormal=(baseUsd+demandUsd)*fuel/100*fx;
+    const odaFuelUsd=odaApplies?odaBase*(1+fuel/100):0;
+    const odaChargeBdt=odaFuelUsd*fx;
+    const customsBdt=customsUsd*fx;
+    // Normal Rate final calculation (single source of truth)
+    // Subtotal = Base + Demand + Fuel + Customs + ODA (including ODA fuel) + Govt Fee
+    const subtotal=Number(baseDemandBdt)+Number(fuelBdtNormal)+Number(customsBdt)+Number(odaChargeBdt)+Number(govtFee);
+    const vatAmount=Number(subtotal)*Number(vat)/100;
+    const grandNoVat=Number(subtotal);
+    const grandVat=Number(subtotal)+Number(vatAmount);
+
+    $('normalBaseUsd').textContent=usd(baseUsd);
+    $('normalDemandUsd').textContent=usd(demandUsd);
+    $('normalCustomUsd').textContent=usd(customsUsd);
+    $('normalOdaFuelUsd').textContent=usd(odaFuelUsd);
+    $('normalBaseDemandBdt').textContent=money(baseDemandBdt);
+    $('normalFuelBdt').textContent=money(fuelBdtNormal);
+    $('normalCustomBdt').textContent=money(customsBdt);
+    $('odaBdt').textContent=money(odaChargeBdt);
+    $('normalMatches').textContent=String(oda.matched.length);
+    $('normalCityPostal').textContent=odaType==='Postal Code'?'Postal Code Imported':(odaType==='City'?'City Imported':(odaType==='Postal Code + City'?'Postal Code + City Imported':'No Match'));
+
+    $('fuelBdt').textContent=money(fuelBdtNormal);
+    $('odaBdt').textContent=money(odaChargeBdt);
+    $('totalOda').textContent=money(odaChargeBdt);
+    $('subtotal').textContent=money(subtotal);
+    $('vatAmount').textContent=money(vatAmount);
+    $('grandNoVat').textContent=money(grandNoVat);
+    $('grandVat').textContent=money(grandVat);
+  }else if(base==null){
     ['totalOda','subtotal','vatAmount','grandNoVat','grandVat','fuelBdt'].forEach(id=>$(id).textContent='—');
   }else if(currentPlan!=='NORMAL'){
     // Rate A / Rate B: Base Tariff + Total ODA Charge only.
@@ -380,18 +470,6 @@ function calculate(){
     const vatAmount=subtotal*vat/100;
     $('fuelBdt').textContent=money(odaFuelBdt);
     $('totalOda').textContent=money(totalOdaBdt);
-    $('subtotal').textContent=money(subtotal);
-    $('vatAmount').textContent=money(vatAmount);
-    $('grandNoVat').textContent=money(subtotal);
-    $('grandVat').textContent=money(subtotal+vatAmount);
-  }else{
-    // Normal Rate: retain the existing Normal Rate calculation path.
-    const odaFuelBdtNormal=odaBdt*fuel/100;
-    const totalFuelBdt=odaFuelBdtNormal;
-    const subtotal=base+demandBdt+odaBdt+odaFuelBdtNormal;
-    const vatAmount=subtotal*vat/100;
-    $('fuelBdt').textContent=money(totalFuelBdt);
-    $('totalOda').textContent=money(odaBdt+odaFuelBdtNormal);
     $('subtotal').textContent=money(subtotal);
     $('vatAmount').textContent=money(vatAmount);
     $('grandNoVat').textContent=money(subtotal);
@@ -437,11 +515,11 @@ function showCitySuggest(){
 }
 document.querySelectorAll('.service').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.service').forEach(x=>x.classList.remove('active'));b.classList.add('active');}));
 document.querySelectorAll('.plan').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.plan').forEach(x=>x.classList.remove('active'));b.classList.add('active');currentPlan=b.dataset.plan;renderRates($('rateSearch').value);calculate();}));
-['weight','postal','city','fx','vat','fuel','odaBase'].forEach(id=>$(id).addEventListener('input',()=>{if(id==='city')showCitySuggest();calculate();}));
+['weight','postal','city','fx','vat','fuel','odaBase','govtFee'].forEach(id=>$(id).addEventListener('input',()=>{if(id==='city')showCitySuggest();calculate();}));
 $('country').addEventListener('input',()=>{showCountrySuggest();calculate()});
 $('calculate').addEventListener('click',calculate);
 $('normalPackage').addEventListener('change',()=>{syncPlanInputs();calculate();});
-$('reset').addEventListener('click',()=>{currentPlan='A';document.querySelectorAll('.plan').forEach(x=>x.classList.toggle('active',x.dataset.plan==='A'));$('weight').value=10;$('normalPackage').value='0.5';$('country').value='';$('postal').value='';$('city').value='';$('fx').value=123.65;$('vat').value=15;$('fuel').value=53.25;$('odaBase').value=25;syncPlanInputs();calculate();renderRates();});
+$('reset').addEventListener('click',()=>{currentPlan='A';document.querySelectorAll('.plan').forEach(x=>x.classList.toggle('active',x.dataset.plan==='A'));$('weight').value=10;$('normalPackage').value='0.5';$('country').value='';$('postal').value='';$('city').value='';$('fx').value=123.65;$('vat').value=15;$('fuel').value=53.25;$('odaBase').value=25;$('govtFee').value=6;syncPlanInputs();calculate();renderRates();});
 $('rateSearch').addEventListener('input',e=>renderRates(e.target.value));
 $('zoneSearch').addEventListener('input',e=>renderZones(e.target.value));
 $('odaSearch').addEventListener('input',e=>renderODA(e.target.value));
@@ -641,12 +719,18 @@ async function adminClearAllData(){
   if(!currentProfile?.is_admin){alert('Admin access required.');return;}
   const ok=confirm('WARNING: This will permanently delete ALL calculation history for ALL users. Continue?');
   if(!ok)return;
-  const {data:rows,error:fetchError}=await sb.from('calculations').select('id').limit(10000);
-  if(fetchError){alert('Data clear failed: '+fetchError.message);return;}
-  const ids=(rows||[]).map(r=>r.id).filter(Boolean);
-  if(!ids.length){alert('No calculation data found.');await loadDashboard();return;}
-  const {error:delError}=await sb.from('calculations').delete().in('id',ids);
+  // Delete directly from the calculations table instead of deleting only the first 10,000 rows.
+  // This also avoids stale dashboard data being left behind after a partial delete.
+  const {error:delError}=await sb.from('calculations').delete().not('id','is',null);
   if(delError){alert('Data clear failed. Please check Supabase DELETE policy for admin users: '+delError.message);return;}
+  // Clear any browser-side calculator/rate cache that could repopulate old dashboard values.
+  try{
+    localStorage.removeItem('iphw_calculation_history');
+    localStorage.removeItem('iphw_dashboard_cache');
+    sessionStorage.removeItem('iphw_calculation_history');
+    sessionStorage.removeItem('iphw_dashboard_cache');
+  }catch(e){}
+  $('dashRows').innerHTML='<tr><td colspan="7">No calculations yet.</td></tr>';
   alert('All calculation data has been cleared successfully.');
   await loadDashboard();
 }
