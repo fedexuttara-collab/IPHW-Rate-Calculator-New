@@ -176,7 +176,32 @@
     <label style="font-size:11px;font-weight:800">EMAIL</label><input id="authEmail" type="email" placeholder="you@example.com">
     <label style="font-size:11px;font-weight:800">PASSWORD</label><input id="authPassword" type="password" placeholder="Minimum 6 characters">
     <div class="actions"><button class="btn primary" id="doLogin">Login</button><button class="btn secondary" id="doRegister">Register</button></div>
+    <div style="text-align:center;margin-top:8px"><a href="#" id="forgotPasswordLink" style="font-size:11px;font-weight:800;color:#0b5ed7;text-decoration:none">Forgot Password?</a></div>
     <div class="auth-msg" id="authMsg"></div>
+  </div>
+</div>
+
+<div class="auth-modal" id="forgotModal">
+  <div class="auth-box">
+    <div style="display:flex;justify-content:space-between;align-items:center"><h2>Forgot Password</h2><button class="rate-close" id="forgotClose">✕</button></div>
+    <p style="font-size:11px;color:#64748b;margin-top:0">Enter your registered email. We will send a password reset link.</p>
+    <label style="font-size:11px;font-weight:800">EMAIL</label>
+    <input id="forgotEmail" type="email" placeholder="you@example.com">
+    <button class="btn primary" id="sendReset">Send Reset Link</button>
+    <div class="auth-msg" id="forgotMsg"></div>
+  </div>
+</div>
+
+<div class="auth-modal" id="resetModal">
+  <div class="auth-box">
+    <div style="display:flex;justify-content:space-between;align-items:center"><h2>Reset Password</h2><button class="rate-close" id="resetClose">✕</button></div>
+    <p style="font-size:11px;color:#64748b;margin-top:0">Enter and confirm your new password.</p>
+    <label style="font-size:11px;font-weight:800">NEW PASSWORD</label>
+    <input id="newPassword" type="password" placeholder="Minimum 8 characters" minlength="8">
+    <label style="font-size:11px;font-weight:800">CONFIRM PASSWORD</label>
+    <input id="confirmPassword" type="password" placeholder="Repeat new password" minlength="8">
+    <button class="btn primary" id="updatePassword">Update Password</button>
+    <div class="auth-msg" id="resetMsg"></div>
   </div>
 </div>
 
@@ -418,8 +443,18 @@ let lastCalculation = null;
 function initSupabase(){
   if(window.supabase && SUPABASE_ANON_KEY && !SUPABASE_ANON_KEY.includes('PASTE_')){
     sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-    sb.auth.getSession().then(({data})=>handleSession(data.session));
-    sb.auth.onAuthStateChange((_event,session)=>handleSession(session));
+    sb.auth.getSession().then(({data})=>{
+      handleSession(data.session);
+      if(window.location.hash.includes('type=recovery')){
+        setTimeout(()=>openResetModal(),250);
+      }
+    });
+    sb.auth.onAuthStateChange((event,session)=>{
+      handleSession(session);
+      if(event==='PASSWORD_RECOVERY'){
+        setTimeout(()=>openResetModal(),100);
+      }
+    });
   }else{
     $('authUser').textContent='Supabase key not configured';
   }
@@ -500,6 +535,39 @@ async function downloadHistoryAndClear(){
 $('downloadHistory').addEventListener('click',downloadHistoryAndClear);
 $('loginBtn').addEventListener('click',()=>{$('authMsg').textContent='';$('authModal').classList.add('show')});
 $('authClose').addEventListener('click',()=>$('authModal').classList.remove('show'));
+$('forgotPasswordLink').addEventListener('click',(e)=>{e.preventDefault();$('authModal').classList.remove('show');$('forgotEmail').value=$('authEmail').value.trim();$('forgotMsg').textContent='';$('forgotModal').classList.add('show');});
+$('forgotClose').addEventListener('click',()=>$('forgotModal').classList.remove('show'));
+$('resetClose').addEventListener('click',()=>$('resetModal').classList.remove('show'));
+function openResetModal(){
+  if(!sb)return;
+  $('resetMsg').textContent='';
+  $('newPassword').value='';
+  $('confirmPassword').value='';
+  $('resetModal').classList.add('show');
+}
+$('sendReset').addEventListener('click',async()=>{
+  if(!sb){$('forgotMsg').textContent='Supabase is not configured.';return;}
+  const email=$('forgotEmail').value.trim();
+  if(!email){$('forgotMsg').textContent='Enter your email address.';return;}
+  const btn=$('sendReset');btn.disabled=true;btn.textContent='Sending...';
+  const redirectTo=window.location.origin+window.location.pathname;
+  const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo});
+  btn.disabled=false;btn.textContent='Send Reset Link';
+  $('forgotMsg').textContent=error?error.message:'If this email is registered, a password reset link has been sent. Please check your inbox.';
+});
+$('updatePassword').addEventListener('click',async()=>{
+  if(!sb){$('resetMsg').textContent='Supabase is not configured.';return;}
+  const password=$('newPassword').value;
+  const confirm=$('confirmPassword').value;
+  if(password.length<8){$('resetMsg').textContent='Password must be at least 8 characters.';return;}
+  if(password!==confirm){$('resetMsg').textContent='Passwords do not match.';return;}
+  const btn=$('updatePassword');btn.disabled=true;btn.textContent='Updating...';
+  const {error}=await sb.auth.updateUser({password});
+  btn.disabled=false;btn.textContent='Update Password';
+  if(error){$('resetMsg').textContent=error.message;return;}
+  $('resetMsg').textContent='Password updated successfully. Redirecting to login...';
+  setTimeout(async()=>{await sb.auth.signOut();window.history.replaceState({},document.title,window.location.pathname);$('resetModal').classList.remove('show');$('authModal').classList.add('show');},1200);
+});
 $('doLogin').addEventListener('click',async()=>{if(!sb){$('authMsg').textContent='Supabase ANON KEY বসান আগে।';return}const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||!password){$('authMsg').textContent='Email ও password দিন।';return}const {error}=await sb.auth.signInWithPassword({email,password});$('authMsg').textContent=error?error.message:'';if(!error)$('authModal').classList.remove('show')});
 $('doRegister').addEventListener('click',async()=>{if(!sb){$('authMsg').textContent='Supabase ANON KEY বসান আগে।';return}const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||password.length<6){$('authMsg').textContent='Valid email এবং কমপক্ষে 6 character password দিন।';return}const {error}=await sb.auth.signUp({email,password});$('authMsg').textContent=error?error.message:'Registration successful. Email verification লাগলে email check করুন.'});
 $('logoutBtn').addEventListener('click',async()=>{if(sb)await sb.auth.signOut()});
