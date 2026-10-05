@@ -98,6 +98,22 @@
 .form2 > .field2:has(#fuel){order:7}.form2 > .field2:has(.service){order:8}
 .excel-ui-badge{font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.04em;margin-bottom:7px}
 .excel-calc-row{border-left:3px solid #c9a84c;padding-left:9px}.plan-a-b-only{display:none}
+
+/* FedEx ICPC instruction */
+.icpc-panel{margin-top:0}
+.icpc-box{border:1px solid #d7e2ef;border-radius:12px;background:#f8fbff;padding:12px}
+.icpc-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 10px;border-bottom:1px solid #e7edf4;font-size:12px}
+.icpc-row:last-of-type{border-bottom:0}
+.icpc-row span{font-weight:700;color:#526173}
+.icpc-row strong{font-size:14px;color:#17345d;text-align:right}
+.icpc-row.used{margin-top:6px;border:1px solid #b8d8c1;border-radius:9px;background:#edf9f0}
+.icpc-row.used span{color:#176b2c}
+.icpc-row.used strong{font-size:18px;color:#0b6b25;letter-spacing:.4px}
+.icpc-note{margin-top:9px;padding:8px 10px;border-radius:8px;background:#fff8e6;color:#775b00;font-size:10px;line-height:1.45}
+
+.subtotal-highlight strong,.subtotal-highlight.vat strong{display:inline-block;min-width:165px;text-align:right;font-size:22px;font-weight:900;padding:8px 12px;border-radius:9px;letter-spacing:.2px}
+.subtotal-highlight strong{color:#0b6b25;background:#eaf8ee;border:1px solid #b9dfc2}
+.subtotal-highlight.vat strong{color:#075a9b;background:#eaf4fc;border:1px solid #b9d8ef}
 </style>
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -192,6 +208,16 @@ body:before{content:"";position:fixed;inset:0;background:linear-gradient(135deg,
       </div>
     </section>
 
+    <section class="panel-card icpc-panel">
+      <div class="panel-title">FedEx ICPC Instruction</div>
+      <div class="icpc-box">
+        <div class="icpc-row"><span>Destination Country / Zone</span><strong id="icpcZone">—</strong></div>
+        <div class="icpc-row"><span>Weight Break</span><strong id="icpcWeight">—</strong></div>
+        <div class="icpc-row used"><span>Used ICPC</span><strong id="usedIcpc">—</strong></div>
+        <div class="icpc-note" id="icpcRule">ICPC will be selected automatically according to destination zone and weight.</div>
+      </div>
+    </section>
+
     <section class="panel-card">
       <div class="panel-title">Rate Information (<span id="rateInfoTitle">Normal Rate</span>)</div>
 <div class="excel-ui-badge">Automatic Calculation</div>
@@ -216,8 +242,8 @@ body:before{content:"";position:fixed;inset:0;background:linear-gradient(135deg,
 <div class="info-row plan-a-b-only"><span>ODA Charge (BDT)</span><strong id="abOdaBdt">—</strong></div>
 <div class="info-row plan-a-b-only"><span>ODA Fuel Surcharge (BDT)</span><strong id="abOdaFuelBdt">—</strong></div>
 <div class="info-row plan-a-b-only excel-calc-row"><span>Total ODA Charge (BDT)</span><strong id="abTotalOda">—</strong></div>
-<div class="info-row plan-a-b-only"><span>Subtotal Without VAT</span><strong id="abSubtotal">—</strong></div>
-<div class="info-row plan-a-b-only"><span>Subtotal With VAT</span><strong id="abSubtotalVat">—</strong></div>
+<div class="info-row plan-a-b-only subtotal-highlight"><span>Subtotal Without VAT</span><strong id="abSubtotal">— BDT</strong></div>
+<div class="info-row plan-a-b-only subtotal-highlight vat"><span>Subtotal With VAT</span><strong id="abSubtotalVat">— BDT</strong></div>
 <div class="info-row"><span>Matches Found</span><strong id="normalMatches">0</strong></div>
 <div class="info-row"><span>Matched By</span><strong id="matchInfo">—</strong></div>
 <div class="info-row"><span>ODA Base Rate (USD)</span><strong id="displayOdaBase">$25.00</strong></div>
@@ -228,23 +254,7 @@ body:before{content:"";position:fixed;inset:0;background:linear-gradient(135deg,
 </div></div>
     </section>
 
-    <section class="panel-card">
-      <div class="panel-title">ODA Information</div>
-      <div class="oda-box">
-        <div class="oda-head"><span>ODA Charge (USD)</span><span id="odaBadge" class="oda-badge">ODA</span></div>
-        <div class="info-row"><span>ODA Charge (USD)</span><strong id="odaUsd">$50.00</strong></div>
-        <div class="info-row"><span>ODA Charge (BDT)</span><strong id="odaBdt">৳6,182.50</strong></div>
-        <div class="info-row"><span>ODA Fuel Surcharge (BDT)</span><strong id="normalFuelBdt">৳3,292.18</strong></div>
-        <div class="oda-total"><span>Total ODA Charge (BDT)</span><strong id="totalOda">৳9,474.68</strong></div>
-      </div>
-      <div class="final">
-        <div class="info-row"><span>Subtotal Without VAT</span><strong id="subtotal">৳99,974.68</strong></div>
-        <div class="info-row"><span>VAT Amount (<span id="vatLabel">15.0%</span>)</span><strong id="vatAmount">৳14,996.20</strong></div>
-        <div class="info-row"><span>Subtotal With VAT</span><strong id="grandVat">৳114,970.88</strong></div>
-        <div class="info-row grand grand-no-vat"><span>Grand Total Without VAT</span><strong id="grandNoVat">৳99,974.68</strong></div>
-        <div class="info-row grand"><span>Grand Total With VAT</span><strong id="grandWithVat">৳114,970.88</strong></div>
-      </div>
-    </section>
+
   </div>
 
   <section class="panel-card rate-chart-panel" id="rateChartPanel">
@@ -415,6 +425,22 @@ function syncExcelPlanUI(){
   $('rateInfoTitle').textContent=normal?'Normal Rate':'Rate '+currentPlan;
   if($('displayOdaBase')) $('displayOdaBase').textContent=usd(Number($('odaBase').value)||0);
 }
+function updateIcpcInstruction(){
+  const zone=String($('zone')?.textContent||'—').trim().toUpperCase();
+  const raw=String($('weight')?.value||'').trim();
+  const n=parseFloat(raw.replace(/[^0-9.]/g,''));
+  const zEl=$('icpcZone'), wEl=$('icpcWeight'), iEl=$('usedIcpc'), rEl=$('icpcRule');
+  if(!zEl||!wEl||!iEl||!rEl) return;
+  zEl.textContent=zone && zone!=='—' ? zone : '—';
+  if(!Number.isFinite(n)){ wEl.textContent='—'; iEl.textContent='—'; rEl.textContent='Enter a valid shipment weight to select the ICPC automatically.'; return; }
+  wEl.textContent=(n<=40?'Up to 40 Kg':'41 Kg and above');
+  let icpc='799699109', rule='All zones and weight breaks except Zone G below 41 Kg and Zone B up to 40 Kg.';
+  if(zone==='G' && n>=41){ icpc='629048715'; rule='Destination Zone G (USA & Canada) from 41 Kg.'; }
+  else if(zone==='B' && n<=40){ icpc='806659533'; rule='Destination Zone B up to 40 Kg.'; }
+  else if(zone==='G' && n<=40){ icpc='799699109'; rule='Destination Zone G (USA & Canada) up to 40 Kg.'; }
+  else if(zone==='B' && n>=41){ icpc='799699109'; rule='Destination Zone B from 41 Kg.'; }
+  iEl.textContent=icpc; rEl.textContent=rule;
+}
 function calculate(){
   window.lastCalculation = null;
   const packageCode=currentPlan==='NORMAL'?$('normalPackage').value:'';
@@ -461,17 +487,32 @@ function calculate(){
   else if(cityHit.length) odaType='City';
   updateOdaFieldState(odaType);
   const odaApplies=odaType!=='No ODA'; if($('excelOdaStatus'))$('excelOdaStatus').textContent=odaType; if($('abOdaStatus'))$('abOdaStatus').textContent=odaType;
-  const odaUsd=odaApplies?Math.max(odaBase,rr.rounded*0.5):0;
+  // ODA calculation — keep one source of truth for Rate A/B and Normal Rate.
+  // Never leave ODA/result fields stale when a postal/city match is found.
+  const safeRounded = Number.isFinite(Number(rr.rounded)) ? Number(rr.rounded) : Number(rawWeight)||0;
+  const odaUsd=odaApplies ? Math.max(odaBase, safeRounded*0.5) : 0;
   const odaFuel=odaUsd*(1+fuel/100);
   const odaBdt=odaUsd*fx;
-  const odaFuelBdt=odaFuel*fx-odaBdt;
+  const odaFuelBdt=odaUsd*(fuel/100)*fx;
   $('odaType').textContent=odaType;
   $('odaStatus').innerHTML=odaApplies?'<span class="status oda">ODA applies</span>':'<span class="status nooda">No ODA</span>';
+  // Populate every ODA/result target immediately so the UI never shows stale dashes.
+  const totalOdaBdt = odaBdt + odaFuelBdt;
   $('odaUsd').textContent=usd(odaUsd);
   $('odaBdt').textContent=money(odaBdt);
   $('odaFuel').textContent=money(odaFuelBdt);
-  $('totalOda').textContent=money(odaBdt+odaFuelBdt);
+  $('totalOda').textContent=money(totalOdaBdt);
+  if($('abOdaStatus')) $('abOdaStatus').textContent=odaType;
+  if($('abOdaUsd')) $('abOdaUsd').textContent=usd(odaUsd);
+  if($('abOdaBdt')) $('abOdaBdt').textContent=money(odaBdt);
+  if($('abOdaFuelBdt')) $('abOdaFuelBdt').textContent=money(odaFuelBdt);
+  if($('abTotalOda')) $('abTotalOda').textContent=money(totalOdaBdt);
+  if($('excelOdaStatus')) $('excelOdaStatus').textContent=odaType;
+  if($('excelOdaUsd')) $('excelOdaUsd').textContent=usd(odaUsd);
+  if($('excelOdaFuelUsd')) $('excelOdaFuelUsd').textContent=usd(odaFuel);
+  if($('uiOdaBdt')) $('uiOdaBdt').textContent=money(odaBdt);
 
+  let finalTotalOdaBdt = 0;
   if(currentPlan==='NORMAL'){
     // Normal Rate: always calculate the final totals from the Normal Rate components.
     // This block must not be skipped by the generic base==null check used by Rate A/B.
@@ -516,7 +557,7 @@ function calculate(){
   }else if(currentPlan!=='NORMAL'){
     // Rate A / Rate B: Base Tariff + Total ODA Charge only.
     // ODA Fuel Surcharge is calculated on the ODA charge and included in Total ODA.
-    const totalOdaBdt=odaBdt+odaFuelBdt; if($('abOdaUsd'))$('abOdaUsd').textContent=usd(odaUsd); if($('abOdaBdt'))$('abOdaBdt').textContent=money(odaBdt); if($('abOdaFuelBdt'))$('abOdaFuelBdt').textContent=money(odaFuelBdt); if($('abTotalOda'))$('abTotalOda').textContent=money(totalOdaBdt);
+    const totalOdaBdt=odaBdt+odaFuelBdt; finalTotalOdaBdt=totalOdaBdt; if($('abOdaUsd'))$('abOdaUsd').textContent=usd(odaUsd); if($('abOdaBdt'))$('abOdaBdt').textContent=money(odaBdt); if($('abOdaFuelBdt'))$('abOdaFuelBdt').textContent=money(odaFuelBdt); if($('abTotalOda'))$('abTotalOda').textContent=money(totalOdaBdt);
     const subtotal=base+totalOdaBdt;
     const vatAmount=subtotal*vat/100;
     $('fuelBdt').textContent=money(odaFuelBdt);
@@ -524,10 +565,22 @@ function calculate(){
     $('subtotal').textContent=money(subtotal);
     $('vatAmount').textContent=money(vatAmount);
     $('grandNoVat').textContent=money(subtotal);
-    $('grandVat').textContent=money(subtotal+vatAmount); if($('abSubtotal'))$('abSubtotal').textContent=money(subtotal); if($('abSubtotalVat'))$('abSubtotalVat').textContent=money(subtotal+vatAmount);
+    $('grandVat').textContent=money(subtotal+vatAmount); if($('abSubtotal'))$('abSubtotal').textContent=money(subtotal)+' BDT'; if($('abSubtotalVat'))$('abSubtotalVat').textContent=money(subtotal+vatAmount)+' BDT';
   }
   // Final totals: Subtotal Without VAT = Grand Total Without VAT.
   // Subtotal With VAT = Grand Total With VAT.
+  // Keep Rate A/B summary fields synchronized even if another UI branch was hidden.
+  if(currentPlan!=='NORMAL'){
+    const currentSubtotal=Number(base||0)+Number(finalTotalOdaBdt||0);
+    const currentVat=currentSubtotal*vat/100;
+    $('subtotal').textContent=money(currentSubtotal);
+    $('vatAmount').textContent=money(currentVat);
+    $('grandNoVat').textContent=money(currentSubtotal);
+    $('grandVat').textContent=money(currentSubtotal+currentVat);
+    $('grandWithVat').textContent=money(currentSubtotal+currentVat);
+    if($('abSubtotal')) $('abSubtotal').textContent=money(currentSubtotal)+' BDT';
+    if($('abSubtotalVat')) $('abSubtotalVat').textContent=money(currentSubtotal+currentVat)+' BDT';
+  }
   const displayedSubtotalWithoutVat = Number(String($('subtotal').textContent).replace(/[^0-9.-]/g,''));
   const displayedVatAmount = Number(String($('vatAmount').textContent).replace(/[^0-9.-]/g,''));
   if(Number.isFinite(displayedSubtotalWithoutVat) && displayedSubtotalWithoutVat >= 0){
@@ -538,6 +591,7 @@ function calculate(){
     $('grandVat').textContent=money(displayedSubtotalWithVat);
     $('grandWithVat').textContent=money(displayedSubtotalWithVat);
   }
+  updateIcpcInstruction();
   $('matchInfo').textContent=`ODA records for ${country||'selected country'}: ${oda.rows.length} • ODA Type: ${odaType} • Rate Type: ${currentPlan==='NORMAL'?'Normal Rate':'Rate '+currentPlan}`;
   const readMoney=id=>{
     const t=$(id)?.textContent||'';
@@ -611,7 +665,7 @@ document.querySelectorAll('.plan').forEach(b=>b.addEventListener('click',()=>{do
   calculate();
 }));
 $('country').addEventListener('input',()=>{showCountrySuggest();calculate()});
-$('calculate').addEventListener('click',calculate);
+$('calculate').addEventListener('click',()=>calculate());
 $('normalPackage')?.addEventListener('change',()=>{if(currentPlan==='NORMAL')$('weight').value=$('normalPackage').value;syncPlanInputs();calculate();});
 $('reset')?.addEventListener('click',()=>{
   currentPlan='A';
@@ -1553,4 +1607,84 @@ body.access-locked .side2 .nav2:not(.logout){pointer-events:none;opacity:.55}
 })();
 </script>
 
+
+<script id="calculation-icpc-repair">
+(function(){
+  'use strict';
+  function el(id){return document.getElementById(id);}
+  function runCalc(){
+    try{
+      if(typeof window.calculate==='function'){
+        return window.calculate();
+      }
+    }catch(err){
+      console.error('IPHW calculation error:',err);
+      var w=el('warning');
+      if(w){w.textContent='Calculation error: '+(err&&err.message?err.message:'Please check the entered values.');w.classList.add('show');}
+    }
+  }
+  function runIcpc(){
+    try{
+      if(typeof window.updateIcpcInstruction==='function') window.updateIcpcInstruction();
+      else{
+        var zone=(el('zone')?.textContent||'—').trim().toUpperCase();
+        var raw=(el('weight')?.value||'').trim();
+        var n=parseFloat(raw.replace(/[^0-9.]/g,''));
+        if(!el('usedIcpc')||!el('icpcZone')||!el('icpcWeight')||!el('icpcRule')) return;
+        el('icpcZone').textContent=zone||'—';
+        if(!Number.isFinite(n)){
+          el('icpcWeight').textContent='—';
+          el('usedIcpc').textContent='—';
+          el('icpcRule').textContent='Enter a valid shipment weight to select the ICPC automatically.';
+          return;
+        }
+        el('icpcWeight').textContent=n<=40?'Up to 40 Kg':'41 Kg and above';
+        var icpc='799699109', rule='All zones and weight breaks except Zone G below 41 Kg and Zone B up to 40 Kg.';
+        if(zone==='G'&&n>=41){icpc='629048715';rule='Destination Zone G (USA & Canada) from 41 Kg.';}
+        else if(zone==='B'&&n<=40){icpc='806659533';rule='Destination Zone B up to 40 Kg.';}
+        else if(zone==='G'&&n<=40){icpc='799699109';rule='Destination Zone G (USA & Canada) up to 40 Kg.';}
+        else if(zone==='B'&&n>=41){icpc='799699109';rule='Destination Zone B from 41 Kg.';}
+        el('usedIcpc').textContent=icpc;
+        el('icpcRule').textContent=rule;
+      }
+    }catch(err){console.error('IPHW ICPC error:',err);}
+  }
+  function refresh(){
+    runCalc();
+    setTimeout(runIcpc,0);
+  }
+
+  // Keep the existing UI and formulas; only make the calculation trigger reliable.
+  ['weight','country','postal','city','fx','vat','fuel','odaBase','govtFee'].forEach(function(id){
+    var e=el(id);
+    if(!e) return;
+    e.addEventListener('input',refresh,false);
+    e.addEventListener('change',refresh,false);
+  });
+  var normalPackage=el('normalPackage');
+  if(normalPackage){
+    normalPackage.addEventListener('input',function(){
+      if(typeof currentPlan!=='undefined' && currentPlan==='NORMAL' && el('weight')) el('weight').value=normalPackage.value;
+      refresh();
+    },false);
+    normalPackage.addEventListener('change',function(){
+      if(typeof currentPlan!=='undefined' && currentPlan==='NORMAL' && el('weight')) el('weight').value=normalPackage.value;
+      refresh();
+    },false);
+  }
+
+  var calcBtn=el('calculate');
+  if(calcBtn){
+    calcBtn.addEventListener('click',function(){setTimeout(runIcpc,0);},true);
+  }
+
+  document.querySelectorAll('.plan').forEach(function(btn){
+    btn.addEventListener('click',function(){setTimeout(refresh,20);},true);
+  });
+
+  // Initial refresh after all existing scripts have initialized.
+  window.addEventListener('load',function(){setTimeout(refresh,100);});
+  setTimeout(refresh,50);
+})();
+</script>
 </body></html>
