@@ -131,6 +131,10 @@ body:before{content:"";position:fixed;inset:0;background:linear-gradient(135deg,
 .final .grand:not(.grand-no-vat){background:linear-gradient(90deg,#edf8f2,#dff2e8)!important;color:#175b3b!important;border:1px solid #b9dfca!important}
 .final .grand:not(.grand-no-vat) strong{color:#175b3b!important}
 </style>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script><style id="v9-public-chart-logs">
+.chart-search-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 0}.chart-search-row label{font-size:11px;font-weight:800;color:#52647c}.chart-search-row input{width:280px;max-width:100%;padding:9px 10px;border:1px solid #c9d5e3;border-radius:7px}.chart-zone-badge{font-size:11px;font-weight:800;padding:7px 10px;border-radius:7px;background:#eef5ff;color:#173f73}.chart-suggest{position:relative;z-index:20}.chart-suggest button{display:block;width:280px;max-width:100%;text-align:left;padding:7px 10px;border:1px solid #d8e0ea;background:#fff}.chart-grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}.chart-box{border:1px solid #dbe4ef;border-radius:9px;padding:10px;background:#fff}.chart-box h3{font-size:13px;margin:0 0 8px;color:#173f73}.chart-scroll{overflow:auto;max-height:330px}.rate-chart-table{width:100%;border-collapse:collapse;font-size:11px}.rate-chart-table th,.rate-chart-table td{border:1px solid #e1e7ef;padding:7px;text-align:center}.rate-chart-table th{background:#eef5ff;color:#173f73}.oda-summary{font-size:11px;color:#52647c;padding:5px 0 9px}.icpc-note{margin-top:14px}.icpc-note-table{width:100%;border-collapse:collapse;font-size:11px}.icpc-note-table th,.icpc-note-table td{border:1px solid #dbe3ec;padding:8px;text-align:left}.icpc-note-table th{background:#eef5ff;color:#173f73}.icpc-foot{font-size:11px;margin-top:9px;color:#8b1e1e}.log-delete-btn{font-size:10px;padding:4px 7px;border:1px solid #efb5b5;background:#fff4f4;color:#a11;border-radius:5px;cursor:pointer}.logs-modal-table{width:100%;border-collapse:collapse;font-size:10px}.logs-modal-table th,.logs-modal-table td{border:1px solid #dbe3ec;padding:6px;white-space:nowrap}.logs-modal-table th{background:#eef5ff}.logs-modal-toolbar{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}.logs-modal-toolbar input{padding:7px;border:1px solid #c9d5e3;border-radius:6px}.logs-modal-wrap{overflow:auto;max-height:60vh}
+@media(max-width:900px){.chart-grid2{grid-template-columns:1fr}.chart-search-row input{width:100%}}
+</style>
 </head>
 <body>
 <header class="app-top">
@@ -176,7 +180,7 @@ body:before{content:"";position:fixed;inset:0;background:linear-gradient(135deg,
         <div class="field2"><label>Service Type</label><div class="radio-line"><label><input class="service" type="radio" name="svc" data-service="Import" checked> Import</label><label><input class="service" type="radio" name="svc" data-service="Export"> Export</label></div></div>
         <div id="normalPackageWrap" class="hide-compat"><input id="normalPackage" value="5"><datalist id="normalPackageList"></datalist></div>
         <div class="hide-compat"><input id="odaBase" type="number" value="25"><input id="govtFee" type="number" value="6"><span id="govtFeeWrap"></span></div>
-        <button class="calc-btn" id="calculate">⌕ &nbsp; Calculate Rate</button>
+        <div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap"><button class="calc-btn" id="calculate">⌕ &nbsp; Calculate Rate</button><button type="button" class="btn2 secondary" id="dashboardReset">↻ Reset</button></div>
         <div id="warning" style="grid-column:1/-1;font-size:10px;color:#b42318"></div>
       </div>
     </section>
@@ -217,26 +221,35 @@ body:before{content:"";position:fixed;inset:0;background:linear-gradient(135deg,
     </section>
   </div>
 
-  <section class="panel-card compare">
-    <div class="compare-head"><b>Rate Comparison (Normal / A / B)</b><small>Rate A and Rate B can be updated separately. Normal Rate remains unchanged.</small></div>
-    <div class="compare-tabs"><button class="active">Normal Rate</button><button>Rate A</button><button>Rate B</button></div>
-    <div class="compare-grid">
-      <div class="compare-card normal"><div class="ct normal">Normal Rate &nbsp;<small>(Unchanged)</small></div><div class="compare-body">
-        <div class="info-row"><span>Base Tariff (BDT)</span><strong id="cmpNBase">৳90,500.00</strong></div><div class="info-row"><span>Per KG Rate (BDT)</span><strong id="cmpNRate">৳905.00</strong></div><div class="info-row"><span>ODA Charge (BDT)</span><strong id="cmpNOda">৳6,182.50</strong></div><div class="info-row"><span>ODA Fuel (BDT)</span><strong id="cmpNFuel">৳3,292.18</strong></div><div class="info-row"><span>Total ODA (BDT)</span><strong id="cmpNTotalOda">৳9,474.68</strong></div><div class="info-row total"><span>Subtotal Without VAT</span><strong id="cmpNSub">৳99,974.68</strong></div><div class="info-row total"><span>VAT (15.0%)</span><strong id="cmpNVat">৳14,996.20</strong></div><div class="info-row total"><span>Subtotal With VAT</span><strong id="cmpNWith">৳114,970.88</strong></div><div class="info-row grand" style="background:#173f73;color:#fff;border:0"><span>Grand Total With VAT</span><strong id="cmpNGrand">৳114,970.88</strong></div>
-      </div></div>
-      <div class="compare-card"><div class="ct a">Rate A &nbsp;<small>(Separate Rate)</small></div><div class="compare-body">
-        <div class="info-row"><span>Base Tariff (BDT)</span><strong id="cmpABase">—</strong></div><div class="info-row"><span>Per KG Rate (BDT)</span><strong id="cmpARate">—</strong></div><div class="info-row"><span>ODA Charge (BDT)</span><strong id="cmpAOda">—</strong></div><div class="info-row"><span>ODA Fuel (BDT)</span><strong id="cmpAFuel">—</strong></div><div class="info-row"><span>Total ODA (BDT)</span><strong id="cmpATotalOda">—</strong></div><div class="info-row total"><span>Subtotal Without VAT</span><strong id="cmpASub">—</strong></div><div class="info-row total"><span>VAT (15.0%)</span><strong id="cmpAVat">—</strong></div><div class="info-row total"><span>Subtotal With VAT</span><strong id="cmpAWith">—</strong></div><div class="info-row grand" style="background:#078957;color:#fff;border:0"><span>Grand Total With VAT</span><strong id="cmpAGrand">—</strong></div>
-      </div></div>
-      <div class="compare-card b"><div class="ct b">Rate B &nbsp;<small>(Separate Rate)</small></div><div class="compare-body">
-        <div class="info-row"><span>Base Tariff (BDT)</span><strong id="cmpBBase">—</strong></div><div class="info-row"><span>Per KG Rate (BDT)</span><strong id="cmpBRate">—</strong></div><div class="info-row"><span>ODA Charge (BDT)</span><strong id="cmpBOda">—</strong></div><div class="info-row"><span>ODA Fuel (BDT)</span><strong id="cmpBFuel">—</strong></div><div class="info-row"><span>Total ODA (BDT)</span><strong id="cmpBTotalOda">—</strong></div><div class="info-row total"><span>Subtotal Without VAT</span><strong id="cmpBSub">—</strong></div><div class="info-row total"><span>VAT (15.0%)</span><strong id="cmpBVat">—</strong></div><div class="info-row total"><span>Subtotal With VAT</span><strong id="cmpBWith">—</strong></div><div class="info-row grand" style="background:#5641aa;color:#fff;border:0"><span>Grand Total With VAT</span><strong id="cmpBGrand">—</strong></div>
-      </div></div>
+  <section class="panel-card rate-chart-panel" id="rateChartPanel">
+    <div class="compare-head"><b>Rate Chart / Zone / ODA</b><small>Search by destination country. Rate chart shows the selected country zone; ODA shows postal &amp; city matches.</small></div>
+    <div class="chart-search-row">
+      <label>Search Country</label><input id="chartCountrySearch" type="text" placeholder="Enter country name..." autocomplete="off">
+      <span id="chartCountryZone" class="chart-zone-badge">Zone —</span>
+    </div>
+    <div id="chartCountrySuggest" class="chart-suggest"></div>
+    <div class="chart-grid2">
+      <div class="chart-box"><h3>Rate Chart</h3><div class="chart-scroll"><table class="rate-chart-table"><thead><tr><th>Weight Break</th><th>Rate A</th><th>Rate B</th></tr></thead><tbody id="publicRateChartBody"></tbody></table></div></div>
+      <div class="chart-box"><h3>ODA Search Result</h3><div class="oda-summary" id="chartOdaSummary">Search a country to see postal &amp; city ODA.</div><div class="chart-scroll"><table class="rate-chart-table"><thead><tr><th>ODA Type</th><th>Reference</th><th>Country</th></tr></thead><tbody id="publicOdaBody"></tbody></table></div></div>
     </div>
   </section>
 
   <section class="panel-card bottom-card" id="dashboard">
     <div class="bottom-tabs"><button class="active">Recent Calculations</button><button>Calculation Logs</button><button>Rate History</button><button id="viewAllLogs">View All</button></div>
-    <div class="log-table"><table><thead><tr><th>Date &amp; Time</th><th>Email</th><th>Service</th><th>Country</th><th>Weight</th><th>ODA</th><th>Subtotal (w/o VAT)</th><th>Grand Total (w/ VAT)</th><th>Status</th></tr></thead><tbody id="dashRows"><tr><td colspan="9">Login to load calculations.</td></tr></tbody></table></div>
+    <div class="log-table"><table><thead><tr><th>Date &amp; Time</th><th>Email</th><th>Service</th><th>Country</th><th>Weight</th><th>ODA</th><th>Subtotal (w/o VAT)</th><th>Grand Total (w/ VAT)</th><th>Action</th></tr></thead><tbody id="dashRows"><tr><td colspan="9">Login to load calculations.</td></tr></tbody></table></div>
     <div class="hide-compat"><span id="dashRole">User</span><span id="dTotal"></span><span id="dShipments"></span><span id="dOda"></span><span id="dVat"></span><span id="dGrand"></span><button id="downloadHistory"></button><button id="adminClearData"></button></div>
+  </section>
+
+  <section class="panel-card icpc-note">
+    <div class="panel-title">Note — ICPC Instruction</div>
+    <div class="icpc-note-table-wrap"><table class="icpc-note-table"><thead><tr><th>FedEx Account Number</th><th>Destination Country / Zone</th></tr></thead><tbody>
+      <tr><td>799699109</td><td>All zone &amp; all weight break except/without G zone and B Zone</td></tr>
+      <tr><td>799699109</td><td>G Zone (USA &amp; Canada) up to 40Kg</td></tr>
+      <tr><td>629048715</td><td>G Zone (USA &amp; Canada) from 41Kg</td></tr>
+      <tr><td>806659533</td><td>B Zone Up to 40Kg</td></tr>
+      <tr><td>799699109</td><td>B Zone above 40Kg</td></tr>
+    </tbody></table></div>
+    <div class="icpc-foot"><b>*** The AWB should be created as per the above ICPC only.</b></div>
   </section>
 
   <div class="hide-compat">
@@ -256,7 +269,7 @@ body:before{content:"";position:fixed;inset:0;background:linear-gradient(135deg,
 </div></div>
 <div class="modal2" id="forgotModal"><div class="modalbox2"><h2>Forgot Password</h2><button class="btn2 secondary" id="forgotClose">✕</button><input id="forgotEmail" type="email" placeholder="you@example.com"><button class="btn2 primary" id="sendReset">Send Reset Link</button><div id="forgotMsg"></div></div></div>
 <div class="modal2" id="resetModal"><div class="modalbox2"><h2>Reset Password</h2><button class="btn2 secondary" id="resetClose">✕</button><input id="newPassword" type="password" placeholder="New password"><input id="confirmPassword" type="password" placeholder="Confirm password"><button class="btn2 primary" id="updatePassword">Update Password</button><div id="resetMsg"></div></div></div>
-<div class="modal2" id="rateModal"><div class="modalbox2"><div style="display:flex;justify-content:space-between"><h2>⚙ Rate Update</h2><button class="btn2 secondary" id="rateClose">✕</button></div><p>Edit Rate A / Rate B separately. Normal Rate remains unchanged.</p><div style="font-size:11px;color:#52647c;margin:-2px 0 9px">Rates loaded from the uploaded <b>IPHW Rate.xlsx</b>. Current rate is shown above each editable field. Change the value below it and click <b>Save Rates</b>.</div><div class="compare-tabs"><button class="rate-tab active" data-edit-plan="A">Rate A</button><button class="rate-tab" data-edit-plan="B">Rate B</button></div><div style="overflow:auto;max-height:55vh"><table style="width:100%;font-size:11px"><thead id="editRateHead"></thead><tbody id="editRateBody"></tbody></table></div><div class="modal-actions" style="margin-top:12px"><button class="btn2 primary" id="saveRates">Save Rates</button><button class="btn2 secondary" id="restoreRates">Restore Default</button><button class="btn2 secondary" id="exportRates">Export Backup</button><label class="btn2 secondary">Import Backup<input id="importRates" type="file" accept=".json" style="display:none"></label></div><div id="rateMsg"></div></div></div>
+<div class="modal2" id="rateModal"><div class="modalbox2"><div style="display:flex;justify-content:space-between"><h2>⚙ Rate Update</h2><button class="btn2 secondary" id="rateClose">✕</button></div><p>Edit Rate A / Rate B separately. Normal Rate remains unchanged.</p><div style="font-size:11px;color:#52647c;margin:-2px 0 9px">Rates loaded from the uploaded <b>IPHW Rate.xlsx</b>. Current rate is shown above each editable field. Change the value below it and click <b>Save Rates</b>.</div><div class="compare-tabs"><button class="rate-tab active" data-edit-plan="A">Rate A</button><button class="rate-tab" data-edit-plan="B">Rate B</button></div><div style="overflow:auto;max-height:55vh"><table style="width:100%;font-size:11px"><thead id="editRateHead"></thead><tbody id="editRateBody"></tbody></table></div><div class="modal-actions" style="margin-top:12px"><button class="btn2 primary" id="saveRates">Save Rates</button><button class="btn2 secondary" id="restoreRates">Restore Default</button><button class="btn2 secondary" id="exportRates">Export Backup</button><label class="btn2 secondary" id="excelRateUploadWrap">📊 Upload Rate A Excel<input id="excelRateUpload" type="file" accept=".xlsx,.xls" style="display:none"></label><label class="btn2 secondary" id="excelRateBUploadWrap">📊 Upload Rate B Excel<input id="excelRateBUpload" type="file" accept=".xlsx,.xls" style="display:none"></label><button class="btn2 secondary" id="downloadExcelDemo">⬇ Excel Demo</button><label class="btn2 secondary">Import Backup<input id="importRates" type="file" accept=".json" style="display:none"></label></div><div id="rateMsg"></div></div></div>
 
 <div class="hide-compat">
   <button id="loginBtn" onclick="openAuthModal()">Login</button><button id="logoutBtn">Logout</button><span id="authUser">Not logged in</span><button id="rateUpdateBtn">Rate Update</button>
@@ -613,7 +626,10 @@ function renderRateEditor(){
   }).join('')+'</tr>').join('');
 }
 async function saveRates(){
-  /* Only the selected A or B matrix is editable. Normal Rate is never included here. */
+  if(!currentUser || !currentProfile?.is_admin){
+    $('rateMsg').textContent='✕ Admin access required to change rates.';
+    return;
+  }
   const rows=editPlan==='A'?DATA.ratesA:DATA.ratesB;
   document.querySelectorAll('#editRateBody input').forEach(inp=>{
     const ri=Number(inp.dataset.ri),ci=Number(inp.dataset.ci),v=Number(inp.value);
@@ -623,14 +639,14 @@ async function saveRates(){
   localStorage.setItem('iphw_rates_excel_v2',JSON.stringify(payload));
   renderRates($('rateSearch').value);
   calculate();
-  $('rateMsg').textContent='✓ Rates saved locally.';
-  if(sb&&currentUser&&currentProfile?.is_admin){
-    const {error}=await sb.from('rates').insert({rate_data:{A:DATA.ratesA,B:DATA.ratesB},updated_by:currentUser.id});
+  if(sb){
+    const {error}=await sb.from('rates').insert({rate_data:payload,updated_by:currentUser.id});
     if(error)$('rateMsg').textContent='⚠ Local save হয়েছে, database save failed: '+error.message;
     else $('rateMsg').textContent='✓ Rates saved to shared database.';
-  }
+  }else $('rateMsg').textContent='✓ Rates saved locally.';
 }
 function restoreRates(){
+  if(!currentUser || !currentProfile?.is_admin){$('rateMsg').textContent='✕ Admin access required.';return;}
   if(!confirm('Restore default Rate A and Rate B?'))return;
   DATA.ratesA=cloneRateMatrix(DEFAULT_RATES_A);
   DATA.ratesB=cloneRateMatrix(DEFAULT_RATES_B);
@@ -647,7 +663,10 @@ function exportRates(){
   URL.revokeObjectURL(a.href);
   $('rateMsg').textContent='✓ Backup exported.';
 }
-$('rateUpdateBtn').addEventListener('click',()=>{renderRateEditor();$('rateMsg').textContent='';$('rateModal').classList.add('show');});
+$('rateUpdateBtn').addEventListener('click',()=>{
+  if(!currentUser || !currentProfile?.is_admin){$('rateMsg').textContent='✕ Admin access required.';return;}
+  renderRateEditor();$('rateMsg').textContent='';$('rateModal').classList.add('show');
+});
 $('rateClose').addEventListener('click',()=>$('rateModal').classList.remove('show'));
 $('rateModal').addEventListener('click',e=>{if(e.target.id==='rateModal')$('rateModal').classList.remove('show');});
 document.querySelectorAll('[data-edit-plan]').forEach(b=>b.addEventListener('click',()=>{
@@ -672,6 +691,53 @@ $('importRates').addEventListener('change',e=>{
     e.target.value='';
   };
   reader.readAsText(file);
+});
+async function importRateAExcel(file){
+  if(!currentUser || !currentProfile?.is_admin){$('rateMsg').textContent='✕ Admin access required to upload Rate A Excel.';return;}
+  if(!window.XLSX){$('rateMsg').textContent='✕ Excel reader is not loaded. Please refresh and try again.';return;}
+  try{
+    const buf=await file.arrayBuffer();
+    const wb=XLSX.read(buf,{type:'array'});
+    const ws=wb.Sheets[wb.SheetNames.find(n=>String(n).trim().toLowerCase()==='rate a')||wb.SheetNames[0]];
+    if(!ws) throw new Error('Rate A sheet not found');
+    const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
+    let headerIdx=rows.findIndex(r=>Array.isArray(r)&&String(r[0]??'').trim().toLowerCase()==='zone');
+    if(headerIdx<0) throw new Error('Zone header row not found');
+    const headers=rows[headerIdx].slice(0,14).map(v=>String(v??'').trim());
+    if(headers.length!==14) throw new Error('Expected 14 columns');
+    const parsed=[];
+    for(let i=headerIdx+1;i<rows.length;i++){
+      const r=rows[i]||[];
+      const zone=String(r[0]??'').trim().replace(/^'/,'');
+      if(!zone) continue;
+      const vals=[zone];
+      for(let c=1;c<14;c++){
+        const v=Number(r[c]);
+        if(!Number.isFinite(v)) throw new Error('Invalid rate in row '+(i+1)+', column '+(c+1));
+        vals.push(v);
+      }
+      parsed.push(vals);
+    }
+    if(parsed.length!==8 || !parsed.every(r=>r.length===14)) throw new Error('Rate A must contain 8 weight rows and 14 columns');
+    DATA.ratesA=parsed;
+    localStorage.setItem('iphw_rates_excel_v2',JSON.stringify({A:DATA.ratesA,B:DATA.ratesB}));
+    const payload={A:DATA.ratesA,B:DATA.ratesB};
+    if(sb){
+      const {error}=await sb.from('rates').insert({rate_data:payload,updated_by:currentUser.id});
+      if(error) throw new Error('Database save failed: '+error.message);
+    }
+    editPlan='A';
+    document.querySelectorAll('[data-edit-plan]').forEach(x=>x.classList.toggle('active',x.dataset.editPlan==='A'));
+    renderRateEditor(); renderRates($('rateSearch').value); calculate();
+    $('rateMsg').textContent='✓ Rate A Excel uploaded and shared rates updated successfully.';
+  }catch(err){
+    $('rateMsg').textContent='✕ Rate A Excel upload failed: '+err.message;
+  }finally{
+    $('excelRateUpload').value='';
+  }
+}
+$('excelRateUpload')?.addEventListener('change',e=>{
+  const file=e.target.files?.[0]; if(file) importRateAExcel(file);
 });
 loadSavedRates();
 syncPlanInputs();
@@ -762,18 +828,33 @@ async function loadSharedRates(){
 }
 async function loadDashboard(){
   if(!sb||!currentUser)return;
-  let q=sb.from('calculations').select('id,user_id,created_at,email,service,country,postal,city,weight,oda_charge_bdt,oda_fuel_surcharge_bdt,grand_total_with_vat,vat,grand_total');
+  let q=sb.from('calculations').select('id,user_id,created_at,email,service,country,postal,city,weight,oda_charge_bdt,oda_fuel_surcharge_bdt,subtotal,vat,grand_total_with_vat,grand_total');
   if(!currentProfile?.is_admin) q=q.eq('user_id',currentUser.id);
-  const {data,error}=await q.order('created_at',{ascending:false}).limit(100);
-  if(error){$('dashRows').innerHTML='<tr><td colspan="7">Dashboard error: '+esc(error.message)+'</td></tr>';return;}
+  const {data,error}=await q.order('created_at',{ascending:false}).limit(1000);
+  if(error){$('dashRows').innerHTML='<tr><td colspan="10">Dashboard error: '+esc(error.message)+'</td></tr>';return;}
   const rows=data||[];
-  $('dTotal').textContent=rows.length;
-  $('dShipments').textContent=rows.length;
+  window.currentLogRows=rows;
+  $('dTotal').textContent=rows.length;$('dShipments').textContent=rows.length;
   $('dOda').textContent=bdt(rows.reduce((a,r)=>a+n(r.oda_charge_bdt)+n(r.oda_fuel_surcharge_bdt),0));
   $('dVat').textContent=bdt(rows.reduce((a,r)=>a+n(r.vat),0));
   $('dGrand').textContent=bdt(rows.reduce((a,r)=>a+n(r.grand_total_with_vat ?? r.grand_total),0));
-  $('dashRows').innerHTML=rows.length?rows.map(r=>{const odaType=(r.service==='Postal'||r.service==='Postal Code')?'Postal Code':(r.service==='City'?'City':(String(r.postal||'').trim()?'Postal Code':(String(r.city||'').trim()?'City':'')));return `<tr><td>${new Date(r.created_at).toLocaleString()}</td><td>${esc(r.email||'')}</td><td>${esc(odaType)}</td><td>${esc(r.country||'')}</td><td>${n(r.weight)}</td><td>${bdt(n(r.oda_charge_bdt)+n(r.oda_fuel_surcharge_bdt))}</td><td>${bdt(r.subtotal ?? r.grand_total)}</td><td>${bdt(r.grand_total_with_vat ?? r.grand_total)}</td></tr>`}).join(''):'<tr><td colspan="9">No calculations yet.</td></tr>';
+  $('dashRows').innerHTML=rows.length?rows.map(r=>{
+    const odaType=(r.service==='Postal'||r.service==='Postal Code')?'Postal Code':(r.service==='City'?'City':(String(r.postal||'').trim()?'Postal Code':(String(r.city||'').trim()?'City':'')));
+    return `<tr><td>${new Date(r.created_at).toLocaleString()}</td><td>${esc(r.email||'')}</td><td>${esc(odaType)}</td><td>${esc(r.country||'')}</td><td>${n(r.weight)}</td><td>${bdt(n(r.oda_charge_bdt)+n(r.oda_fuel_surcharge_bdt))}</td><td>${bdt(r.subtotal ?? r.grand_total)}</td><td>${bdt(r.grand_total_with_vat ?? r.grand_total)}</td><td><button class="log-delete-btn" data-log-id="${esc(r.id)}">Delete</button></td></tr>`;
+  }).join(''):'<tr><td colspan="9">No calculations yet.</td></tr>';
+  document.querySelectorAll('.log-delete-btn').forEach(btn=>btn.addEventListener('click',()=>deleteCalculationLog(btn.dataset.logId)));
+  renderLogsModal(rows);
 }
+async function deleteCalculationLog(id){
+  if(!sb||!currentUser||!id)return;
+  if(!confirm('Delete this calculation log?'))return;
+  let q=sb.from('calculations').delete().eq('id',id);
+  if(!currentProfile?.is_admin) q=q.eq('user_id',currentUser.id);
+  const {error}=await q;
+  if(error){alert('Delete failed: '+error.message);return;}
+  await loadDashboard();
+}
+
 async function saveCalculation(){
   if(!sb||!currentUser){
     if(!currentUser) $('authUser').textContent='Not logged in — calculation not logged.';
@@ -816,23 +897,15 @@ async function saveCalculation(){
 }
 async function downloadHistoryAndClear(){
   if(!sb||!currentUser){alert('Please login first.');return;}
-  let q=sb.from('calculations').select('id,user_id,created_at,email,service,country,postal,city,weight,oda_charge_bdt,oda_fuel_surcharge_bdt,grand_total_with_vat,grand_total');
+  let q=sb.from('calculations').select('created_at,email,service,country,postal,city,weight,oda_charge_bdt,oda_fuel_surcharge_bdt,subtotal,grand_total_with_vat,grand_total');
   if(!currentProfile?.is_admin) q=q.eq('user_id',currentUser.id);
-  const {data,error}=await q.order('created_at',{ascending:false}).limit(1000);
+  const {data,error}=await q.order('created_at',{ascending:false}).limit(5000);
   if(error){alert('History download failed: '+error.message);return;}
-  const rows=data||[];
-  if(!rows.length){alert('No history available to download.');return;}
-  const escCsv=v=>'\"'+String(v??'').replace(/\"/g,'\"\"')+'\"';
-  const csvRows=[['Date','Email','ODA Type','Country','Weight','ODA','Grand Total'],...rows.map(r=>[new Date(r.created_at).toLocaleString(),r.email||'',(r.service==='Postal'||r.service==='Postal Code')?'Postal Code':(r.service==='City'?'City':(String(r.postal||'').trim()?'Postal Code':(String(r.city||'').trim()?'City':''))),r.country||'',n(r.weight),bdt(n(r.oda_charge_bdt)+n(r.oda_fuel_surcharge_bdt)),bdt(r.grand_total_with_vat??r.grand_total)])];
+  const rows=data||[]; if(!rows.length){alert('No history available to download.');return;}
+  const escCsv=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+  const csvRows=[['Date','Email','ODA Type','Country','Postal','City','Weight','ODA','Subtotal Without VAT','Grand Total With VAT'],...rows.map(r=>[new Date(r.created_at).toLocaleString(),r.email||'',(r.service==='Postal'||r.service==='Postal Code')?'Postal Code':(r.service==='City'?'City':(String(r.postal||'').trim()?'Postal Code':(String(r.city||'').trim()?'City':''))),r.country||'',r.postal||'',r.city||'',n(r.weight),bdt(n(r.oda_charge_bdt)+n(r.oda_fuel_surcharge_bdt)),bdt(r.subtotal??r.grand_total),bdt(r.grand_total_with_vat??r.grand_total)])];
   const csv=csvRows.map(row=>row.map(escCsv).join(',')).join('\r\n');
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='IPHW-History-'+new Date().toISOString().slice(0,10)+'.csv';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(a.href);
-  const ids=rows.map(r=>r.id).filter(Boolean);
-  if(ids.length){
-    const {error:delError}=await sb.from('calculations').delete().in('id',ids);
-    if(delError){alert('History downloaded, but database history could not be deleted: '+delError.message);return;}
-  }
-  await loadDashboard();
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='IPHW-Calculation-Logs-'+new Date().toISOString().slice(0,10)+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),500);
 }
 $('downloadHistory').addEventListener('click',downloadHistoryAndClear);
 async function adminClearAllData(){
@@ -1037,4 +1110,125 @@ renderRates();renderZones();renderODA();calculate();
 })();
 </script>
 
+
+<script>
+(function(){
+  const $id=id=>document.getElementById(id);
+  const settingsKey='iphw_manual_settings_v1';
+  function isAdmin(){ return !!(window.currentUser && window.currentProfile && (window.currentProfile.is_admin===true || String(window.currentProfile.role||'').toLowerCase()==='admin')); }
+  function setAdminControls(){
+    const show=isAdmin();
+    ['rateUpdateBtn','rateUpdateNav','excelRateUploadWrap','excelRateBUploadWrap','downloadExcelDemo'].forEach(id=>{const e=$id(id);if(e)e.style.display=show?'':'none';});
+  }
+  function saveManualSettings(){
+    const v={fx:$id('fx')?.value,vat:$id('vat')?.value,fuel:$id('fuel')?.value};
+    if(v.fx!=null&&v.vat!=null&&v.fuel!=null)localStorage.setItem(settingsKey,JSON.stringify(v));
+  }
+  function restoreManualSettings(){
+    try{const v=JSON.parse(localStorage.getItem(settingsKey)||'null');if(v){if($id('fx')&&v.fx!=null)$id('fx').value=v.fx;if($id('vat')&&v.vat!=null)$id('vat').value=v.vat;if($id('fuel')&&v.fuel!=null)$id('fuel').value=v.fuel;}}catch(e){}
+  }
+  ['fx','vat','fuel'].forEach(id=>{const e=$id(id);if(e)e.addEventListener('input',saveManualSettings);});
+  restoreManualSettings();
+
+  async function importRateBExcel(file){
+    if(!isAdmin()){const m=$id('rateMsg');if(m)m.textContent='✕ Admin access required to upload Rate B Excel.';return;}
+    if(!window.XLSX){const m=$id('rateMsg');if(m)m.textContent='✕ Excel reader is not loaded. Please refresh.';return;}
+    try{
+      const buf=await file.arrayBuffer(), wb=XLSX.read(buf,{type:'array'});
+      const sheetName=wb.SheetNames.find(n=>String(n).trim().toLowerCase()==='rate b')||wb.SheetNames[0];
+      const ws=wb.Sheets[sheetName]; if(!ws)throw new Error('Rate B sheet not found');
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
+      const hi=rows.findIndex(r=>Array.isArray(r)&&String(r[0]??'').trim().toLowerCase()==='zone');
+      if(hi<0)throw new Error('Zone header row not found');
+      const parsed=[];
+      for(let i=hi+1;i<rows.length;i++){
+        const r=rows[i]||[], zone=String(r[0]??'').trim().replace(/^'/,''); if(!zone)continue;
+        const vals=[zone]; for(let c=1;c<14;c++){const n=Number(r[c]);if(!Number.isFinite(n))throw new Error('Invalid rate at row '+(i+1)+', column '+(c+1));vals.push(n);} parsed.push(vals);
+      }
+      if(parsed.length!==8)throw new Error('Rate B must contain 8 weight rows and 14 columns');
+      DATA.ratesB=parsed;
+      localStorage.setItem('iphw_rates_excel_v2',JSON.stringify({A:DATA.ratesA,B:DATA.ratesB}));
+      const payload={A:DATA.ratesA,B:DATA.ratesB};
+      if(typeof sb!=='undefined'&&sb&&window.currentUser){const {error}=await sb.from('rates').insert({rate_data:payload,updated_by:window.currentUser.id});if(error)throw new Error('Database save failed: '+error.message);}
+      if(typeof editPlan!=='undefined') editPlan='B';
+      if(typeof renderRateEditor==='function')renderRateEditor();
+      if(typeof renderRates==='function')renderRates($id('rateSearch')?.value||'');
+      if(typeof calculate==='function')calculate();
+      const m=$id('rateMsg');if(m)m.textContent='✓ Rate B Excel uploaded and shared rates updated successfully.';
+    }catch(err){const m=$id('rateMsg');if(m)m.textContent='✕ Rate B Excel upload failed: '+err.message;}
+    finally{if($id('excelRateBUpload'))$id('excelRateBUpload').value='';}
+  }
+  $id('excelRateBUpload')?.addEventListener('change',e=>{const f=e.target.files?.[0];if(f)importRateBExcel(f);});
+
+  $id('downloadExcelDemo')?.addEventListener('click',()=>{
+    if(!isAdmin())return;
+    const rows=[['Rate A'],[],['Zone','A','B','C','D (for UK)','D rest','E','F','G','H','I','J','K','L'],['10-19',830,1220,825,1265,1350,1350,1210,1670,1340,1950,1950,860,1150],['20-29',720,1100,775,1050,1090,1095,1115,1320,1100,1715,1715,820,1010],['30-39',700,1095,765,980,1010,1030,1080,1315,1065,1650,1650,800,950],['40-49',690,1090,760,940,960,995,1055,1270,1040,1685,1685,790,945],['50-59',684,1078,749,915,930,985,1045,1246,1020,1580,1580,760,915],['60-70',680,1070,745,900,915,940,1030,1240,1025,1600,1600,760,900],['71-100',680,1065,740,875,890,930,1025,1235,1005,1590,1590,755,875],['101KG+ & Commercial',680,1065,740,875,890,930,1025,1235,1005,1590,1590,755,875],[],['Rate B'],[],['Zone','A','B','C','D (for UK)','D rest','E','F','G','H','I','J','K','L'],['10-19',840,1230,835,1275,1360,1360,1220,1680,1350,1960,1960,870,1160],['20-29',730,1110,785,1060,1100,1105,1125,1330,1110,1725,1725,830,1020],['30-39',710,1105,775,990,1020,1040,1090,1325,1075,1660,1660,810,960],['40-49',700,1100,770,950,970,1005,1065,1280,1050,1695,1695,800,955],['50-59',694,1088,759,925,940,995,1055,1256,1030,1590,1590,770,925],['60-70',690,1080,755,910,925,950,1040,1250,1035,1610,1610,770,910],['71-100',690,1075,750,885,900,940,1035,1245,1015,1600,1600,765,885],['101KG+ & Commercial',690,1075,750,885,900,940,1035,1245,1015,1600,1600,765,885]];
+    const ws=XLSX.utils.aoa_to_sheet(rows), wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Rate A & B'); XLSX.writeFile(wb,'IPHW_Rate_A_B_Demo.xlsx');
+  });
+
+  $id('dashboardReset')?.addEventListener('click',()=>{
+    const keep={fx:$id('fx')?.value,vat:$id('vat')?.value,fuel:$id('fuel')?.value};
+    ['country','postal','city','weight','normalPackage'].forEach(id=>{const e=$id(id);if(e)e.value='';});
+    document.querySelectorAll('input[name="svc"]').forEach(x=>x.checked=x.dataset.service==='Import');
+    if($id('fx'))$id('fx').value=keep.fx;if($id('vat'))$id('vat').value=keep.vat;if($id('fuel'))$id('fuel').value=keep.fuel;
+    saveManualSettings();
+    if(typeof syncPlanInputs==='function')syncPlanInputs();
+    if(typeof calculate==='function')calculate();
+    if(typeof renderInfoCharts==='function')renderInfoCharts();
+  });
+
+  const oldHandle=window.handleSession;
+  const watch=setInterval(()=>{setAdminControls(); if(window.currentUser!==undefined && window.currentProfile!==undefined){}},500); setTimeout(()=>clearInterval(watch),20000);
+  setAdminControls();
+})();
+</script>
+<script id="v9-chart-logs-enhance">
+(function(){
+ const $=id=>document.getElementById(id);
+ function countryRows(country){return (DATA.oda||[]).filter(r=>norm(r[0])===norm(country));}
+ function renderInfoCharts(){
+   const q=norm($('chartCountrySearch')?.value||$('country')?.value||'');
+   const exact=canonicalCountry($('chartCountrySearch')?.value||$('country')?.value||'');
+   const zone=DATA.zones[exact]||'';
+   if($('chartZone'))$('chartZone').textContent=zone;
+   if($('chartCountryZone'))$('chartCountryZone').textContent=zone?'Zone '+zone:'Zone —';
+   const suggestions=[...new Set(Object.keys(DATA.zones).filter(c=>!q||norm(c).includes(q)))].slice(0,20);
+   if($('chartCountrySuggest'))$('chartCountrySuggest').innerHTML=(q&&!exact?suggestions.map(c=>`<button type="button" data-chart-country="${esc(c)}">${esc(c)} — ${esc(DATA.zones[c]||'')}</button>`).join(''):'');
+   document.querySelectorAll('[data-chart-country]').forEach(b=>b.onclick=()=>{ $('chartCountrySearch').value=b.dataset.chartCountry; $('country').value=b.dataset.chartCountry; if(typeof showCountrySuggest==='function')showCountrySuggest(); calculate(); renderInfoCharts(); });
+   const body=$('publicRateChartBody');
+   if(body){
+     const idx=DATA.rateHeaders.indexOf(zone); const labels=DATA.ratesA.map(r=>r[0]);
+     body.innerHTML=idx<0?'<tr><td colspan="3">Select a valid destination country.</td></tr>':labels.map((w,i)=>`<tr><td><b>${esc(w)}</b></td><td>৳${Number(DATA.ratesA[i][idx]||0).toLocaleString('en-BD',{minimumFractionDigits:2})}</td><td>৳${Number(DATA.ratesB[i][idx]||0).toLocaleString('en-BD',{minimumFractionDigits:2})}</td></tr>`).join('');
+   }
+   const oda=countryRows(exact), ob=$('publicOdaBody');
+   if(ob){
+     const rows=oda.filter(r=>String(r[2]??'').trim()||String(r[3]??'').trim());
+     $('chartOdaSummary').textContent=exact?`${exact} — ${rows.filter(r=>String(r[2]??'').trim()).length} postal reference(s), ${rows.filter(r=>String(r[3]??'').trim()).length} city reference(s).`:'Search a country to see postal & city ODA.';
+     ob.innerHTML=rows.length?rows.slice(0,500).map(r=>{const p=String(r[2]??'').trim(),c=String(r[3]??'').trim();return `<tr><td>${p&&c?'Postal + City':p?'Postal':'City'}</td><td>${esc(p||c)}</td><td>${esc(r[0]||'')}</td></tr>`}).join(''):'<tr><td colspan="3">No ODA postal/city reference found.</td></tr>';
+   }
+ }
+ window.renderInfoCharts=renderInfoCharts;
+ $('chartCountrySearch')?.addEventListener('input',renderInfoCharts);
+ $('chartCountrySearch')?.addEventListener('change',()=>{const c=canonicalCountry($('chartCountrySearch').value);if(c){$('country').value=c;calculate();}});
+ $('country')?.addEventListener('input',()=>{setTimeout(()=>{if($('chartCountrySearch')&&!$('chartCountrySearch').matches(':focus'))$('chartCountrySearch').value=$('country').value;renderInfoCharts();},0)});
+ setTimeout(()=>{if($('chartCountrySearch'))$('chartCountrySearch').value=$('country')?.value||'';renderInfoCharts();},500);
+
+ function ensureLogsModal(){
+   let m=$('logsModal'); if(m)return m;
+   m=document.createElement('div');m.id='logsModal';m.className='modal2';
+   m.innerHTML=`<div class="modalbox2" style="max-width:1200px;width:96vw"><div style="display:flex;justify-content:space-between;align-items:center"><h2>▤ Calculation Logs</h2><button class="btn2 secondary" id="logsClose">✕</button></div><div class="logs-modal-toolbar"><input id="logsSearch" placeholder="Search country / email / postal / city"><button class="btn2 primary" id="logsDownload">⬇ Download CSV</button><button class="btn2 secondary" id="logsDeleteVisible">Delete Visible</button></div><div class="logs-modal-wrap"><table class="logs-modal-table"><thead><tr><th>Date</th><th>Email</th><th>Country</th><th>ODA</th><th>Postal</th><th>City</th><th>Weight</th><th>Subtotal</th><th>Grand VAT</th><th>Action</th></tr></thead><tbody id="logsModalBody"></tbody></table></div><div id="logsMsg" style="font-size:11px;margin-top:8px"></div></div>`;
+   document.body.appendChild(m);$('logsClose').onclick=()=>m.classList.remove('show');m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('show')});
+   $('logsSearch').oninput=()=>renderLogsModal(window.currentLogRows||[]);
+   $('logsDownload').onclick=()=>downloadHistoryAndClear();
+   $('logsDeleteVisible').onclick=async()=>{const rows=filterLogs(window.currentLogRows||[]);if(!rows.length)return;if(!confirm('Delete all visible calculation logs?'))return;for(const r of rows)await deleteCalculationLog(r.id);await loadDashboard();};
+   return m;
+ }
+ function filterLogs(rows){const q=norm($('logsSearch')?.value||'');if(!q)return rows;return rows.filter(r=>[r.email,r.country,r.postal,r.city,r.service].some(v=>norm(v).includes(q)));}
+ function renderLogsModal(rows){const m=$('logsModal');if(!m)return;const body=$('logsModalBody'),list=filterLogs(rows);body.innerHTML=list.length?list.map(r=>`<tr><td>${new Date(r.created_at).toLocaleString()}</td><td>${esc(r.email||'')}</td><td>${esc(r.country||'')}</td><td>${esc(r.service||'')}</td><td>${esc(r.postal||'')}</td><td>${esc(r.city||'')}</td><td>${n(r.weight)}</td><td>${bdt(r.subtotal??r.grand_total)}</td><td>${bdt(r.grand_total_with_vat??r.grand_total)}</td><td><button class="log-delete-btn" data-modal-log-id="${esc(r.id)}">Delete</button></td></tr>`).join(''):'<tr><td colspan="10">No calculation logs found.</td></tr>';body.querySelectorAll('[data-modal-log-id]').forEach(b=>b.onclick=async()=>{await deleteCalculationLog(b.dataset.modalLogId);});}
+ window.renderLogsModal=renderLogsModal;
+ document.querySelectorAll('.nav2[data-nav="logs"]').forEach(x=>x.addEventListener('click',async()=>{if(!window.currentUser){window.openAuthModal?.();return;}ensureLogsModal();await loadDashboard();renderLogsModal(window.currentLogRows||[]);$('logsModal').classList.add('show');}));
+ $('viewAllLogs')?.addEventListener('click',async()=>{if(!window.currentUser){window.openAuthModal?.();return;}ensureLogsModal();await loadDashboard();renderLogsModal(window.currentLogRows||[]);$('logsModal').classList.add('show');});
+ // Keep download as download-only. Admin sees all rows; users see their own rows according to current dashboard access.
+})();
+</script>
 </body></html>
