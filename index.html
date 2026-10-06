@@ -407,9 +407,21 @@ function demandChargeFor(zone,weight){
   const weightFactor=lookupWeight!=null?lookupWeight:w;
   return Math.max(factor*weightFactor,1);
 }
+function getCountryOdaType(country){
+  const rows=DATA.oda.filter(r=>norm(r[0])===norm(country));
+  if(!rows.length) return '';
+  const hasCity=rows.some(r=>String(r[1]??'').trim()!=='');
+  return hasCity?'City':'Postal Code';
+}
 function updateOdaFieldState(type){
-  $('postal').classList.toggle('oda-required',type==='Postal Code');
-  $('city').classList.toggle('oda-required',type==='City');
+  const postal=$('postal'), city=$('city');
+  const cityMode=type==='City', postalMode=type==='Postal Code';
+  postal.disabled=postalMode?false:cityMode;
+  city.disabled=cityMode?false:postalMode;
+  postal.classList.toggle('oda-required',postalMode);
+  city.classList.toggle('oda-required',cityMode);
+  if(postal.disabled){ postal.value=''; $('citySuggest').style.display='none'; }
+  if(city.disabled){ city.value=''; $('citySuggest').style.display='none'; }
 }
 function syncPlanInputs(){
   const normal=currentPlan==='NORMAL';
@@ -480,13 +492,14 @@ function calculate(){
   $('demandUsd').textContent=currentPlan==='NORMAL' && rr.zone?usd(demandUsd):'—';
   $('demandBdt').textContent=currentPlan==='NORMAL' && rr.zone?money(demandBdt):'—';
 
+  const countryOdaType=getCountryOdaType(country);
+  updateOdaFieldState(countryOdaType);
   const oda=findODA(country,postal,city);
   const postalHit=String(postal).trim()?oda.rows.filter(r=>postalMatches(postal,r[2],r[3])):[];
   const cityHit=String(city).trim()?oda.rows.filter(r=>norm(r[1])===norm(city)):[];
   let odaType='No ODA';
-  if(postalHit.length) odaType='Postal Code';
-  else if(cityHit.length) odaType='City';
-  updateOdaFieldState(odaType);
+  if(countryOdaType==='Postal Code' && postalHit.length) odaType='Postal Code';
+  else if(countryOdaType==='City' && cityHit.length) odaType='City';
   const odaApplies=odaType!=='No ODA';
   const noLocationProvided=!String(postal).trim()&&!String(city).trim();
   const odaUsd=odaApplies?Math.max(odaBase,rr.rounded*0.5):0;
@@ -584,16 +597,23 @@ function showCountrySuggest(){
 }
 function showCitySuggest(){
   const country=canonicalCountry($('country').value), q=norm($('city').value), box=$('citySuggest');
-  if(!country||!q){box.style.display='none';return}
-  const list=[...new Set(DATA.oda.filter(r=>norm(r[0])===norm(country)&&norm(r[1]).includes(q)).map(r=>r[1]).filter(Boolean))].slice(0,15);
+  const type=getCountryOdaType(country);
+  if(!country || type!=='City' || $('city').disabled){box.style.display='none';return}
+  // Show the full ODA city list when the field is focused/empty; filter it while typing.
+  const list=[...new Set(DATA.oda
+    .filter(r=>norm(r[0])===norm(country) && String(r[1]??'').trim()!=='')
+    .map(r=>r[1]))]
+    .filter(c=>!q || norm(c).includes(q))
+    .sort((a,b)=>String(a).localeCompare(String(b)))
+    .slice(0,30);
   box.innerHTML=list.map(c=>`<button type="button" data-v="${esc(c)}">${esc(c)}</button>`).join('');
   box.style.display=list.length?'block':'none';
   box.querySelectorAll('button').forEach(b=>b.addEventListener('mousedown',e=>{e.preventDefault();$('city').value=b.dataset.v;box.style.display='none';calculate();}));
 }
 document.querySelectorAll('.service').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.service').forEach(x=>x.classList.remove('active'));b.classList.add('active');}));
 document.querySelectorAll('.plan').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.plan').forEach(x=>x.classList.remove('active'));b.classList.add('active');currentPlan=b.dataset.plan;renderRates($('rateSearch').value);calculate();}));
-['weight','postal','city','fx','vat','fuel','odaBase','govtFee'].forEach(id=>$(id).addEventListener('input',()=>{if(id==='city')showCitySuggest();calculate();}));
-$('country').addEventListener('input',()=>{showCountrySuggest();calculate()});
+['weight','postal','city','fx','vat','fuel','odaBase','govtFee'].forEach(id=>$(id).addEventListener('input',()=>{if(id==='city')showCitySuggest();calculate();})); $('city').addEventListener('focus',()=>showCitySuggest());
+$('country').addEventListener('input',()=>{showCountrySuggest();const country=canonicalCountry($('country').value);const type=getCountryOdaType(country);if(type)updateOdaFieldState(type);else updateOdaFieldState('');calculate()});
 $('calculate').addEventListener('click',calculate);
 $('normalPackage').addEventListener('change',()=>{syncPlanInputs();calculate();});
 $('reset').addEventListener('click',()=>{
