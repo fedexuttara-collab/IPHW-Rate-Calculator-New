@@ -596,7 +596,26 @@ document.querySelectorAll('.plan').forEach(b=>b.addEventListener('click',()=>{do
 $('country').addEventListener('input',()=>{showCountrySuggest();calculate()});
 $('calculate').addEventListener('click',calculate);
 $('normalPackage').addEventListener('change',()=>{syncPlanInputs();calculate();});
-$('reset').addEventListener('click',()=>{currentPlan='A';document.querySelectorAll('.plan').forEach(x=>x.classList.toggle('active',x.dataset.plan==='A'));$('weight').value=10;$('normalPackage').value='0.5E';$('country').value='';$('postal').value='';$('city').value='';$('fx').value=123.65;$('vat').value=15;$('fuel').value=53.25;$('odaBase').value=25;$('govtFee').value=6;syncPlanInputs();calculate();renderRates();});
+$('reset').addEventListener('click',()=>{
+  // Clear only shipment/calculation inputs. Keep the latest manually imported
+  // Exchange Rate, VAT, Fuel Surcharge and ODA Base values unchanged.
+  const keepFx=$('fx').value, keepVat=$('vat').value, keepFuel=$('fuel').value, keepOdaBase=$('odaBase').value;
+  currentPlan='A';
+  document.querySelectorAll('.plan').forEach(x=>x.classList.toggle('active',x.dataset.plan==='A'));
+  $('weight').value=10;
+  $('normalPackage').value='0.5E';
+  $('country').value='';
+  $('postal').value='';
+  $('city').value='';
+  $('fx').value=keepFx;
+  $('vat').value=keepVat;
+  $('fuel').value=keepFuel;
+  $('odaBase').value=keepOdaBase;
+  $('govtFee').value=6;
+  syncPlanInputs();
+  calculate();
+  renderRates();
+});
 $('rateSearch').addEventListener('input',e=>renderRates(e.target.value));
 $('zoneSearch').addEventListener('input',e=>renderZones(e.target.value));
 $('odaSearch').addEventListener('input',e=>renderODA(e.target.value));
