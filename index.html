@@ -134,7 +134,7 @@ body.auth-locked > *:not(.auth-modal):not(.forgot-modal):not(.reset-modal):not(.
     <div><div class="admin-brand-title">IPHW Rate Calculator</div><div class="admin-brand-sub">FedEx Admin Portal</div></div>
   </div>
   <div class="admin-user">
-    <div class="admin-user-row"><div class="admin-avatar">♙</div><div><div class="admin-user-email" id="sidebarUser">amir.hamza@bdexpress.com</div><div class="admin-user-role">Admin</div></div></div>
+    <div class="admin-user-row"><div class="admin-avatar">♙</div><div><div class="admin-user-email" id="sidebarUser">amir.hamza@bdexpress.com</div><div class="admin-user-role" id="sidebarRole">User</div></div></div>
   </div>
   <nav class="admin-nav">
     <button type="button" class="active" data-admin-nav="dashboard"><span class="nav-icon">⌂</span><span>Dashboard</span></button>
@@ -286,7 +286,7 @@ body.auth-locked > *:not(.auth-modal):not(.forgot-modal):not(.reset-modal):not(.
 </section>
 <section class="card admin-section admin-only" id="usersPanel">
   <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">♙ User Access Control</h2><button class="btn secondary" id="refreshUsers">↻ Refresh Users</button></div>
-  <div class="user-table"><table><thead><tr><th>Email</th><th>Role</th><th>User ID</th><th>Access</th></tr></thead><tbody id="userRows"><tr><td colspan="4">Admin only.</td></tr></tbody></table></div>
+  <div class="user-table"><table><thead><tr><th>Email</th><th>Role</th><th>Rate A</th><th>Rate B</th><th>Normal Rate</th><th>Dashboard</th><th>Save</th></tr></thead><tbody id="userRows"><tr><td colspan="7">Admin only.</td></tr></tbody></table></div>
 </section>
 <div class="footer">FedEx • IPHW Rate Calculator • <b>Designed &amp; Developed by Amir Hamza</b></div>
 </main>
@@ -729,10 +729,13 @@ $('importRates').addEventListener('change',e=>{
 });
 async function loadUsers(){
   if(!sb||!currentProfile?.is_admin)return;
-  const {data,error}=await sb.from('profiles').select('id,email,is_admin').order('email',{ascending:true});
-  if(error){$('userRows').innerHTML='<tr><td colspan="4">User access error: '+esc(error.message)+'</td></tr>';return;}
-  $('userRows').innerHTML=(data||[]).map(u=>`<tr><td>${esc(u.email||'')}</td><td><b>${u.is_admin?'ADMIN':'USER'}</b></td><td style="font-size:9px">${esc(u.id)}</td><td>${u.is_admin?'Full Admin Access':'Calculator + Own Dashboard'}</td></tr>`).join('')||'<tr><td colspan="4">No users found.</td></tr>';
+  const {data,error}=await sb.from('profiles').select('id,email,is_admin,can_rate_a,can_rate_b,can_normal,can_dashboard').order('email',{ascending:true});
+  if(error){$('userRows').innerHTML='<tr><td colspan="7">User access error: '+esc(error.message)+'</td></tr>';return;}
+  const d=u=>({can_rate_a:u.can_rate_a!==false,can_rate_b:u.can_rate_b!==false,can_normal:u.can_normal!==false,can_dashboard:u.can_dashboard!==false});
+  $('userRows').innerHTML=(data||[]).map(u=>{if(u.is_admin)return `<tr><td>${esc(u.email||'')}</td><td><b>ADMIN</b></td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>Full Admin</td></tr>`;const a=d(u);return `<tr><td>${esc(u.email||'')}</td><td>USER</td><td><input type="checkbox" id="ra_${u.id}" ${a.can_rate_a?'checked':''}></td><td><input type="checkbox" id="rb_${u.id}" ${a.can_rate_b?'checked':''}></td><td><input type="checkbox" id="rn_${u.id}" ${a.can_normal?'checked':''}></td><td><input type="checkbox" id="rd_${u.id}" ${a.can_dashboard?'checked':''}></td><td><button class="btn secondary" style="padding:5px 8px" onclick="saveUserAccess('${u.id}')">Save</button></td></tr>`}).join('')||'<tr><td colspan="7">No users found.</td></tr>';
 }
+async function saveUserAccess(id){if(!currentProfile?.is_admin||!sb)return;const payload={can_rate_a:document.getElementById('ra_'+id)?.checked===true,can_rate_b:document.getElementById('rb_'+id)?.checked===true,can_normal:document.getElementById('rn_'+id)?.checked===true,can_dashboard:document.getElementById('rd_'+id)?.checked===true};const {error}=await sb.from('profiles').update(payload).eq('id',id);if(error){alert('Access update failed: '+error.message+'\nRun the supplied Supabase SQL migration first.');return;}alert('User access updated successfully.');await loadUsers();}
+window.saveUserAccess=saveUserAccess;
 $('refreshUsers')?.addEventListener('click',loadUsers);
 function exportRatesExcel(){
   if(!currentProfile?.is_admin){alert('Admin access required.');return;}
@@ -804,6 +807,10 @@ function initSupabase(){
     $('authUser').textContent='Login service unavailable';
   }
 }
+function accessDefaults(){return {can_rate_a:true,can_rate_b:true,can_normal:true,can_dashboard:true};}
+function normalizeAccess(p){return Object.assign(accessDefaults(),p||{});}
+function canUse(plan){if(currentProfile?.is_admin)return true;return plan==='A'?currentProfile?.can_rate_a!==false:plan==='B'?currentProfile?.can_rate_b!==false:plan==='NORMAL'?currentProfile?.can_normal!==false:false;}
+function applyAccessUI(){const admin=!!currentProfile?.is_admin;document.querySelectorAll('.plan[data-plan]').forEach(b=>{const ok=admin||canUse(b.dataset.plan);b.style.display=ok?'inline-flex':'none';b.disabled=!ok;});const db=admin||currentProfile?.can_dashboard!==false;document.querySelector('[data-admin-nav="dashboard"]')?.style.setProperty('display',db?'flex':'none');document.querySelector('[data-admin-nav="logs"]')?.style.setProperty('display',admin?'flex':'none');$('dashboard').style.display=db?'block':'none';}
 async function handleSession(session){
   currentUser=session?.user||null;
   const gate=document.getElementById('accessGate');
@@ -811,17 +818,18 @@ async function handleSession(session){
     $('loginBtn').style.display='none';$('logoutBtn').style.display='inline-block';
     $('authUser').textContent=currentUser.email||'Logged in';
     await loadProfile();
-    if(!currentProfile){ currentProfile={id:currentUser.id,email:currentUser.email,is_admin:false}; }
+    if(!currentProfile){ currentProfile=normalizeAccess({id:currentUser.id,email:currentUser.email,is_admin:false}); }
     await loadSharedRates();
     await loadDashboard();
     $('dashboard').classList.add('show');
     document.body.classList.remove('auth-locked'); if(gate)gate.style.display='none';
     const admin=!!currentProfile?.is_admin;
-    $('dashRole').textContent=admin?'ADMIN':'USER';
+    $('dashRole').textContent=admin?'ADMIN':'USER'; $('sidebarRole').textContent=admin?'Admin':'User';
     $('rateUpdateBtn').style.display=admin?'inline-block':'none';
     $('adminClearData').style.display=admin?'inline-block':'none';
     document.querySelectorAll('.admin-only').forEach(el=>el.classList.toggle('show',admin));
     document.querySelectorAll('[data-admin-nav="rate"],[data-admin-nav="users"]').forEach(el=>el.style.display=admin?'flex':'none');
+    applyAccessUI();
     if(admin) await loadUsers();
   }else{
     $('loginBtn').style.display='inline-block';$('logoutBtn').style.display='none';$('authUser').textContent='Not logged in';$('dashboard').classList.remove('show');$('rateUpdateBtn').style.display='none';$('adminClearData').style.display='none';currentProfile=null;
@@ -831,9 +839,9 @@ async function handleSession(session){
 }
 async function loadProfile(){
   if(!sb||!currentUser)return;
-  const {data,error}=await sb.from('profiles').select('id,email,is_admin').eq('id',currentUser.id).maybeSingle();
+  const {data,error}=await sb.from('profiles').select('id,email,is_admin,can_rate_a,can_rate_b,can_normal,can_dashboard').eq('id',currentUser.id).maybeSingle();
   if(error){console.warn(error);return;}
-  currentProfile=data||{id:currentUser.id,email:currentUser.email,is_admin:false};
+  currentProfile=normalizeAccess(data||{id:currentUser.id,email:currentUser.email,is_admin:false});
 }
 function n(v){return Number(v)||0}
 function bdt(v){return '৳'+n(v).toLocaleString('en-BD',{minimumFractionDigits:2,maximumFractionDigits:2})}
@@ -866,6 +874,7 @@ window.deleteCalculation=deleteCalculation;
 
 async function saveCalculation(){
   if(!sb||!currentUser)return;
+  if(!currentProfile?.is_admin && !canUse(currentPlan)){alert('You do not have access to '+(rateTypeLabel[currentPlan]||currentPlan)+'.');return;}
   const rawWeight=n($('weight').value), country=canonicalCountry($('country').value), postal=$('postal').value.trim(), city=$('city').value.trim();
   const rr=rateFor(country,rawWeight), oda=findODA(country,postal,city), fx=n($('fx').value), fuel=n($('fuel').value), odaBase=n($('odaBase').value), vatRate=n($('vat').value);
   const base=rr.rate!=null?rr.rounded*rr.rate:0, odaUsd=oda.matched.length?Math.max(odaBase,rr.rounded*0.5):0, odaFuel=odaUsd*(1+fuel/100), odaBdt=odaUsd*fx, odaFuelBdt=odaFuel*fx-odaBdt, subtotal=base+odaFuel*fx, vatAmount=subtotal*vatRate/100, grandVat=subtotal+vatAmount;
@@ -979,7 +988,7 @@ $('logoutBtn').addEventListener('click',async()=>{if(sb)await sb.auth.signOut();
 const originalCalculate=calculate;
 calculate=originalCalculate;
 $('calculate').removeEventListener('click',calculate);
-$('calculate').addEventListener('click',async()=>{calculate();await saveCalculation();});
+$('calculate').addEventListener('click',async()=>{if(!currentProfile?.is_admin && !canUse(currentPlan)){alert('You do not have access to '+(rateTypeLabel[currentPlan]||currentPlan)+'.');return;}calculate();await saveCalculation();});
 
 /* Admin can open Rate Update only after profile check */
 const originalRateOpen=$('rateUpdateBtn').onclick;
@@ -993,9 +1002,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   const nav=(key)=>{
     document.querySelectorAll('.admin-nav button').forEach(b=>b.classList.toggle('active',b.dataset.adminNav===key));
     if(key==='calculator') document.querySelector('.grid')?.scrollIntoView({behavior:'smooth',block:'start'});
-    else if(key==='dashboard') document.querySelector('#dashboard')?.scrollIntoView({behavior:'smooth',block:'start'});
+    else if(key==='dashboard'){if(currentProfile?.is_admin||currentProfile?.can_dashboard!==false)document.querySelector('#dashboard')?.scrollIntoView({behavior:'smooth',block:'start'});else alert('Dashboard access is disabled for this user.');}
     else if(key==='rate') document.querySelector('#rateUpdateBtn')?.click();
-    else if(key==='logs') document.querySelector('#dashboard')?.scrollIntoView({behavior:'smooth',block:'start'});
+    else if(key==='logs'){if(currentProfile?.is_admin)document.querySelector('#dashboard')?.scrollIntoView({behavior:'smooth',block:'start'});else alert('Admin access required for Calculation Logs.');}
     else if(key==='users') alert('Users management is available for Admin access.');
     else if(key==='settings') document.querySelector('#fx')?.scrollIntoView({behavior:'smooth',block:'center'});
   };
