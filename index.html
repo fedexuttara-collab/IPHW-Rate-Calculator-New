@@ -125,13 +125,172 @@ body.auth-locked > *:not(.auth-modal):not(.forgot-modal):not(.reset-modal):not(.
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>window.addEventListener("load",function(){if(!window.supabase){var s=document.createElement("script");s.src="https://unpkg.com/@supabase/supabase-js@2";s.onload=function(){if(typeof initSupabase==="function")initSupabase();};document.head.appendChild(s);}});</script>
+
+<style id="fedex-color-only-theme">
+/* ===== COLOR ONLY: header + sidebar/dashboard navigation ===== */
+.admin-sidebar{
+  background:#0b2a55 !important;
+  border-right:1px solid #173e70 !important;
+  box-shadow:4px 0 18px rgba(0,0,0,.14) !important;
+}
+.admin-brand{
+  border-bottom:1px solid #234978 !important;
+}
+.admin-brand-mark{
+  color:#ffffff !important;
+}
+.admin-brand-title{
+  color:#ffffff !important;
+}
+.admin-brand-sub{
+  color:#b9cbe2 !important;
+}
+.admin-user{
+  border-bottom:1px solid #234978 !important;
+}
+.admin-avatar{
+  background:#173e70 !important;
+  color:#ffffff !important;
+}
+.admin-user-email{
+  color:#ffffff !important;
+}
+.admin-user-role{
+  color:#b9cbe2 !important;
+}
+.admin-nav button{
+  color:#d9e6f5 !important;
+}
+.admin-nav button:hover,
+.admin-nav button.active{
+  background:#2457a6 !important;
+  color:#ffffff !important;
+}
+.admin-nav .nav-icon{
+  color:inherit !important;
+}
+.admin-logout{
+  background:#173e70 !important;
+  border-color:#315b8f !important;
+  color:#ffffff !important;
+}
+.admin-topbar{
+  background:linear-gradient(135deg,#08234a,#123d73) !important;
+  border-bottom:1px solid #1d4d84 !important;
+}
+.admin-top-title{
+  color:#ffffff !important;
+}
+.admin-top-status{
+  color:#d9e6f5 !important;
+}
+.admin-dot{
+  background:#16c784 !important;
+}
+
+/* Keep the existing main calculator/dashboard content exactly as-is. */
+</style>
+
+
+<style id="fedex-header-text-only">
+.admin-top-title{color:#fff !important}
+</style>
+
+
+<style id="fedex-branding-only">
+.admin-sidebar{
+  background:linear-gradient(180deg,#3f168f 0%,#21105f 100%) !important;
+  border-right-color:#32147a !important;
+}
+.admin-brand{border-bottom-color:#5b36a0 !important}
+.admin-brand-mark{
+  color:#fff !important;
+  font-style:italic !important;
+  font-weight:1000 !important;
+  letter-spacing:-1.5px !important;
+}
+.admin-brand-title{color:#fff !important}
+.admin-brand-sub{color:#d8cef0 !important}
+.admin-user{border-bottom-color:#5b36a0 !important}
+.admin-avatar{background:#5423a3 !important;color:#fff !important}
+.admin-user-email{color:#fff !important}
+.admin-user-role{color:#d8cef0 !important}
+.admin-nav button{color:#eee8ff !important}
+.admin-nav button:hover,.admin-nav button.active{
+  background:linear-gradient(90deg,#6932d4,#7b3ff0) !important;
+  color:#fff !important;
+}
+.admin-logout{
+  background:#35177f !important;
+  border-color:#6945a7 !important;
+  color:#fff !important;
+}
+.admin-topbar{
+  background:linear-gradient(90deg,#2f116f 0%,#4a1590 48%,#2c126c 100%) !important;
+  border-bottom-color:#4f2990 !important;
+}
+.admin-top-title{color:#fff !important}
+.admin-top-status{color:#eee8ff !important}
+.admin-dot{background:#16c784 !important}
+
+/* FedEx wordmark colors */
+.fedex-heading{
+  background:linear-gradient(90deg,#fff 0%,#fff 58%,#ff6200 59%,#ff6200 100%) !important;
+  -webkit-background-clip:text !important;
+  background-clip:text !important;
+}
+.fedex-mark{
+  background:linear-gradient(135deg,#4b168e,#6d25c7) !important;
+  color:#fff !important;
+}
+</style>
+
+
+<style id="fedex-wordmark-only">
+.admin-brand-mark,
+.fedex-mark{
+  color:transparent !important;
+  background:linear-gradient(to right,#ffffff 0%,#ffffff 58%,#ff6200 58%,#ff6200 100%) !important;
+  -webkit-background-clip:text !important;
+  background-clip:text !important;
+}
+</style>
+
+
+<style id="fedex-top-wordmark-only">
+.admin-top-title{
+  color:transparent !important;
+  background:linear-gradient(to right,#ffffff 0%,#ffffff 58%,#ff6200 58%,#ff6200 100%) !important;
+  -webkit-background-clip:text !important;
+  background-clip:text !important;
+}
+</style>
+
+
+<style id="city-suggestion-only-fix">
+#citySuggest{
+  max-height:260px !important;
+  overflow-y:auto !important;
+}
+</style>
+
+
+<style id="fedex-top-brand-only-final">
+/* Only the two FedEx words in the top header: Fed = white, Ex = orange. */
+</style>
+
+<style id="city-suggestion-final-style">#citySuggest{max-height:260px!important;overflow-y:auto!important}</style>
 </head>
 <body class="auth-locked">
 <div class="access-gate" id="accessGate"><div class="access-gate-box"><div class="lock">🔐</div><h2>Login Required</h2><p>You must login with an authorized Supabase account to use the IPHW Rate Calculator, Dashboard, Rate Update and Calculation Logs.</p><button type="button" class="btn primary" onclick="document.getElementById('authModal').classList.add('show'); if(typeof initSupabase==='function') initSupabase();">🔐 Login / Register</button></div></div>
 <aside class="admin-sidebar">
   <div class="admin-brand">
     <div class="admin-brand-mark">FedEx</div>
-    <div><div class="admin-brand-title">IPHW Rate Calculator</div><div class="admin-brand-sub">FedEx Admin Portal</div></div>
+    <div>
+      <div class="admin-brand-title">Bangladesh Express Co. Ltd</div>
+      <div class="admin-brand-sub">Licensee of Federal Express Corp.</div>
+      <div style="font-size:9px;color:#ffffff;font-weight:800;margin-top:3px;white-space:nowrap">Banex Admin panel</div>
+    </div>
   </div>
   <div class="admin-user">
     <div class="admin-user-row"><div class="admin-avatar">♙</div><div><div class="admin-user-email" id="sidebarUser">amir.hamza@bdexpress.com</div><div class="admin-user-role" id="sidebarRole">User</div></div></div>
@@ -146,7 +305,16 @@ body.auth-locked > *:not(.auth-modal):not(.forgot-modal):not(.reset-modal):not(.
   </nav>
   <button type="button" class="admin-logout" id="sidebarLogout"><span>⇥</span> <span>Logout</span></button>
 </aside>
-<div class="admin-topbar"><div class="admin-top-title">FedEx</div><div class="admin-top-status"><span class="admin-dot"></span> Connected to Supabase</div></div>
+<div class="admin-topbar">
+  <div class="admin-top-title">
+    <div style="font-size:22px;font-weight:900;line-height:1.05">FedEx Rate Calculator</div>
+    <div style="font-size:10px;font-weight:700;margin-top:3px;color:#cbd8e8">Designed &amp; Developed by <b style="color:#fff">Amir Hamza</b></div>
+  </div>
+  <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">
+    <div style="font-size:11px;font-weight:900;color:#fff">Welcome to FedEx BD</div>
+    <div class="admin-top-status"><span class="admin-dot"></span> Connected to Supabase</div>
+  </div>
+</div>
 
 <header class="top"><div class="top-inner">
   <div class="brand"><div class="brand-mark fedex-mark">FEDEX</div><div><h1 class="fedex-heading">FedEx Rate Calculator</h1><p>Designed &amp; Developed by <b>Amir Hamza</b></p></div></div>
@@ -596,23 +764,45 @@ function showCountrySuggest(){
   box.querySelectorAll('button').forEach(b=>b.addEventListener('mousedown',e=>{e.preventDefault();$('country').value=b.dataset.v;box.style.display='none';calculate();}));
 }
 function showCitySuggest(){
-  const country=canonicalCountry($('country').value), q=norm($('city').value), box=$('citySuggest');
-  const type=getCountryOdaType(country);
-  if(!country || type!=='City' || $('city').disabled){box.style.display='none';return}
-  // Show the full ODA city list when the field is focused/empty; filter it while typing.
-  const list=[...new Set(DATA.oda
-    .filter(r=>norm(r[0])===norm(country) && String(r[1]??'').trim()!=='')
-    .map(r=>r[1]))]
-    .filter(c=>!q || norm(c).includes(q))
-    .sort((a,b)=>String(a).localeCompare(String(b)))
-    .slice(0,30);
+  const country=canonicalCountry($('country').value);
+  const q=norm($('city').value);
+  const box=$('citySuggest');
+  if($('city').disabled){
+    box.style.display='none';
+    return;
+  }
+
+  // Use the actual city column from DATA.oda.
+  // If a country is selected, show only that country's cities.
+  // If a letter is typed, show cities STARTING with that letter.
+  let rows=DATA.oda.filter(r=>String(r[1]??'').trim()!=='');
+  if(country){
+    rows=rows.filter(r=>norm(r[0])===norm(country));
+  }
+
+  const allCities=[...new Set(rows.map(r=>String(r[1]).trim()))]
+    .sort((a,b)=>a.localeCompare(b));
+
+  const list=q ? allCities.filter(c=>norm(c).startsWith(q)) : allCities;
+
   box.innerHTML=list.map(c=>`<button type="button" data-v="${esc(c)}">${esc(c)}</button>`).join('');
   box.style.display=list.length?'block':'none';
-  box.querySelectorAll('button').forEach(b=>b.addEventListener('mousedown',e=>{e.preventDefault();$('city').value=b.dataset.v;box.style.display='none';calculate();}));
+
+  box.querySelectorAll('button').forEach(b=>b.addEventListener('mousedown',e=>{
+    e.preventDefault();
+    $('city').value=b.dataset.v;
+    box.style.display='none';
+    calculate();
+  }));
 }
 document.querySelectorAll('.service').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.service').forEach(x=>x.classList.remove('active'));b.classList.add('active');}));
 document.querySelectorAll('.plan').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.plan').forEach(x=>x.classList.remove('active'));b.classList.add('active');currentPlan=b.dataset.plan;renderRates($('rateSearch').value);calculate();}));
-['weight','postal','city','fx','vat','fuel','odaBase','govtFee'].forEach(id=>$(id).addEventListener('input',()=>{if(id==='city')showCitySuggest();calculate();})); $('city').addEventListener('focus',()=>showCitySuggest());
+['weight','postal','fx','vat','fuel','odaBase','govtFee'].forEach(id=>$(id).addEventListener('input',calculate));
+$('city').addEventListener('input',()=>{
+  calculate();
+  showCitySuggest();
+});
+$('city').addEventListener('focus',showCitySuggest);
 $('country').addEventListener('input',()=>{showCountrySuggest();const country=canonicalCountry($('country').value);const type=getCountryOdaType(country);if(type)updateOdaFieldState(type);else updateOdaFieldState('');calculate()});
 $('calculate').addEventListener('click',calculate);
 $('normalPackage').addEventListener('change',()=>{syncPlanInputs();calculate();});
