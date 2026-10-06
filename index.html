@@ -72,7 +72,7 @@ body.auth-locked > *:not(.auth-modal):not(.forgot-modal):not(.reset-modal){filte
 .access-gate{position:fixed;inset:0;background:rgba(8,23,43,.72);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px}
 .access-gate-box{background:#fff;border-radius:16px;width:min(460px,100%);padding:28px;box-shadow:0 24px 80px rgba(0,0,0,.3);text-align:center}
 .access-gate-box .lock{font-size:38px;margin-bottom:8px}.access-gate-box h2{margin:0 0 8px;color:#0b1f3a}.access-gate-box p{margin:0 0 16px;color:#64748b;font-size:12px;line-height:1.5}
-.admin-only{display:none!important}.admin-only.show{display:inline-flex!important}.admin-section{margin-top:14px}.rate-perm{display:inline-flex;align-items:center;gap:5px;margin:2px 4px 2px 0;padding:4px 7px;border:1px solid #dbe2ea;border-radius:6px;background:#fff;font-size:10px;font-weight:800}.rate-perm input{accent-color:#ff6200}.rate-denied{opacity:.45;pointer-events:none}.user-table{margin-top:10px;overflow:auto;border:1px solid var(--line);border-radius:9px}.user-table table{min-width:650px}
+.admin-only{display:none!important}.admin-only.show{display:inline-flex!important}.admin-section{margin-top:14px}.user-table{margin-top:10px;overflow:auto;border:1px solid var(--line);border-radius:9px}.user-table table{min-width:650px}
 /* ===== Auth + Dashboard ===== */
 .authbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}.auth-user{font-size:11px;color:var(--muted);font-weight:700}.dash{display:none;margin-bottom:14px}.dash.show{display:block}.dash-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.stat{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px}.stat b{display:block;font-size:19px;color:var(--navy);margin-top:4px}.stat span{font-size:10px;color:var(--muted);font-weight:800}.dash-table{margin-top:12px;overflow:auto;border:1px solid var(--line);border-radius:9px}.dash-table table{min-width:850px}.dash-head-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.dash-table th{background:#edf2f7}.auth-modal{position:fixed;inset:0;background:#0b1f3a99;z-index:10000;display:none;align-items:center;justify-content:center;padding:18px}.auth-modal.show{display:flex}.auth-box{background:#fff;width:min(430px,100%);border-radius:14px;padding:20px;box-shadow:0 20px 60px #0005}.auth-box h2{margin:0 0 12px}.auth-box input{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;margin:5px 0 10px}.auth-msg{font-size:11px;font-weight:800;min-height:18px;color:var(--red)}@media(max-width:900px){.dash-grid{grid-template-columns:repeat(2,1fr)}}
 
@@ -120,89 +120,18 @@ body.auth-locked > *:not(.auth-modal):not(.forgot-modal):not(.reset-modal){filte
 .grand-row{background:#f8fafc;font-weight:800}.grand-row span,.grand-row strong{font-size:12px;font-weight:900;color:#111827}
 @media (min-width:951px){.rate-result-card{padding:11px}.rate-result-card>h2{margin-bottom:7px;font-size:15px}.auto-row{min-height:29px;font-size:10.5px}.auto-row strong{font-size:10.5px}.auto-row em{font-size:9px}.auto-head{min-height:25px;font-size:8px}.grand-row span,.grand-row strong{font-size:11.5px}}
 @media (max-width:950px){.auto-row{grid-template-columns:minmax(0,1.45fr) minmax(100px,1fr) 62px}}
-
-/* ===== Attached FedEx UI color theme ===== */
-:root{--navy:#0b2f5b;--blue:#1267c9;--gold:#ffcc00;--bg:#f3f7fc;--card:#ffffff;--line:#d7e2ef;--muted:#64748b;--green:#0b8f67;--red:#c92a2a;--soft:#eef4fb}
-body{background:#f3f7fc;color:#172b4d}
-.admin-sidebar{background:linear-gradient(180deg,#0b2f5b 0%,#08264b 100%);border-right:1px solid #174676;box-shadow:4px 0 18px rgba(5,30,60,.18)}
-.admin-brand{border-bottom:1px solid rgba(255,255,255,.12)}
-.admin-brand-mark{color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.2)}
-.admin-brand-title{color:#fff}
-.admin-brand-sub{color:#bfd0e4}
-.admin-user{border-bottom:1px solid rgba(255,255,255,.12)}
-.admin-avatar{background:#173f70;color:#fff}
-.admin-user-email{color:#fff}
-.admin-user-role{color:#b8cbe0}
-.admin-nav button{color:#d5e2f0}
-.admin-nav button:hover{background:rgba(37,99,199,.28);color:#fff}
-.admin-nav button.active{background:linear-gradient(90deg,#1769ce,#2b78d7);color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.16)}
-.admin-nav .nav-icon{color:inherit}
-.admin-logout{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#fff}
-.admin-logout:hover{background:rgba(220,38,38,.2);border-color:rgba(255,255,255,.28)}
-.admin-topbar{background:linear-gradient(90deg,#0b2f5b,#123f76);border-bottom:1px solid #174676;box-shadow:0 2px 10px rgba(5,30,60,.12)}
-.admin-top-title{color:#fff}
-.admin-top-status{color:#d6e3f2}
-.admin-dot{background:#18c77a;box-shadow:0 0 0 3px rgba(24,199,122,.12)}
-.card{border-color:#d7e2ef;box-shadow:0 5px 18px rgba(15,55,95,.07)}
-.card h2,.online-title{color:#173b68}
-.field label{color:#49627e}
-.field input:focus,.field select:focus{border-color:#1769ce;box-shadow:0 0 0 3px rgba(23,105,206,.14)}
-.primary{background:#1267c9;color:#fff}
-.primary:hover{background:#0f5db7}
-.secondary{background:#eef4fb;color:#1c426b}
-.plan{border-color:#d5e1ee;background:#fff;color:#35516f}
-.plan.active{background:#1267c9;color:#fff;border-color:#1267c9}
-.tab.active,.rate-tab.active{background:#1267c9;color:#fff;border-color:#1267c9}
-.service{border-color:#d7e2ef;color:#36516f}.service.active{background:#1267c9;color:#fff;border-color:#1267c9}
-.source-tag{background:#eaf2fb;color:#42617f}
-.settings{background:#f7faff}
-th{background:#edf4fb}
-.grand{color:#0b376c!important}
-.total{background:#eaf6ff}
-.fedex-heading{background:none;-webkit-text-fill-color:initial;color:#1267c9;text-shadow:none}
-.fedex-mark{background:#1267c9;color:#fff;box-shadow:0 6px 18px rgba(18,103,201,.25)}
-.fedex-badge{border:1px solid #cfe0f3;background:#edf5fd}
-.fedex-badge b{background:none;-webkit-text-fill-color:initial;color:#1267c9}
-.rate-perm input{accent-color:#1267c9}
 </style>
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>window.addEventListener("load",function(){if(!window.supabase){var s=document.createElement("script");s.src="https://unpkg.com/@supabase/supabase-js@2";s.onload=function(){if(typeof initSupabase==="function")initSupabase();};document.head.appendChild(s);}});</script>
-<style id="final-header-branding-fix">
-/* Final header branding: match the attached FedEx-style header */
-header.top .brand .fedex-heading{
-  color:#ffffff !important;
-  background:none !important;
-  -webkit-text-fill-color:#ffffff !important;
-  text-shadow:none !important;
-  margin:0 !important;
-}
-header.top .brand p{color:#ffffff !important;}
-header.top .brand p b{color:#ffffff !important;}
-</style>
-<style id="force-fedex-header-branding">
-/* FINAL: exact requested header branding */
-header.top .brand .fedex-heading, header.top .brand .fedex-heading *{
-  color:#fff !important;
-  background:#fff !important;
-  background-image:none !important;
-  -webkit-background-clip:initial !important;
-  background-clip:initial !important;
-  -webkit-text-fill-color:#fff !important;
-  text-shadow:none !important;
-}
-header.top .brand p, header.top .brand p b{color:#fff !important;-webkit-text-fill-color:#fff !important;}
-.admin-brand-title{color:#fff !important;}
-.admin-brand-sub{color:#d9e7f7 !important;}
-</style>
 </head>
 <body class="auth-locked">
 <div class="access-gate" id="accessGate"><div class="access-gate-box"><div class="lock">🔐</div><h2>Login Required</h2><p>You must login with an authorized Supabase account to use the IPHW Rate Calculator, Dashboard, Rate Update and Calculation Logs.</p><button type="button" class="btn primary" onclick="openAuthModal()">🔐 Login / Register</button></div></div>
 <aside class="admin-sidebar">
   <div class="admin-brand">
     <div class="admin-brand-mark">FedEx</div>
-    <div><div class="admin-brand-title">FedEx Rate Calculator</div><div class="admin-brand-sub">Designed &amp; Developed by Amir Hamza</div></div>
+    <div><div class="admin-brand-title">IPHW Rate Calculator</div><div class="admin-brand-sub">FedEx Admin Portal</div></div>
   </div>
   <div class="admin-user">
     <div class="admin-user-row"><div class="admin-avatar">♙</div><div><div class="admin-user-email" id="sidebarUser">amir.hamza@bdexpress.com</div><div class="admin-user-role">Admin</div></div></div>
@@ -357,7 +286,7 @@ header.top .brand p, header.top .brand p b{color:#fff !important;-webkit-text-fi
 </section>
 <section class="card admin-section admin-only" id="usersPanel">
   <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">♙ User Access Control</h2><button class="btn secondary" id="refreshUsers">↻ Refresh Users</button></div>
-  <div class="user-table"><table><thead><tr><th>Email</th><th>Role</th><th>User ID</th><th>Rate Access</th><th>Save</th></tr></thead><tbody id="userRows"><tr><td colspan="5">Admin only.</td></tr></tbody></table></div>
+  <div class="user-table"><table><thead><tr><th>Email</th><th>Role</th><th>User ID</th><th>Access</th></tr></thead><tbody id="userRows"><tr><td colspan="4">Admin only.</td></tr></tbody></table></div>
 </section>
 <div class="auth-modal" id="authModal">
   <div class="auth-box">
@@ -662,7 +591,7 @@ function showCitySuggest(){
   box.querySelectorAll('button').forEach(b=>b.addEventListener('mousedown',e=>{e.preventDefault();$('city').value=b.dataset.v;box.style.display='none';calculate();}));
 }
 document.querySelectorAll('.service').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.service').forEach(x=>x.classList.remove('active'));b.classList.add('active');}));
-document.querySelectorAll('.plan').forEach(b=>b.addEventListener('click',()=>{const plan=b.dataset.plan;if(!hasRateAccess(plan)){alert('You do not have access to '+rateTypeLabel[plan]+'. Please contact Admin.');return;}document.querySelectorAll('.plan').forEach(x=>x.classList.remove('active'));b.classList.add('active');currentPlan=plan;renderRates($('rateSearch').value);calculate();}));
+document.querySelectorAll('.plan').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.plan').forEach(x=>x.classList.remove('active'));b.classList.add('active');currentPlan=b.dataset.plan;renderRates($('rateSearch').value);calculate();}));
 ['weight','postal','city','fx','vat','fuel','odaBase','govtFee'].forEach(id=>$(id).addEventListener('input',()=>{if(id==='city')showCitySuggest();calculate();}));
 $('country').addEventListener('input',()=>{showCountrySuggest();calculate()});
 $('calculate').addEventListener('click',calculate);
@@ -761,30 +690,10 @@ $('importRates').addEventListener('change',e=>{
 });
 async function loadUsers(){
   if(!sb||!currentProfile?.is_admin)return;
-  const {data,error}=await sb.from('profiles').select('id,email,is_admin,rate_access').order('email',{ascending:true});
-  if(error){$('userRows').innerHTML='<tr><td colspan="5">User access error: '+esc(error.message)+'</td></tr>';return;}
-  $('userRows').innerHTML=(data||[]).map(u=>{
-    const admin=!!u.is_admin;
-    const access=Array.isArray(u.rate_access)?u.rate_access.map(String):['NORMAL'];
-    const normal=true;
-    const a=admin||access.includes('A'), b=admin||access.includes('B');
-    return `<tr><td>${esc(u.email||'')}</td><td><b>${admin?'ADMIN':'USER'}</b></td><td style="font-size:9px">${esc(u.id)}</td><td>
-      <label class="rate-perm"><input type="checkbox" data-user="${esc(u.id)}" data-rate="NORMAL" checked disabled> Normal Rate</label>
-      <label class="rate-perm"><input type="checkbox" data-user="${esc(u.id)}" data-rate="A" ${a?'checked':''} ${admin?'disabled':''}> Rate A</label>
-      <label class="rate-perm"><input type="checkbox" data-user="${esc(u.id)}" data-rate="B" ${b?'checked':''} ${admin?'disabled':''}> Rate B</label>
-    </td><td>${admin?'<span style="font-size:10px;color:#16a34a;font-weight:900">FULL ACCESS</span>':`<button class="btn secondary" style="padding:5px 9px" onclick="saveUserRateAccess('${esc(u.id)}')">Save</button>`}</td></tr>`;
-  }).join('')||'<tr><td colspan="5">No users found.</td></tr>';
+  const {data,error}=await sb.from('profiles').select('id,email,is_admin').order('email',{ascending:true});
+  if(error){$('userRows').innerHTML='<tr><td colspan="4">User access error: '+esc(error.message)+'</td></tr>';return;}
+  $('userRows').innerHTML=(data||[]).map(u=>`<tr><td>${esc(u.email||'')}</td><td><b>${u.is_admin?'ADMIN':'USER'}</b></td><td style="font-size:9px">${esc(u.id)}</td><td>${u.is_admin?'Full Admin Access':'Calculator + Own Dashboard'}</td></tr>`).join('')||'<tr><td colspan="4">No users found.</td></tr>';
 }
-async function saveUserRateAccess(userId){
-  if(!currentProfile?.is_admin||!sb){alert('Admin access required.');return;}
-  const vals=['NORMAL'];
-  document.querySelectorAll(`input[data-user="${CSS.escape(userId)}"][data-rate]`).forEach(x=>{if(x.checked&&!x.disabled)vals.push(x.dataset.rate);});
-  const {error}=await sb.from('profiles').update({rate_access:[...new Set(vals)]}).eq('id',userId);
-  if(error){alert('Access update failed: '+error.message);return;}
-  alert('User rate access updated successfully.');
-  await loadUsers();
-}
-window.saveUserRateAccess=saveUserRateAccess;
 $('refreshUsers')?.addEventListener('click',loadUsers);
 function exportRatesExcel(){
   if(!currentProfile?.is_admin){alert('Admin access required.');return;}
@@ -820,42 +729,42 @@ let currentUser = null;
 let currentProfile = null;
 let lastCalculation = null;
 
-let supabaseLoadingPromise=null;
-async function ensureSupabase(){
-  if(sb) return sb;
-  if(!window.supabase){
-    if(!supabaseLoadingPromise){
-      supabaseLoadingPromise=new Promise((resolve,reject)=>{
-        const existing=document.querySelector('script[data-supabase-loader]');
-        if(existing){existing.addEventListener('load',()=>resolve(window.supabase));existing.addEventListener('error',()=>reject(new Error('Supabase library failed to load.')));return;}
-        const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'; s.async=true; s.dataset.supabaseLoader='1';
-        s.onload=()=>window.supabase?resolve(window.supabase):reject(new Error('Supabase library loaded but is unavailable.'));
-        s.onerror=()=>reject(new Error('Supabase library failed to load.')); document.head.appendChild(s);
-      });
-    }
-    try{await supabaseLoadingPromise;}catch(e){console.error(e);throw e;}
+window.openAuthModal=function(){
+  try{
+    const modal=document.getElementById('authModal');
+    const msg=document.getElementById('authMsg');
+    if(msg) msg.textContent='';
+    if(modal) modal.classList.add('show');
+    if(typeof initSupabase==='function') initSupabase();
+  }catch(err){
+    console.error('Open login modal failed:',err);
   }
-  if(!window.supabase) throw new Error('Supabase library is unavailable.');
-  if(!SUPABASE_URL || !SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.includes('PASTE_')) throw new Error('Supabase configuration is missing.');
-  sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-  $('authUser').textContent='Ready to login';
-  sb.auth.getSession().then(({data,error})=>{
-    if(error){console.warn('Supabase session error:',error);return;}
-    handleSession(data?.session||null);
-    if(window.location.hash.includes('type=recovery')) setTimeout(()=>openResetModal(),250);
-  }).catch(err=>console.warn('Supabase getSession error:',err));
-  sb.auth.onAuthStateChange((event,session)=>{
-    handleSession(session).catch(err=>console.warn('Session handler error:',err));
-    if(event==='PASSWORD_RECOVERY') setTimeout(()=>openResetModal(),100);
-  });
-  return sb;
-}
-window.openAuthModal=async function(){
-  const modal=document.getElementById('authModal'); const msg=document.getElementById('authMsg');
-  if(msg) msg.textContent=''; if(modal) modal.classList.add('show');
-  try{await ensureSupabase();}catch(err){if(msg) msg.textContent='Login service load হয়নি: '+err.message;}
 };
-function initSupabase(){ ensureSupabase().catch(err=>console.warn('Supabase init failed:',err)); }
+
+function initSupabase(){
+  if(sb)return;
+  try{
+    if(window.supabase && SUPABASE_URL && SUPABASE_ANON_KEY && !SUPABASE_ANON_KEY.includes('PASTE_')){
+      sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+      $('authUser').textContent='Ready to login';
+      sb.auth.getSession().then(({data,error})=>{
+        if(error){console.warn('Supabase session error:',error);$('authUser').textContent='Login ready';return;}
+        handleSession(data?.session||null);
+        if(window.location.hash.includes('type=recovery')) setTimeout(()=>openResetModal(),250);
+      }).catch(err=>{console.warn('Supabase getSession error:',err);$('authUser').textContent='Login ready';});
+      sb.auth.onAuthStateChange((event,session)=>{
+        handleSession(session).catch(err=>console.warn('Session handler error:',err));
+        if(event==='PASSWORD_RECOVERY') setTimeout(()=>openResetModal(),100);
+      });
+    }else{
+      $('authUser').textContent='Login service unavailable';
+    }
+  }catch(err){
+    console.error('Supabase init failed:',err);
+    sb=null;
+    $('authUser').textContent='Login service unavailable';
+  }
+}
 async function handleSession(session){
   currentUser=session?.user||null;
   const gate=document.getElementById('accessGate');
@@ -875,41 +784,17 @@ async function handleSession(session){
     document.querySelectorAll('.admin-only').forEach(el=>el.classList.toggle('show',admin));
     document.querySelectorAll('[data-admin-nav="rate"],[data-admin-nav="users"]').forEach(el=>el.style.display=admin?'flex':'none');
     if(admin) await loadUsers();
-    applyRateAccessUI();
   }else{
     $('loginBtn').style.display='inline-block';$('logoutBtn').style.display='none';$('authUser').textContent='Not logged in';$('dashboard').classList.remove('show');$('rateUpdateBtn').style.display='none';$('adminClearData').style.display='none';currentProfile=null;
     document.body.classList.add('auth-locked'); if(gate)gate.style.display='flex';
     document.querySelectorAll('.admin-only').forEach(el=>{el.classList.remove('show');if(el.tagName==='BUTTON')el.style.display='none';});
-    document.querySelectorAll('.plan').forEach(b=>{b.style.display='none';});
   }
 }
-function getRateAccess(){
-  if(currentProfile?.is_admin)return ['NORMAL','A','B'];
-  const a=Array.isArray(currentProfile?.rate_access)?currentProfile.rate_access.map(String):['NORMAL'];
-  return [...new Set(a.includes('NORMAL')?a:['NORMAL',...a])];
-}
-function hasRateAccess(plan){return getRateAccess().includes(plan);}
-function applyRateAccessUI(){
-  document.querySelectorAll('.plan').forEach(b=>{
-    const allowed=hasRateAccess(b.dataset.plan);
-    b.style.display=allowed?'inline-flex':'none';
-    b.disabled=!allowed;
-    b.classList.toggle('rate-denied',!allowed);
-  });
-  if(!hasRateAccess(currentPlan)){
-    currentPlan=hasRateAccess('A')?'A':(hasRateAccess('B')?'B':'NORMAL');
-  }
-  document.querySelectorAll('.plan').forEach(b=>b.classList.toggle('active',b.dataset.plan===currentPlan));
-  syncPlanInputs(); renderRates($('rateSearch').value); calculate();
-}
-
 async function loadProfile(){
   if(!sb||!currentUser)return;
-  const {data,error}=await sb.from('profiles').select('id,email,is_admin,rate_access').eq('id',currentUser.id).maybeSingle();
+  const {data,error}=await sb.from('profiles').select('id,email,is_admin').eq('id',currentUser.id).maybeSingle();
   if(error){console.warn(error);return;}
-  currentProfile=data||{id:currentUser.id,email:currentUser.email,is_admin:false,rate_access:['NORMAL']};
-  if(String(currentUser.email||'').trim().toLowerCase()==='amir.hamza@bdexpress.com'){currentProfile.is_admin=true;currentProfile.rate_access=['NORMAL','A','B'];}
-  if(!Array.isArray(currentProfile.rate_access))currentProfile.rate_access=['NORMAL'];
+  currentProfile=data||{id:currentUser.id,email:currentUser.email,is_admin:false};
 }
 function n(v){return Number(v)||0}
 function bdt(v){return '৳'+n(v).toLocaleString('en-BD',{minimumFractionDigits:2,maximumFractionDigits:2})}
@@ -1027,7 +912,7 @@ $('updatePassword').addEventListener('click',async()=>{
 });
 $('doLogin').addEventListener('click',async()=>{
   const btn=$('doLogin');
-  try{await ensureSupabase();}catch(err){$('authMsg').textContent='Login service load হয়নি: '+err.message;return;}
+  if(!sb){initSupabase();setTimeout(()=>{if(!sb)$('authMsg').textContent='Login service load হয়নি. Page refresh করে আবার চেষ্টা করুন.';},800);return;}
   const email=$('authEmail').value.trim(),password=$('authPassword').value;
   if(!email||!password){$('authMsg').textContent='Email ও password দিন।';return;}
   btn.disabled=true;btn.textContent='Logging in...';$('authMsg').textContent='';
@@ -1043,7 +928,7 @@ $('doLogin').addEventListener('click',async()=>{
   finally{btn.disabled=false;btn.textContent='Login';}
 });
 $('doRegister').addEventListener('click',async()=>{
-  try{await ensureSupabase();}catch(err){$('authMsg').textContent='Login service load হয়নি: '+err.message;return;}
+  if(!sb){initSupabase();$('authMsg').textContent='Login service load হচ্ছে—একটু পরে আবার চেষ্টা করুন.';return}
   const email=$('authEmail').value.trim(),password=$('authPassword').value;
   if(!email||password.length<6){$('authMsg').textContent='Valid email এবং কমপক্ষে 6 character password দিন।';return}
   const btn=$('doRegister');btn.disabled=true;btn.textContent='Registering...';
