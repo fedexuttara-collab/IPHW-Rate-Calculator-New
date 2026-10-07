@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+<script>window.CHALLAN_EMAIL_FUNCTION_URL = "https://yyoaoegwrssbeiqtmenm.supabase.co/functions/v1/Challan-Email";</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title> FedEx IPHW Rate Calculator — Designed & Developed by Amir Hamza</title>
@@ -120,6 +121,17 @@ body.auth-locked > *:not(.auth-modal):not(.forgot-modal):not(.reset-modal):not(.
 .grand-row{background:#f8fafc;font-weight:800}.grand-row span,.grand-row strong{font-size:12px;font-weight:900;color:#111827}
 @media (min-width:951px){.rate-result-card{padding:11px}.rate-result-card>h2{margin-bottom:7px;font-size:15px}.auto-row{min-height:29px;font-size:10.5px}.auto-row strong{font-size:10.5px}.auto-row em{font-size:9px}.auto-head{min-height:25px;font-size:8px}.grand-row span,.grand-row strong{font-size:11.5px}}
 @media (max-width:950px){.auto-row{grid-template-columns:minmax(0,1.45fr) minmax(100px,1fr) 62px}}
+
+
+#challanPanel .suggest{position:absolute;left:0;right:0;top:100%;z-index:50;background:#fff;border:1px solid #cbd5e1;border-radius:8px;box-shadow:0 8px 20px rgba(15,23,42,.12);max-height:220px;overflow:auto;display:none}
+#challanPanel .suggest button{display:block;width:100%;border:0;background:#fff;text-align:left;padding:9px 11px;cursor:pointer;font-size:12px}
+#challanPanel .suggest button:hover{background:#eff6ff}
+
+/* Challan navigation panel — scoped only to Challan */
+#challanPanel{margin-top:14px}
+#challanPanel .challan-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}
+#challanPanel .challan-action{display:flex;align-items:center;justify-content:center;min-height:44px;text-decoration:none}
+@media(max-width:700px){#challanPanel .challan-actions{grid-template-columns:1fr}}
 </style>
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -280,6 +292,44 @@ body.auth-locked > *:not(.auth-modal):not(.forgot-modal):not(.reset-modal):not(.
 </style>
 
 <style id="city-suggestion-final-style">#citySuggest{max-height:260px!important;overflow-y:auto!important}</style>
+
+<style id="challan-detail-ui">
+#challanPanel .challan-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}
+#challanPanel .challan-action{min-height:44px}
+#challanPanel .challan-view{box-sizing:border-box}
+@media(max-width:900px){#challanPanel .challan-actions{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){#challanPanel .challan-actions{grid-template-columns:1fr}}
+</style>
+
+<style id="challan-create-awb-style">
+#challanCreate .challan-awb-shell{background:#fff;border:1px solid #dbe3ee;border-radius:12px;overflow:hidden;box-shadow:0 4px 14px rgba(15,35,65,.08)}
+#challanCreate .challan-awb-head{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #e5eaf1;font-weight:900;color:#24324a}
+#challanCreate .challan-awb-icon{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:#7c4dff;color:#fff;box-shadow:0 3px 10px rgba(124,77,255,.35);font-size:15px}
+#challanCreate .challan-select-all{padding:14px 16px 9px;font-size:12px;color:#64748b;display:flex;align-items:center;gap:8px}
+#challanCreate .challan-mini-title{padding:0 16px 6px;font-size:10px;font-weight:900;color:#94a3b8;letter-spacing:.6px}
+#challanCreate .challan-mini-table{width:calc(100% - 32px);margin:0 16px 10px;border-collapse:collapse;font-size:12px}
+#challanCreate .challan-mini-table th{height:27px;background:#f5f8fc;color:#8fa0b8;font-size:9px;letter-spacing:.5px;font-weight:900;border-top:1px solid #dfe6ef;border-bottom:1px solid #dfe6ef}
+#challanCreate .challan-mini-table td{height:42px;border-bottom:1px solid #eef2f7;color:#334155}
+#challanCreate .challan-mini-table th:first-child,#challanCreate .challan-mini-table td:first-child{width:46px;text-align:center}
+#challanCreate .challan-mini-table th:last-child,#challanCreate .challan-mini-table td:last-child{text-align:center;width:90px}
+#challanCreate .challan-pending-number{text-align:center!important;color:#334155}
+#challanCreate .challan-awb-list{padding:4px 16px 8px;min-height:120px}
+#challanCreate .challan-awb-row{display:flex;align-items:center;gap:6px;padding:3px 4px;font-size:13px;color:#334155}
+#challanCreate .challan-awb-row input{margin:0}
+#challanCreate .challan-create-bottom{display:flex;gap:5px;flex-wrap:wrap;padding:10px 16px 16px}
+#challanCreate .challan-create-bottom .btn{min-width:70px;height:35px;padding:7px 15px;border-radius:9px}
+#challanCreate .challan-create-bottom .btn.dashboard-lite{background:#fff;color:#64748b;border:1px solid #d5dce7}
+#challanCreate .challan-create-bottom .btn.create-lite,
+#challanCreate .challan-create-bottom .btn.logout-lite,
+#challanCreate .challan-create-bottom .btn.delete-lite{background:#3478ee;color:#fff;border-color:#3478ee;box-shadow:0 4px 10px rgba(52,120,238,.18)}
+#challanCreate .challan-create-msg-lite{padding:0 16px 12px;font-size:11px;color:#64748b}
+#challanCreate .challan-legacy-form{display:none!important}
+</style>
+
+
+<style>
+.challan-entry-form-lite{margin-top:14px;background:#fff;border:1px solid #dbe3ee;border-radius:10px;padding:14px}.challan-form-title-lite{font-weight:900;color:#0b1f3a;margin-bottom:12px}.challan-form-grid-lite{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.challan-form-grid-lite label,.challan-remarks-lite label{display:block;font-size:10px;font-weight:800;color:#475569;margin-bottom:5px}.challan-form-grid-lite input,.challan-remarks-lite textarea{width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:7px;padding:9px 10px;background:#fff;font-size:13px}.challan-option-block-lite{margin-top:14px;border-top:1px solid #e2e8f0;padding-top:11px}.challan-option-label-lite{font-size:10px;font-weight:900;color:#334155;margin-bottom:7px}.challan-options-lite{display:flex;flex-wrap:wrap;gap:7px 13px}.challan-options-lite label{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#334155;white-space:nowrap}.challan-options-lite input{margin:0}.challan-remarks-lite{margin-top:14px}@media(max-width:900px){.challan-form-grid-lite{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:560px){.challan-form-grid-lite{grid-template-columns:1fr}}
+</style>
 </head>
 <body class="auth-locked">
 <div class="access-gate" id="accessGate"><div class="access-gate-box"><div class="lock">🔐</div><h2>Login Required</h2><p>You must login with an authorized Supabase account to use the IPHW Rate Calculator, Dashboard, Rate Update and Calculation Logs.</p><button type="button" class="btn primary" onclick="document.getElementById('authModal').classList.add('show'); if(typeof initSupabase==='function') initSupabase();">🔐 Login / Register</button></div></div>
@@ -302,6 +352,7 @@ body.auth-locked > *:not(.auth-modal):not(.forgot-modal):not(.reset-modal):not(.
     <button type="button" data-admin-nav="logs"><span class="nav-icon">▤</span><span>Calculation Logs</span></button>
     <button type="button" data-admin-nav="users" class="admin-only"><span class="nav-icon">♙</span><span>Users</span></button>
     <button type="button" data-admin-nav="settings"><span class="nav-icon">⚙</span><span>Settings</span></button>
+    <button type="button" data-admin-nav="challan"><span class="nav-icon">▤</span><span>Challan</span></button>
   </nav>
   <button type="button" class="admin-logout" id="sidebarLogout"><span>⇥</span> <span>Logout</span></button>
 </aside>
@@ -452,9 +503,142 @@ body.auth-locked > *:not(.auth-modal):not(.forgot-modal):not(.reset-modal):not(.
   </div>
   <div class="dash-table"><table><thead><tr><th>Date</th><th>Email</th><th>ODA Type</th><th>Country</th><th>Weight</th><th>ODA</th><th>Grand Total</th><th class="admin-only-col">Action</th></tr></thead><tbody id="dashRows"><tr><td colspan="8">Login to load calculations.</td></tr></tbody></table></div>
 </section>
+<section class="card" id="challanPanel" style="display:none">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+    <h2 style="margin:0">📄 Challan</h2>
+    <span class="source-tag">AWB &amp; Challan Management</span>
+  </div>
+
+  <div class="challan-actions">
+    <button type="button" class="btn primary challan-action" data-challan-tab="awb">1. AWB Entry</button>
+    <button type="button" class="btn secondary challan-action" data-challan-tab="create">2. Challan Entry</button>
+    <button type="button" class="btn secondary challan-action" data-challan-tab="report">3. Challan Report</button>
+    <button type="button" class="btn secondary challan-action" data-challan-tab="search">4. Challan Search / Report</button>
+  </div>
+
+  <div id="challanAwb" class="challan-view" style="margin-top:16px;padding:14px;border:1px solid #dbe3ee;border-radius:10px;background:#f8fafc">
+    <div style="font-weight:900;color:#0b1f3a;margin-bottom:12px">1. AWB Entry</div>
+    <div style="font-size:11px;color:#64748b;margin-bottom:12px">AWB Manuel Import</div>
+    <div id="challanAwbEntryForms">
+    <div class="formgrid challan-awb-entry-form" data-awb-index="0">
+      <div class="field"><label>AWB</label><input id="challanAwbManual" type="text" inputmode="numeric" maxlength="12" minlength="12" pattern="[0-9]{12}" placeholder="Enter 12 digit AWB number" required><div class="note">Manual Import — exactly 12 digits.</div></div>
+      <div class="field"><label>PKG PCS</label><input id="challanAwbPcs" type="number" min="1" value="1" required><div class="note">Enter actual PCS manually. Default is 1.</div></div>
+      <div class="field"><label>RATE</label><select id="challanAwbRate"></select><div class="note">Rate select based on user access.</div></div>
+      <div class="field"><label>DESTINATION COUNTRY</label><div style="width:100%;position:relative"><input id="challanAwbCountry" type="text" placeholder="Destination Country" autocomplete="off"><div id="challanCountrySuggest" class="suggest"></div></div></div>
+      <div class="field"><label>RECIPIENT POSTAL CODE</label><input id="challanAwbPostal" type="text" placeholder="As per destination selection"></div>
+      <div class="field"><label>RECIPIENT CITY</label><div style="width:100%;position:relative"><input id="challanAwbCity" type="text" placeholder="As per destination &amp; ODA data" autocomplete="off"><div id="challanCitySuggest" class="suggest"></div></div></div>
+      <div class="field"><label>WEIGHT / PACKAGE CODE</label><input id="challanAwbWeight" type="text" inputmode="decimal" placeholder="e.g. 11, 15, 25, 50"><div class="note">Rate A / B: enter actual KG (e.g. 11, 15, 25, 50). Normal Rate keeps package options.</div></div>
+      <div class="field"><label>VAT</label><select id="challanAwbVat"><option value="yes">Yes</option><option value="no">No</option></select></div>
+      <div class="field"><label>AMOUNT</label><input id="challanAwbAmount" type="text" inputmode="decimal" placeholder="Grand Total Amount (BDT)" readonly></div>
+    </div>
+    </div>
+    <div class="actions" style="margin-top:12px"><button type="button" class="btn secondary" id="addChallanAwb">Add AWB</button><button type="button" class="btn primary" id="saveChallanAwb">Save AWB</button><button type="button" class="btn secondary" id="clearChallanAwb">Clear</button></div><div id="pendingChallanAwbs" style="margin-top:10px"></div>
+    <div id="challanAwbMsg" style="margin-top:8px;font-size:12px;color:#64748b"></div>
+  </div>
+
+  <div id="challanCreate" class="challan-view" style="display:none;margin-top:16px;padding:0;background:transparent;border:0">
+    <div class="challan-awb-shell">
+      <div class="challan-awb-head">
+        <span class="challan-awb-icon">▣</span>
+        <span>CHALLAN ENTRY</span>
+      </div>
+
+      <label class="challan-select-all">
+        <input type="checkbox" id="challanSelectAll">
+        <span>Select All</span>
+      </label>
+
+      <div class="challan-mini-title">AGENT NAME</div>
+      <table class="challan-mini-table">
+        <thead><tr><th></th><th>AGENT NAME</th><th>LABEL</th><th>PENDING</th></tr></thead>
+        <tbody>
+          <tr><td><input type="checkbox" id="challanRouteCounter"></td><td id="challanAgentName"><b>—</b></td><td></td><td id="challanRoutePending" class="challan-pending-number">0</td></tr>
+        </tbody>
+      </table>
+
+      <div class="challan-mini-title">COURIERS</div>
+      <table class="challan-mini-table">
+        <thead><tr><th></th><th>LABEL</th><th>PENDING</th></tr></thead>
+        <tbody>
+          <tr><td><input type="checkbox" id="challanCourierSelect"></td><td id="challanCourierLabel"><b>Courier</b></td><td id="challanCourierPending" class="challan-pending-number">0</td></tr>
+        </tbody>
+      </table>
+
+      <div style="margin-top:14px;font-weight:900;color:#0b1f3a">SAVED AWB LIST</div>
+      <div class="note" style="margin:5px 0 9px">AWB Entry থেকে Save করা সব pending AWB এখানে দেখাবে। All Select অথবা প্রয়োজনমতো AWB select করে নিচের option ব্যবহার করুন।</div>
+      <div id="challanAwbListForCreate" class="challan-awb-list"></div>
+      <div class="challan-create-bottom" style="margin-top:14px">
+        <button type="button" class="btn delete-lite" id="challanDeleteVisualBtn">Delete</button>
+        <button type="button" class="btn create-lite" id="challanCreateVisualBtn">Create Challan</button>
+      </div>
+      <div id="challanCreateVisualMsg" class="challan-create-msg-lite"></div>
+    </div>
+
+    <!-- Existing Challan calculation fields kept hidden so the existing calculation logic remains unchanged. -->
+    <div class="challan-legacy-form">
+      <select id="challanAwbSelect"><option value="">Select saved AWB</option></select>
+      <select id="challanCreateRate"></select>
+      <input id="challanCreateCountry">
+      <input id="challanCreatePostal">
+      <input id="challanCreateCity">
+      <input id="challanCreateWeight">
+      <select id="challanCreateVat"><option value="yes">Yes</option><option value="no">No</option></select>
+      <input id="challanCreateAmount">
+      <button type="button" id="addAwbToChallan">Add AWB to Challan</button>
+      <button type="button" id="submitChallan">Challan Create / Submit</button>
+      <button type="button" id="deleteSelectedAwb">AWB Delete</button>
+      <button type="button" id="importChallanAwb">AWB Manuel Import</button>
+      <button type="button" id="createChallanPdf">Create PDF &amp; Mail</button>
+      <div id="challanBatchAwbs"></div>
+      <div id="challanCreateMsg"></div>
+      <div id="challanCreateCountrySuggest" class="suggest"></div>
+      <div id="challanCreateCitySuggest" class="suggest"></div>
+    </div>
+  </div>
+  <div id="challanReport" class="challan-view" style="display:none;margin-top:16px;padding:14px;border:1px solid #dbe3ee;border-radius:10px;background:#fff">
+    <div style="font-weight:900;color:#0b1f3a;margin-bottom:12px">3. Challan Report</div>
+    <div class="formgrid">
+      <div class="field"><label>FROM DATE</label><input id="challanReportFrom" type="date"></div>
+      <div class="field"><label>TO DATE</label><input id="challanReportTo" type="date"></div>
+    </div>
+    <div class="actions" style="margin-top:12px"><button type="button" class="btn primary" id="downloadChallanReport">Download Report</button></div>
+    <div id="challanReportMsg" style="margin-top:8px;font-size:12px;color:#64748b"></div>
+    <div class="dash-table" style="margin-top:12px"><table><thead><tr><th>Date</th><th>Challan</th><th>AWB</th><th>User</th><th>Country</th><th>Weight</th><th>Amount</th></tr></thead><tbody id="challanReportRows"><tr><td colspan="7">No challan records.</td></tr></tbody></table></div>
+  </div>
+
+  <div id="challanSearch" class="challan-view" style="display:none;margin-top:16px;padding:14px;border:1px solid #dbe3ee;border-radius:10px;background:#fff">
+    <div style="font-weight:900;color:#0b1f3a;margin-bottom:4px">4. Challan Search / Report</div>
+    <div style="font-size:11px;color:#64748b;margin-bottom:12px">Admin-only search/report. Search by WSC, period, Ref # or ICPC #.</div>
+    <div class="formgrid">
+      <div class="field"><label>WSC</label><input id="challanWsc" type="text" placeholder="WSC"></div>
+      <div class="field"><label>PERIOD</label><select id="challanPeriod"><option>Today</option><option>Yesterday</option><option>Date range</option><option>Challan no</option></select></div>
+      <div class="field"><label>REF #</label><input id="challanRef" type="text" placeholder="Ref #"></div>
+      <div class="field"><label>ICPC #</label><input id="challanIcpc" type="text" placeholder="ICPC #"></div>
+    </div>
+    <div class="actions" style="margin-top:12px"><button type="button" class="btn primary" id="searchChallan">Search / Challan Report</button></div>
+    <div id="challanSearchMsg" style="margin-top:8px;font-size:12px;color:#64748b"></div>
+  </div>
+</section>
 <section class="card admin-section admin-only" id="usersPanel">
   <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">♙ User Access Control</h2><button class="btn secondary" id="refreshUsers">↻ Refresh Users</button></div>
-  <div class="user-table"><table><thead><tr><th>Email</th><th>Role</th><th>Rate A</th><th>Rate B</th><th>Normal Rate</th><th>Dashboard</th><th>Save</th></tr></thead><tbody id="userRows"><tr><td colspan="7">Admin only.</td></tr></tbody></table></div>
+  <div class="user-table"><table><thead><tr><th>Email</th><th>Role</th><th>Rate A</th><th>Rate B</th><th>Normal Rate</th><th>Dashboard</th><th>Challan Access</th><th>Save</th></tr></thead><tbody id="userRows"><tr><td colspan="8">Admin only.</td></tr></tbody></table></div>
+  <div id="selectedUserAccess" style="margin-top:14px;display:none;border-top:1px solid #dbe4ef;padding-top:14px">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+      <label for="userAccessSelect" style="font-weight:700;color:#0b1f3a">Select User</label>
+      <select id="userAccessSelect" style="min-width:280px;padding:9px 12px;border:1px solid #cbd5e1;border-radius:8px;background:#fff"></select>
+    </div>
+    <div id="userAccessEditor" style="display:none">
+      <div style="font-weight:700;color:#0b1f3a;margin-bottom:8px">Access Control</div>
+      <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center">
+        <label><input type="checkbox" id="selectedCanRateA"> Rate A</label>
+        <label><input type="checkbox" id="selectedCanRateB"> Rate B</label>
+        <label><input type="checkbox" id="selectedCanNormal"> Normal Rate</label>
+        <label><input type="checkbox" id="selectedCanDashboard"> Dashboard</label><label><input type="checkbox" id="selectedCanChallanMail"> Challan Access</label>
+        <button type="button" class="btn primary" id="saveSelectedUserAccess">Save Access</button>
+      </div>
+      <div id="selectedUserMsg" style="margin-top:8px;font-size:12px;color:#64748b"></div>
+    </div>
+  </div>
 </section>
 <div class="footer">FedEx • IPHW Rate Calculator • <b>Designed &amp; Developed by Amir Hamza</b></div>
 </main>
@@ -918,15 +1102,41 @@ $('importRates').addEventListener('change',e=>{
   };
   reader.readAsText(file);
 });
+let adminUserAccessList=[];
+function fillSelectedUserAccess(id){
+  const u=adminUserAccessList.find(x=>String(x.id)===String(id)); const box=$('userAccessEditor'); const msg=$('selectedUserMsg');
+  if(!u||u.is_admin){if(box)box.style.display='none';return;}
+  $('selectedCanRateA').checked=u.can_rate_a!==false; $('selectedCanRateB').checked=u.can_rate_b!==false; $('selectedCanNormal').checked=u.can_normal!==false; $('selectedCanDashboard').checked=u.can_dashboard!==false; $('selectedCanChallanMail').checked=u.can_challan_mail===true;
+  if(msg)msg.textContent='Selected: '+(u.email||'User'); if(box)box.style.display='block';
+}
 async function loadUsers(){
   if(!sb||!currentProfile?.is_admin)return;
-  const {data,error}=await sb.from('profiles').select('id,email,is_admin,can_rate_a,can_rate_b,can_normal,can_dashboard').order('email',{ascending:true});
-  if(error){$('userRows').innerHTML='<tr><td colspan="7">User access error: '+esc(error.message)+'</td></tr>';return;}
-  const d=u=>({can_rate_a:u.can_rate_a!==false,can_rate_b:u.can_rate_b!==false,can_normal:u.can_normal!==false,can_dashboard:u.can_dashboard!==false});
-  $('userRows').innerHTML=(data||[]).map(u=>{if(u.is_admin)return `<tr><td>${esc(u.email||'')}</td><td><b>ADMIN</b></td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>Full Admin</td></tr>`;const a=d(u);return `<tr><td>${esc(u.email||'')}</td><td>USER</td><td><input type="checkbox" id="ra_${u.id}" ${a.can_rate_a?'checked':''}></td><td><input type="checkbox" id="rb_${u.id}" ${a.can_rate_b?'checked':''}></td><td><input type="checkbox" id="rn_${u.id}" ${a.can_normal?'checked':''}></td><td><input type="checkbox" id="rd_${u.id}" ${a.can_dashboard?'checked':''}></td><td><button class="btn secondary" style="padding:5px 8px" onclick="saveUserAccess('${u.id}')">Save</button></td></tr>`}).join('')||'<tr><td colspan="7">No users found.</td></tr>';
+  const {data,error}=await sb.from('profiles').select('id,email,is_admin,can_rate_a,can_rate_b,can_normal,can_dashboard,can_challan_mail').order('email',{ascending:true});
+  if(error){$('userRows').innerHTML='<tr><td colspan="8">User access error: '+esc(error.message)+'</td></tr>';return;}
+  adminUserAccessList=data||[];
+  const d=u=>({can_rate_a:u.can_rate_a!==false,can_rate_b:u.can_rate_b!==false,can_normal:u.can_normal!==false,can_dashboard:u.can_dashboard!==false,can_challan_mail:u.can_challan_mail===true});
+  $('userRows').innerHTML=(data||[]).map(u=>{if(u.is_admin)return `<tr><td>${esc(u.email||'')}</td><td><b>ADMIN</b></td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>Full Admin</td></tr>`;const a=d(u);return `<tr><td>${esc(u.email||'')}</td><td>USER</td><td><input type="checkbox" id="ra_${u.id}" ${a.can_rate_a?'checked':''}></td><td><input type="checkbox" id="rb_${u.id}" ${a.can_rate_b?'checked':''}></td><td><input type="checkbox" id="rn_${u.id}" ${a.can_normal?'checked':''}></td><td><input type="checkbox" id="rd_${u.id}" ${a.can_dashboard?'checked':''}></td><td><input type="checkbox" id="rcm_${u.id}" ${a.can_challan_mail?'checked':''}></td><td><button class="btn secondary" style="padding:5px 8px" onclick="saveUserAccess('${u.id}')">Save</button></td></tr>`}).join('')||'<tr><td colspan="8">No users found.</td></tr>';
+  const sel=$('userAccessSelect'); if(sel){sel.innerHTML='<option value="">Select a user...</option>'+(data||[]).filter(u=>!u.is_admin).map(u=>`<option value="${esc(u.id)}">${esc(u.email||'')}</option>`).join('');$('selectedUserAccess').style.display=(data||[]).some(u=>!u.is_admin)?'block':'none';$('userAccessEditor').style.display='none';$('selectedUserMsg').textContent='';}
 }
-async function saveUserAccess(id){if(!currentProfile?.is_admin||!sb)return;const payload={can_rate_a:document.getElementById('ra_'+id)?.checked===true,can_rate_b:document.getElementById('rb_'+id)?.checked===true,can_normal:document.getElementById('rn_'+id)?.checked===true,can_dashboard:document.getElementById('rd_'+id)?.checked===true};const {error}=await sb.from('profiles').update(payload).eq('id',id);if(error){alert('Access update failed: '+error.message+'\nRun the supplied Supabase SQL migration first.');return;}alert('User access updated successfully.');await loadUsers();}
+async function saveUserAccess(id){
+  if(!currentProfile?.is_admin||!sb)return;
+  const payload={can_rate_a:document.getElementById('ra_'+id)?.checked===true,can_rate_b:document.getElementById('rb_'+id)?.checked===true,can_normal:document.getElementById('rn_'+id)?.checked===true,can_dashboard:document.getElementById('rd_'+id)?.checked===true,can_challan_mail:document.getElementById('rcm_'+id)?.checked===true};
+  const {error}=await sb.from('profiles').update(payload).eq('id',id); if(error){alert('Access update failed: '+error.message+'\nRun the supplied Supabase SQL migration first.');return;}
+  alert('User access updated successfully.'); await loadUsers(); if($('userAccessSelect')){$('userAccessSelect').value=id;fillSelectedUserAccess(id);}
+}
 window.saveUserAccess=saveUserAccess;
+$('userAccessSelect')?.addEventListener('change',e=>fillSelectedUserAccess(e.target.value));
+$('saveSelectedUserAccess')?.addEventListener('click',async()=>{
+  const id=$('userAccessSelect')?.value;
+  if(!id)return;
+  if(!currentProfile?.is_admin||!sb)return;
+  const payload={can_rate_a:$('selectedCanRateA').checked,can_rate_b:$('selectedCanRateB').checked,can_normal:$('selectedCanNormal').checked,can_dashboard:$('selectedCanDashboard').checked,can_challan_mail:$('selectedCanChallanMail').checked};
+  const {error}=await sb.from('profiles').update(payload).eq('id',id);
+  if(error){$('selectedUserMsg').textContent='Access update failed: '+error.message;return;}
+  $('selectedUserMsg').textContent='✓ Access updated successfully.';
+  await loadUsers();
+  if($('userAccessSelect')){$('userAccessSelect').value=id;fillSelectedUserAccess(id);$('selectedUserMsg').textContent='✓ Access updated successfully.';}
+});
 $('refreshUsers')?.addEventListener('click',loadUsers);
 function exportRatesExcel(){
   if(!currentProfile?.is_admin){alert('Admin access required.');return;}
@@ -998,7 +1208,7 @@ function initSupabase(){
     $('authUser').textContent='Login service unavailable';
   }
 }
-function accessDefaults(){return {can_rate_a:true,can_rate_b:true,can_normal:true,can_dashboard:true};}
+function accessDefaults(){return {can_rate_a:true,can_rate_b:true,can_normal:true,can_dashboard:true,can_challan_mail:false};}
 function normalizeAccess(p){return Object.assign(accessDefaults(),p||{});}
 function canUse(plan){if(currentProfile?.is_admin)return true;return plan==='A'?currentProfile?.can_rate_a!==false:plan==='B'?currentProfile?.can_rate_b!==false:plan==='NORMAL'?currentProfile?.can_normal!==false:false;}
 function applyAccessUI(){const admin=!!currentProfile?.is_admin;document.querySelectorAll('.plan[data-plan]').forEach(b=>{const ok=admin||canUse(b.dataset.plan);b.style.display=ok?'inline-flex':'none';b.disabled=!ok;});const db=admin||currentProfile?.can_dashboard!==false;document.querySelector('[data-admin-nav="dashboard"]')?.style.setProperty('display',db?'flex':'none');document.querySelector('[data-admin-nav="logs"]')?.style.setProperty('display',admin?'flex':'none');$('dashboard').style.display=db?'block':'none';}
@@ -1030,7 +1240,7 @@ async function handleSession(session){
 }
 async function loadProfile(){
   if(!sb||!currentUser)return;
-  const {data,error}=await sb.from('profiles').select('id,email,is_admin,can_rate_a,can_rate_b,can_normal,can_dashboard').eq('id',currentUser.id).maybeSingle();
+  const {data,error}=await sb.from('profiles').select('id,email,is_admin,can_rate_a,can_rate_b,can_normal,can_dashboard,can_challan_mail').eq('id',currentUser.id).maybeSingle();
   if(error){console.warn(error);return;}
   currentProfile=normalizeAccess(data||{id:currentUser.id,email:currentUser.email,is_admin:false});
 }
@@ -1171,7 +1381,13 @@ $('doRegister').addEventListener('click',async()=>{
   const email=$('authEmail').value.trim(),password=$('authPassword').value;
   if(!email||password.length<6){$('authMsg').textContent='Valid email এবং কমপক্ষে 6 character password দিন।';return}
   const btn=$('doRegister');btn.disabled=true;btn.textContent='Registering...';
-  try{const {data,error}=await sb.auth.signUp({email,password});$('authMsg').textContent=error?error.message:(data?.session?'Registration & login successful.':'Registration successful. Email verification লাগলে email check করুন.');}
+  try{
+    const {data,error}=await sb.auth.signUp({email,password});
+    if(!error && data?.user && data?.session){
+      await sb.from('profiles').upsert({id:data.user.id,email:data.user.email,is_admin:false,can_rate_a:false,can_rate_b:false,can_normal:true,can_dashboard:false},{onConflict:'id'});
+    }
+    $('authMsg').textContent=error?error.message:(data?.session?'Registration & login successful. Admin can now assign access from Users.':'Registration successful. After email verification, Admin can assign access from Users.');
+  }
   catch(err){$('authMsg').textContent=err?.message||'Registration failed.';}
   finally{btn.disabled=false;btn.textContent='Register';}
 });
@@ -1192,13 +1408,593 @@ document.addEventListener('DOMContentLoaded',()=>{
   ['weight','normalPackage','country'].forEach(id=>$(id)?.addEventListener('input',()=>{ if($('zone')?.textContent && $('zone').textContent!=='—') updateIcpcUsed(); }));
   const nav=(key)=>{
     document.querySelectorAll('.admin-nav button').forEach(b=>b.classList.toggle('active',b.dataset.adminNav===key));
+    const challanPanel=document.querySelector('#challanPanel');
+    if(challanPanel){challanPanel.style.display=(key==='challan')?'block':'none';}
     if(key==='calculator') document.querySelector('.grid')?.scrollIntoView({behavior:'smooth',block:'start'});
     else if(key==='dashboard'){if(currentProfile?.is_admin||currentProfile?.can_dashboard!==false)document.querySelector('#dashboard')?.scrollIntoView({behavior:'smooth',block:'start'});else alert('Dashboard access is disabled for this user.');}
     else if(key==='rate') document.querySelector('#rateUpdateBtn')?.click();
     else if(key==='logs'){if(currentProfile?.is_admin)document.querySelector('#dashboard')?.scrollIntoView({behavior:'smooth',block:'start'});else alert('Admin access required for Calculation Logs.');}
-    else if(key==='users') alert('Users management is available for Admin access.');
+    else if(key==='users'){
+      if(!currentProfile?.is_admin){alert('Admin access required.');return;}
+      const panel=document.querySelector('#usersPanel');
+      if(panel){
+        panel.classList.add('show');
+        panel.scrollIntoView({behavior:'smooth',block:'start'});
+        loadUsers();
+      }
+    }
     else if(key==='settings') document.querySelector('#fx')?.scrollIntoView({behavior:'smooth',block:'center'});
+    else if(key==='challan'){
+      if(challanPanel){
+        challanPanel.style.display='block';
+        challanPanel.classList.add('show');
+        challanPanel.scrollIntoView({behavior:'smooth',block:'start'});
+      }
+    }
   };
+
+  // Challan UI: scoped only to the Challan panel; existing calculator logic is untouched.
+  (function(){
+    const $c=id=>document.getElementById(id);
+    const rateOptions=()=>{
+      const opts=[];
+      if(currentProfile?.is_admin || canUse('A')) opts.push(['A','Rate A']);
+      if(currentProfile?.is_admin || canUse('B')) opts.push(['B','Rate B']);
+      if(currentProfile?.is_admin || canUse('NORMAL')) opts.push(['Normal','Normal Rate']);
+      return opts.length?opts:[['Normal','Normal Rate']];
+    };
+    const weightOptions=rate=> rate==='Normal'
+      ? DATA.normalRates.map(r=>r[0])
+      : [];
+    function fillRateSelect(id,preferred){
+      const el=$c(id); if(!el)return;
+      const opts=rateOptions();
+      el.innerHTML=opts.map(([v,t])=>`<option value="${v}">${t}</option>`).join('');
+      if(opts.some(x=>x[0]===preferred)) el.value=preferred;
+    }
+    function fillWeightSelect(id,rate,preferred){
+      const el=$c(id); if(!el)return;
+      if(rate==='Normal'){
+        const opts=weightOptions(rate);
+        el.tagName==='SELECT' ? el.innerHTML=opts.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('') : (el.setAttribute('list',id+'List'), ensureWeightDatalist(id,opts));
+        if(preferred!=null) el.value=String(preferred);
+      }else{
+        el.removeAttribute('list');
+        if(preferred!=null) el.value=String(preferred);
+      }
+    }
+    function ensureWeightDatalist(id,opts){
+      const el=$c(id); if(!el)return;
+      const lid=id+'List'; let dl=$c(lid);
+      if(!dl){dl=document.createElement('datalist');dl.id=lid;el.parentNode.appendChild(dl);}
+      dl.innerHTML=opts.map(v=>`<option value="${esc(v)}"></option>`).join('');
+    }
+    function countryList(q=''){
+      const query=norm(q);
+      return Object.keys(DATA.zones).filter(c=>!query||norm(c).includes(query)).sort((a,b)=>a.localeCompare(b));
+    }
+    function cityList(country,q=''){
+      let rows=Array.isArray(DATA.oda)?DATA.oda.filter(r=>String(r[1]??'').trim()):[];
+      if(country) rows=rows.filter(r=>norm(r[0])===norm(canonicalCountry(country)));
+      const cities=[...new Set(rows.map(r=>String(r[1]).trim()))].sort((a,b)=>a.localeCompare(b));
+      const query=norm(q);
+      return query?cities.filter(c=>norm(c).startsWith(query)):cities;
+    }
+    function showSuggest(inputId,boxId,items,assign){
+      const input=$c(inputId), box=$c(boxId); if(!input||!box)return;
+      box.innerHTML=items.slice(0,40).map(v=>`<button type="button" data-v="${esc(v)}">${esc(v)}</button>`).join('');
+      box.style.display=items.length?'block':'none';
+      box.querySelectorAll('button').forEach(b=>b.addEventListener('mousedown',e=>{e.preventDefault();assign(b.dataset.v);box.style.display='none';}));
+    }
+    function wireCountryCity(prefix){
+      const countryId=prefix+'Country', cityId=prefix+'City';
+      const countryBox=prefix==='challanAwb'?'challanCountrySuggest':'challanCreateCountrySuggest';
+      const cityBox=prefix==='challanAwb'?'challanCitySuggest':'challanCreateCitySuggest';
+      const ci=$c(countryId), ct=$c(cityId); if(!ci||!ct)return;
+      ci.addEventListener('input',()=>showSuggest(countryId,countryBox,countryList(ci.value),v=>{ci.value=v;updateChallanAmount(prefix);showSuggest(cityId,cityBox,cityList(v,ct.value),x=>{ct.value=x;updateChallanAmount(prefix);});}));
+      ci.addEventListener('focus',()=>showSuggest(countryId,countryBox,countryList(ci.value),v=>{ci.value=v;updateChallanAmount(prefix);}));
+      ct.addEventListener('input',()=>{showSuggest(cityId,cityBox,cityList(ci.value,ct.value),v=>{ct.value=v;updateChallanAmount(prefix);});updateChallanAmount(prefix);});
+      ct.addEventListener('focus',()=>showSuggest(cityId,cityBox,cityList(ci.value,ct.value),v=>{ct.value=v;updateChallanAmount(prefix);}));
+    }
+    function syncChallanRate(prefix,preferred){
+      const rateId=prefix+'Rate', weightId=prefix+'Weight';
+      const rate=$c(rateId), weight=$c(weightId); if(!rate||!weight)return;
+      fillRateSelect(rateId,preferred||rate.value||rateOptions()[0][0]);
+      if(rate.value==='Normal') fillWeightSelect(weightId,rate.value,weight.value||'0.5E');
+      rate.addEventListener('change',()=>{
+        if(rate.value==='Normal'){
+          weight.value='0.5E'; fillWeightSelect(weightId,rate.value,weight.value);
+        }else{
+          weight.value='';
+          weight.placeholder='e.g. 11, 15, 25, 50';
+        }
+        updateChallanAmount(prefix);
+      });
+      weight.addEventListener('input',()=>updateChallanAmount(prefix));
+      $c(prefix+'Vat')?.addEventListener('change',()=>updateChallanAmount(prefix));
+      $c(prefix+'Postal')?.addEventListener('input',()=>updateChallanAmount(prefix));
+    }
+    function snapshotMain(){
+      const ids=['weight','normalPackage','country','postal','city','fx','vat','fuel','odaBase','govtFee'];
+      const values={}; ids.forEach(id=>{const e=$(id);values[id]=e?e.value:'';});
+      return {values,plan:currentPlan};
+    }
+    function restoreMain(s){
+      Object.entries(s.values).forEach(([id,v])=>{const e=$(id);if(e)e.value=v;});
+      currentPlan=s.plan;
+      syncPlanInputs();
+    }
+    function calculateChallanAmount(prefix){
+      const rate=$c(prefix+'Rate')?.value||'Normal', country=$c(prefix+'Country')?.value.trim()||'', postal=$c(prefix+'Postal')?.value.trim()||'', city=$c(prefix+'City')?.value.trim()||'', vatYes=($c(prefix+'Vat')?.value||'yes')==='yes';
+      const wv=$c(prefix+'Weight')?.value||'';
+      if(!country||!wv){return '';}
+      const snap=snapshotMain();
+      try{
+        currentPlan=rate==='Normal'?'NORMAL':rate;
+        $('country').value=country; $('postal').value=postal; $('city').value=city;
+        if(rate==='Normal') $('normalPackage').value=wv;
+        else $('weight').value=parseFloat(String(wv).replace(/[^0-9.]/g,''))||0;
+        $('vat').value=vatYes?($('vat').value||15):0;
+        calculate();
+        const out=vatYes?$('grandVat').textContent:$('grandNoVat').textContent;
+        return out==='—'?'':out;
+      }catch(e){return '';}
+      finally{restoreMain(snap);calculate();}
+    }
+    function updateChallanAmount(prefix){
+      const amount=calculateChallanAmount(prefix);
+      const out=$c(prefix+'Amount'); if(out)out.value=amount||'';
+    }
+    function initChallanFields(){
+      fillRateSelect('challanAwbRate'); fillRateSelect('challanCreateRate');
+      if($c('challanAwbRate')?.value==='Normal') fillWeightSelect('challanAwbWeight','Normal','0.5E');
+      if($c('challanCreateRate')?.value==='Normal') fillWeightSelect('challanCreateWeight','Normal','0.5E');
+      wireCountryCity('challanAwb'); wireCountryCity('challanCreate');
+      syncChallanRate('challanAwb'); syncChallanRate('challanCreate');
+      ['challanAwbRate','challanCreateRate'].forEach(id=>{$c(id)?.addEventListener('change',()=>updateChallanAmount(id.startsWith('challanAwb')?'challanAwb':'challanCreate'));});
+      ['challanAwbManual','challanAwbPostal','challanCreatePostal'].forEach(id=>$c(id)?.addEventListener('input',()=>updateChallanAmount(id.startsWith('challanAwb')?'challanAwb':'challanCreate')));
+      updateChallanAmount('challanAwb'); updateChallanAmount('challanCreate');
+    }
+    const challanViews={awb:$c('challanAwb'),create:$c('challanCreate'),report:$c('challanReport'),search:$c('challanSearch')};
+    document.querySelectorAll('[data-challan-tab]').forEach(btn=>btn.addEventListener('click',()=>{const key=btn.dataset.challanTab;Object.entries(challanViews).forEach(([k,v])=>{if(v)v.style.display=k===key?'block':'none';});document.querySelectorAll('[data-challan-tab]').forEach(b=>b.classList.toggle('primary',b.dataset.challanTab===key));document.querySelectorAll('[data-challan-tab]').forEach(b=>b.classList.toggle('secondary',b.dataset.challanTab!==key));}));
+    function challanAwbStore(){try{return JSON.parse(localStorage.getItem('iphw_challan_awbs')||'[]')}catch(e){return []}}
+    function saveChallanAwbStore(a){localStorage.setItem('iphw_challan_awbs',JSON.stringify(a));}
+    function challanStore(){try{return JSON.parse(localStorage.getItem('iphw_challans')||'[]')}catch(e){return []}}
+    function saveChallanStore(a){localStorage.setItem('iphw_challans',JSON.stringify(a));}
+    function getChallanAmountByVat(vatYes, withVat, withoutVat){
+  return vatYes ? (withVat ?? '') : (withoutVat ?? '');
+}
+
+function challanAwbAlreadyUsed(id){
+      const key=String(id||'').trim();
+      if(!key)return false;
+      if(challanAwbStore().some(x=>String(x.id||'').trim()===key)) return true;
+      return challanAwbInSubmittedChallan(key);
+    }
+    function challanAwbInSubmittedChallan(id){
+      const key=String(id||'').trim();
+      if(!key)return false;
+      return challanStore().some(ch=>Array.isArray(ch.items)
+        ? ch.items.some(it=>String(it.awb||it.id||'').trim()===key)
+        : String(ch.awb||'').split(',').map(v=>v.trim()).includes(key));
+    }
+    function refreshChallanAwbSelect(){const s=$c('challanAwbSelect');if(!s)return;const a=challanAwbStore();s.innerHTML='<option value="">Select saved AWB</option>'+a.map(x=>`<option value="${esc(x.id)}">${esc(x.id)} — ${esc(x.country||'')} — ${esc(x.weight||'')}</option>`).join('');}
+    function fillCreateFromAwb(){const id=$c('challanAwbSelect')?.value;if(!id)return;const x=challanAwbStore().find(a=>a.id===id);if(!x)return;[['challanCreateRate',x.rate],['challanCreateCountry',x.country],['challanCreatePostal',x.postal],['challanCreateCity',x.city],['challanCreateWeight',x.weight],['challanCreateVat',x.vat]].forEach(([id,v])=>{const e=$c(id);if(e)e.value=v??'';});fillWeightSelect('challanCreateWeight',x.rate,x.weight);$c('challanCreateAmount').value=x.amount||'';updateChallanAmount('challanCreate');}
+    $c('challanAwbSelect')?.addEventListener('change',fillCreateFromAwb);
+    let challanBatchAwbs=[];
+    function renderChallanBatch(){
+      const box=$c('challanBatchAwbs'); if(!box)return;
+      box.innerHTML=challanBatchAwbs.length?'<div style="font-weight:800;margin-bottom:5px">AWBs in this challan</div>'+challanBatchAwbs.map((x,i)=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 8px;border:1px solid #dbe3ee;border-radius:7px;background:#fff;margin-top:5px;font-size:12px"><span><b>${esc(x.awb||x.id)}</b> — ${esc(x.country||'')} — ${esc(x.weight||'')} — ${esc(x.amount||'')}</span><button type="button" class="btn secondary" data-remove-challan-batch="${i}" style="padding:4px 8px">Remove</button></div>`).join(''):' ';
+      box.querySelectorAll('[data-remove-challan-batch]').forEach(b=>b.addEventListener('click',()=>{challanBatchAwbs.splice(Number(b.dataset.removeChallanBatch),1);renderChallanBatch();}));
+    }
+    $c('addAwbToChallan')?.addEventListener('click',()=>{
+      const id=$c('challanAwbSelect')?.value; if(!id){$c('challanCreateMsg').textContent='Please select an AWB.';return;}
+      const x=challanAwbStore().find(a=>a.id===id); if(!x)return;
+      if(challanBatchAwbs.some(a=>(a.awb||a.id)===id)){$c('challanCreateMsg').textContent='This AWB is already added to the challan.';return;}
+      challanBatchAwbs.push({...x,awb:x.id}); renderChallanBatch(); $c('challanCreateMsg').textContent='AWB added to challan. Add more AWBs if needed.';
+    });
+    let pendingChallanAwbs=[];
+    function challanAwbPrefix(index){return index===0?'challanAwb':'challanAwb'+index;}
+    function getChallanAwbForm(prefix='challanAwb',requireAmount=true){
+      const id=$c(prefix+'Manual')?.value.trim()||'';
+      const pcs=$c(prefix+'Pcs')?.value||'1';
+      const rate=$c(prefix+'Rate')?.value||'Normal';
+      const country=$c(prefix+'Country')?.value.trim()||'';
+      const postal=$c(prefix+'Postal')?.value.trim()||'';
+      const city=$c(prefix+'City')?.value.trim()||'';
+      const weight=$c(prefix+'Weight')?.value.trim()||'';
+      const vat=$c(prefix+'Vat')?.value||'yes';
+      const amount=$c(prefix+'Amount')?.value||'';
+      if(!/^\d{12}$/.test(id)) return {error:'AWB must be exactly 12 digits.'};
+      if(!/^\d+$/.test(String(pcs)) || Number(pcs)<1) return {error:'PKG PCS must be a valid number (default 1).'};
+      if(!country) return {error:'Destination Country is required.'};
+      if(!weight) return {error:'Weight / Package Code is required.'};
+      if(rate!=='Normal' && (!/^\d+(?:\.\d+)?$/.test(weight) || Number(weight)<=0)) return {error:'Rate A / Rate B weight must be actual numeric KG, e.g. 11, 15, 25 or 50.'};
+      if(rate!=='Normal' && Number(weight)<=0) return {error:'Rate A / Rate B weight must be actual KG.'};
+      if(requireAmount && !amount) return {error:'Amount could not be calculated. Please check destination, weight and VAT.'};
+      return {data:{id,manualAwb:true,pcs:Number(pcs),rate,country,postal,city,weight,vat,amount,date:new Date().toISOString(),email:currentProfile?.email||''}};
+    }
+    function challanAwbSuggestBoxes(prefix){return {countryBox:prefix==='challanAwb'?'challanCountrySuggest':prefix+'CountrySuggest',cityBox:prefix==='challanAwb'?'challanCitySuggest':prefix+'CitySuggest'};}
+    function wireChallanAwbCountryCity(prefix){
+      const countryId=prefix+'Country', cityId=prefix+'City', boxes=challanAwbSuggestBoxes(prefix);
+      const ci=$c(countryId), ct=$c(cityId); if(!ci||!ct)return;
+      const assignCountry=v=>{ci.value=v;updateChallanAmount(prefix);showSuggest(cityId,boxes.cityBox,cityList(v,ct.value),x=>{ct.value=x;updateChallanAmount(prefix);});};
+      const assignCity=v=>{ct.value=v;updateChallanAmount(prefix);};
+      ci.addEventListener('input',()=>showSuggest(countryId,boxes.countryBox,countryList(ci.value),assignCountry));
+      ci.addEventListener('focus',()=>showSuggest(countryId,boxes.countryBox,countryList(ci.value),assignCountry));
+      ct.addEventListener('input',()=>{showSuggest(cityId,boxes.cityBox,cityList(ci.value,ct.value),assignCity);updateChallanAmount(prefix);});
+      ct.addEventListener('focus',()=>showSuggest(cityId,boxes.cityBox,cityList(ci.value,ct.value),assignCity));
+    }
+    function initChallanAwbEntry(prefix,preferredRate){
+      fillRateSelect(prefix+'Rate',preferredRate||rateOptions()[0][0]);
+      if($c(prefix+'Rate')?.value==='Normal') fillWeightSelect(prefix+'Weight','Normal',$c(prefix+'Weight')?.value||'0.5E');
+      wireChallanAwbCountryCity(prefix);
+      syncChallanRate(prefix);
+      $c(prefix+'Manual')?.addEventListener('input',function(){this.value=this.value.replace(/\D/g,'').slice(0,12);});
+      $c(prefix+'Rate')?.addEventListener('change',()=>updateChallanAmount(prefix));
+      $c(prefix+'Postal')?.addEventListener('input',()=>updateChallanAmount(prefix));
+      updateChallanAmount(prefix);
+    }
+    function resetChallanAwbEntry(prefix,keepRate=false){
+      ['Manual','Country','Postal','City','Amount'].forEach(k=>{const e=$c(prefix+k);if(e)e.value='';});
+      const rate=$c(prefix+'Rate');
+      if(rate){if(!keepRate)rate.value=rateOptions()[0][0];}
+      const r=rate?.value||'Normal';
+      if(r==='Normal') fillWeightSelect(prefix+'Weight','Normal','0.5E'); else {const w=$c(prefix+'Weight');if(w){w.value='';w.removeAttribute('list');}}
+      const vat=$c(prefix+'Vat');if(vat)vat.value='yes';
+    }
+    function cloneChallanAwbEntry(){
+      const wrap=$c('challanAwbEntryForms'); if(!wrap)return null;
+      const forms=[...wrap.querySelectorAll('.challan-awb-entry-form')];
+      const index=forms.length;
+      const source=forms[forms.length-1];
+      const clone=source.cloneNode(true);
+      clone.dataset.awbIndex=String(index);
+      const oldPrefix=source.dataset.prefix||challanAwbPrefix(index-1);
+      const prefix=challanAwbPrefix(index);
+      clone.dataset.prefix=prefix;
+      clone.querySelectorAll('[id]').forEach(el=>{
+        const old=el.id;
+        if(old.startsWith(oldPrefix)) el.id=prefix+old.slice(oldPrefix.length);
+        else if(old==='challanCountrySuggest') el.id=prefix+'CountrySuggest';
+        else if(old==='challanCitySuggest') el.id=prefix+'CitySuggest';
+      });
+      clone.querySelectorAll('input,select,textarea').forEach(el=>{
+        if(el.name) el.name=el.name+'_'+index;
+      });
+      clone.querySelectorAll('[id$="Amount"]').forEach(el=>el.value='');
+      clone.querySelectorAll('[id$="Manual"],[id$="Country"],[id$="Postal"],[id$="City"]').forEach(el=>el.value='');
+      let pcs=clone.querySelector('[id$="Pcs"]');
+      if(!pcs){
+        const awbField=clone.querySelector('[id$="Manual"]');
+        if(awbField){
+          const wrapField=awbField.closest('.field');
+          const div=document.createElement('div'); div.className='field';
+          div.innerHTML='<label>PKG PCS</label><input id="'+prefix+'Pcs'+'" type="number" min="1" value="1" required><div class="note">Enter actual PCS manually. Default is 1.</div>';
+          wrapField?.after(div);
+          pcs=div.querySelector('[id$="Pcs"]');
+        }
+      }
+      if(pcs)pcs.value='1';
+      const vat=clone.querySelector('[id$="Vat"]'); if(vat)vat.value='yes';
+      const rate=clone.querySelector('[id$="Rate"]'); if(rate)rate.innerHTML='';
+      const weight=clone.querySelector('[id$="Weight"]'); if(weight){weight.value='';weight.removeAttribute('list');}
+      clone.querySelectorAll('datalist').forEach(d=>d.remove());
+      clone.querySelectorAll('[id$="CountrySuggest"],[id$="CitySuggest"]').forEach(b=>{b.innerHTML='';b.style.display='none';});
+      wrap.appendChild(clone);
+      initChallanAwbEntry(prefix);
+      const first=clone.querySelector('[id$="Manual"]'); first?.focus();
+      return prefix;
+    }
+    function renderPendingChallanAwbs(){
+      const box=$c('pendingChallanAwbs'); if(!box)return;
+      box.innerHTML=pendingChallanAwbs.length?'<div style="font-weight:800;margin-bottom:5px">AWBs to save with challan</div>'+pendingChallanAwbs.map((x,i)=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 8px;border:1px solid #dbe3ee;border-radius:7px;background:#fff;margin-top:5px;font-size:12px"><span><b>${esc(x.id)}</b> — ${esc(x.country)} — ${esc(x.weight)} — ${esc(x.amount)}</span><button type="button" class="btn secondary" data-remove-pending="${i}" style="padding:4px 8px">Remove</button></div>`).join(''):'';
+      box.querySelectorAll('[data-remove-pending]').forEach(b=>b.addEventListener('click',()=>{pendingChallanAwbs.splice(Number(b.dataset.removePending),1);renderPendingChallanAwbs();}));
+    }
+    $c('addChallanAwb')?.addEventListener('click',()=>{
+      const forms=[...document.querySelectorAll('#challanAwbEntryForms .challan-awb-entry-form')];
+      const last=forms[forms.length-1];
+      const prefix=last?.dataset.prefix||challanAwbPrefix(forms.length-1);
+      const id=String($c(prefix+'Manual')?.value||'').trim();
+      const pcs=String($c(prefix+'Pcs')?.value||'1');
+      if(!/^\d{12}$/.test(id)){ $c('challanAwbMsg').textContent='AWB must be exactly 12 digits before clicking Add AWB.'; $c(prefix+'Manual')?.focus(); return; }
+      if(!/^\d+$/.test(pcs) || Number(pcs)<1){ $c('challanAwbMsg').textContent='PKG PCS must be a valid number (default 1).'; $c(prefix+'Pcs')?.focus(); return; }
+      const duplicateInForms=forms.filter(f=>f!==last).some(f=>String($c((f.dataset.prefix||'challanAwb')+'Manual')?.value||'').trim()===id);
+      if(duplicateInForms || challanAwbAlreadyUsed(id)){ $c('challanAwbMsg').textContent='This AWB already exists and cannot be entered twice.'; $c(prefix+'Manual')?.focus(); return; }
+      cloneChallanAwbEntry();
+      $c('challanAwbMsg').textContent='New AWB form added. Fill this AWB completely, then click Add AWB again. Click Save AWB when finished.';
+    });
+    $c('saveChallanAwb')?.addEventListener('click',()=>{
+      const forms=[...document.querySelectorAll('#challanAwbEntryForms .challan-awb-entry-form')];
+      const batch=[]; const seen=new Set();
+      for(const form of forms){
+        const prefix=form.dataset.prefix||'challanAwb';
+        const r=getChallanAwbForm(prefix);
+        if(r.error){$c('challanAwbMsg').textContent=r.error; $c(prefix+'Manual')?.focus(); return;}
+        if(seen.has(r.data.id)||challanAwbAlreadyUsed(r.data.id)){ $c('challanAwbMsg').textContent='AWB '+r.data.id+' already exists. The same AWB cannot be entered twice.'; $c(prefix+'Manual')?.focus(); return; }
+        seen.add(r.data.id); batch.push(r.data);
+      }
+      const a=challanAwbStore(); batch.forEach(x=>a.push(x)); saveChallanAwbStore(a);
+      pendingChallanAwbs=[]; renderPendingChallanAwbs();
+      const wrap=$c('challanAwbEntryForms');
+      if(wrap){wrap.innerHTML=''; const tpl=document.createElement('div'); tpl.className='formgrid challan-awb-entry-form'; tpl.dataset.awbIndex='0'; tpl.dataset.prefix='challanAwb'; tpl.innerHTML=`<div class="field"><label>AWB</label><input id="challanAwbManual" type="text" inputmode="numeric" maxlength="12" minlength="12" pattern="[0-9]{12}" placeholder="Enter 12 digit AWB number" required><div class="note">Manual Import — exactly 12 digits.</div></div><div class="field"><label>PKG PCS</label><input id="challanAwbPcs" type="number" min="1" value="1" required></div><div class="field"><label>RATE</label><select id="challanAwbRate"></select><div class="note">Rate A / B: actual KG only. Normal Rate keeps package options.</div></div><div class="field"><label>DESTINATION COUNTRY</label><div style="width:100%;position:relative"><input id="challanAwbCountry" type="text" placeholder="Destination Country" autocomplete="off"><div id="challanCountrySuggest" class="suggest"></div></div></div><div class="field"><label>RECIPIENT POSTAL CODE</label><input id="challanAwbPostal" type="text" placeholder="As per destination selection"></div><div class="field"><label>RECIPIENT CITY</label><div style="width:100%;position:relative"><input id="challanAwbCity" type="text" placeholder="As per destination &amp; ODA data" autocomplete="off"><div id="challanCitySuggest" class="suggest"></div></div></div><div class="field"><label>WEIGHT / PACKAGE CODE</label><input id="challanAwbWeight" type="text" inputmode="decimal" placeholder="e.g. 11, 15, 25, 50"><div class="note">Rate A / B: enter actual KG. Normal Rate keeps package/weight options unchanged.</div></div><div class="field"><label>VAT</label><select id="challanAwbVat"><option value="yes">Yes</option><option value="no">No</option></select></div><div class="field"><label>AMOUNT</label><input id="challanAwbAmount" type="text" inputmode="decimal" placeholder="Grand Total Amount (BDT)" readonly></div>`; wrap.appendChild(tpl); initChallanAwbEntry('challanAwb'); }
+      $c('challanAwbMsg').textContent='AWB saved: '+batch.length+' record(s). You can start a new AWB entry.'; refreshChallanAwbSelect(); renderChallanCreateVisual();
+    });
+    $c('clearChallanAwb')?.addEventListener('click',()=>{
+      const wrap=$c('challanAwbEntryForms');
+      if(wrap){wrap.innerHTML=''; const tpl=document.createElement('div'); tpl.className='formgrid challan-awb-entry-form'; tpl.dataset.awbIndex='0'; tpl.dataset.prefix='challanAwb'; tpl.innerHTML=`<div class="field"><label>AWB</label><input id="challanAwbManual" type="text" inputmode="numeric" maxlength="12" minlength="12" pattern="[0-9]{12}" placeholder="Enter 12 digit AWB number" required><div class="note">Manual Import — exactly 12 digits.</div></div><div class="field"><label>PKG PCS</label><input id="challanAwbPcs" type="number" min="1" value="1" required></div><div class="field"><label>RATE</label><select id="challanAwbRate"></select></div><div class="field"><label>DESTINATION COUNTRY</label><div style="width:100%;position:relative"><input id="challanAwbCountry" type="text" placeholder="Destination Country" autocomplete="off"><div id="challanCountrySuggest" class="suggest"></div></div></div><div class="field"><label>RECIPIENT POSTAL CODE</label><input id="challanAwbPostal" type="text" placeholder="As per destination selection"></div><div class="field"><label>RECIPIENT CITY</label><div style="width:100%;position:relative"><input id="challanAwbCity" type="text" placeholder="As per destination &amp; ODA data" autocomplete="off"><div id="challanCitySuggest" class="suggest"></div></div></div><div class="field"><label>WEIGHT / PACKAGE CODE</label><input id="challanAwbWeight" type="text" inputmode="decimal" placeholder="e.g. 11, 15, 25, 50"></div><div class="field"><label>VAT</label><select id="challanAwbVat"><option value="yes">Yes</option><option value="no">No</option></select></div><div class="field"><label>AMOUNT</label><input id="challanAwbAmount" type="text" inputmode="decimal" placeholder="Grand Total Amount (BDT)" readonly></div>`; wrap.appendChild(tpl); initChallanAwbEntry('challanAwb');}
+      $c('challanAwbMsg').textContent='';
+    });
+    $c('deleteSelectedAwb')?.addEventListener('click',()=>{const id=$c('challanAwbSelect')?.value;if(!id){$c('challanCreateMsg').textContent='Please select an AWB.';return;}saveChallanAwbStore(challanAwbStore().filter(x=>x.id!==id));refreshChallanAwbSelect();renderChallanCreateVisual();$c('challanCreateMsg').textContent='AWB deleted: '+id;});
+    $c('importChallanAwb')?.addEventListener('click',()=>{$c('challanAwb')?.scrollIntoView({behavior:'smooth',block:'start'});$c('challanAwbManual')?.focus();});
+    function safePdfText(v){return String(v??'').replace(/[^\x20-\x7E]/g,' ').replace(/[\\()]/g,' ');}
+    function pdfBytesToBase64(bytes){
+      let bin='';
+      const chunk=0x8000;
+      for(let i=0;i<bytes.length;i+=chunk){bin+=String.fromCharCode(...bytes.subarray(i,Math.min(i+chunk,bytes.length)));}
+      return btoa(bin);
+    }
+    function normalizeChallanItems(x){
+      const raw=Array.isArray(x?.items)?x.items:[];
+      const fallbackAwbs=String(x?.awb||'').split(',').map(v=>v.trim()).filter(Boolean);
+      return raw.map((v,i)=>{
+        const item=(v&&typeof v==='object')?v:{};
+        const awb=String(item.awb||item.id||fallbackAwbs[i]||'').trim();
+        return {
+          ...item,
+          awb:awb||'—',
+          id:String(item.id||awb||'').trim(),
+          pcs:item.pcs==null||item.pcs===''?1:item.pcs,
+          rate:item.rate||x?.rate||'Normal',
+          country:item.country||'',
+          postal:item.postal||'',
+          city:item.city||'',
+          weight:item.weight||'',
+          vat:item.vat||'yes',
+          amount:item.amount||''
+        };
+      });
+    }
+    function makeSimplePdfBase64(x){
+      /* PDF only: keep website UI unchanged. Landscape Challan with guaranteed AWB mapping. */
+      const items=normalizeChallanItems(x);
+      const customerName=x.customerName||currentUser?.user_metadata?.full_name||currentUser?.user_metadata?.name||currentProfile?.agent_name||currentProfile?.full_name||currentProfile?.name||x.email||'—';
+      const totalPcs=items.reduce((n,v)=>n+(parseInt(v.pcs,10)||1),0);
+      const totalWt=items.reduce((n,v)=>{const z=String(v.weight??'').replace(/[^0-9.]/g,'');return n+(parseFloat(z)||0);},0);
+      const totalAmount=items.reduce((n,v)=>n+(parseFloat(String(v.amount??'').replace(/[^0-9.]/g,''))||0),0);
+      const headers=['SL NO','AWB Number','PCS','RATE','DESTINATION COUNTRY','RECIPIENT POSTAL CODE','RECIPIENT CITY','WEIGHT / PACKAGE CODE','VAT','AMOUNT'];
+      const rows=items.map((v,i)=>[
+        String(i+1),String(v.awb||v.id||'—'),String(v.pcs??1),String(v.rate||'—'),String(v.country||'—'),String(v.postal||'—'),String(v.city||'—'),String(v.weight||'—'),String(v.vat||'—'),String(v.amount||'—')
+      ]);
+      const pageW=842,pageH=595,left=31,right=31,tableW=780;
+      const cols=[34,105,38,58,100,100,88,100,48,109];
+      const headerH=38,rowH=27,topY=450,rowsPerPage=15;
+      const pageCount=Math.max(1,Math.ceil(rows.length/rowsPerPage));
+      const pageObjNums=[],contentObjNums=[];let nextObj=3;
+      for(let i=0;i<pageCount;i++){pageObjNums.push(nextObj++);contentObjNums.push(nextObj++);}
+      const fontObj=nextObj++,boldObj=nextObj++;
+      const objects=[];
+      const fmt=(n,d=2)=>Number(n||0).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+      const text=(xx,yy,str,size=7,font='F1')=>`BT /${font} ${size} Tf ${xx.toFixed(2)} ${yy.toFixed(2)} Td (${safePdfText(str)}) Tj ET\n`;
+      const line=(x1,y1,x2,y2)=>`${x1.toFixed(2)} ${y1.toFixed(2)} m ${x2.toFixed(2)} ${y2.toFixed(2)} l S\n`;
+      const rect=(xx,yy,w,h,fill)=>fill?`${xx.toFixed(2)} ${yy.toFixed(2)} ${w.toFixed(2)} ${h.toFixed(2)} re f\n`:`${xx.toFixed(2)} ${yy.toFixed(2)} ${w.toFixed(2)} ${h.toFixed(2)} re S\n`;
+      const cellText=(str,xx,yy,w,size=7,bold=false)=>{
+        let t=String(str??'');
+        const max=Math.max(2,Math.floor((w-6)/(size*0.48)));
+        if(t.length>max)t=t.slice(0,Math.max(1,max-1))+'…';
+        return text(xx+3,yy,t,size,bold?'F2':'F1');
+      };
+      const contents=[];
+      for(let pno=0;pno<pageCount;pno++){
+        let c='0.12 0.12 0.12 rg\n0.12 0.12 0.12 RG\n';
+        c+=text(left,558,'CHALLAN DETAILS',20,'F2');
+        c+=text(left,534,'Customer Name: '+customerName,9,'F2');
+        c+=text(left,517,'Challan No: '+(x.id||'—'),8);
+        c+=text(470,517,'Date: '+new Date(x.date||Date.now()).toLocaleString(),8);
+        c+=text(left,499,'USD → BDT Rate: '+(x.fx!=null?Number(x.fx).toFixed(2):(Number($c('fx')?.value)||0).toFixed(2)),9,'F2');
+        c+=text(250,499,'Fuel Surcharge: '+(x.fuel!=null?Number(x.fuel).toFixed(2):(Number($c('fuel')?.value)||0).toFixed(2))+' %',9,'F2');
+        const tableTop=topY;
+        let xx=left;
+        c+='0.90 0.90 0.90 rg\n'+rect(left,tableTop-headerH,tableW,headerH,true)+'0.12 0.12 0.12 rg\n';
+        for(let j=0;j<headers.length;j++){c+=cellText(headers[j],xx,tableTop-15,cols[j],6.1,true);xx+=cols[j];}
+        c+=rect(left,tableTop-headerH,tableW,headerH,false);
+        xx=left;for(const w of cols){c+=line(xx,tableTop,xx,tableTop-headerH);xx+=w;}c+=line(left+tableW,tableTop,left+tableW,tableTop-headerH);
+        const start=pno*rowsPerPage,end=Math.min(rows.length,start+rowsPerPage);let y=tableTop-headerH;
+        for(let i=start;i<end;i++){
+          if((i-start)%2===1)c+='0.97 0.97 0.97 rg\n'+rect(left,y-rowH,tableW,rowH,true)+'0.12 0.12 0.12 rg\n';
+          c+=rect(left,y-rowH,tableW,rowH,false);xx=left;
+          for(let j=0;j<cols.length;j++){c+=cellText(rows[i][j],xx,y-17,cols[j],7,false);c+=line(xx,y,xx,y-rowH);xx+=cols[j];}
+          c+=line(left+tableW,y,left+tableW,y-rowH);y-=rowH;
+        }
+        c+=line(left,y,left+tableW,y);
+        if(pno===pageCount-1){
+          const ty=Math.max(55,y-32);
+          c+=text(left,ty,'Total AWB: '+items.length,8,'F2');
+          c+=text(170,ty,'Total PCS: '+totalPcs,8,'F2');
+          c+=text(300,ty,'Total WT: '+(Number.isInteger(totalWt)?totalWt:totalWt.toFixed(2)),8,'F2');
+          c+=text(465,ty,'Total Amount: '+fmt(totalAmount)+' BDT',8,'F2');
+        }
+        c+=text(755,20,'Page '+(pno+1)+'/'+pageCount,7);
+        contents.push(c);
+      }
+      objects[0]=`<< /Type /Catalog /Pages 2 0 R >>`;
+      objects[1]=`<< /Type /Pages /Kids [${pageObjNums.map(n=>n+' 0 R').join(' ')}] /Count ${pageCount} >>`;
+      const encoder=new TextEncoder();
+      for(let i=0;i<pageCount;i++){
+        objects[pageObjNums[i]-1]=`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageW} ${pageH}] /Resources << /Font << /F1 ${fontObj} 0 R /F2 ${boldObj} 0 R >> >> /Contents ${contentObjNums[i]} 0 R >>`;
+        const bytes=encoder.encode(contents[i]);
+        objects[contentObjNums[i]-1]=`<< /Length ${bytes.length} >>\nstream\n${contents[i]}endstream`;
+      }
+      objects[fontObj-1]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>';
+      objects[boldObj-1]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>';
+      let pdf='%PDF-1.4\n';const offsets=new Array(objects.length+1).fill(0);
+      for(let i=0;i<objects.length;i++){offsets[i+1]=encoder.encode(pdf).length;pdf+=(i+1)+' 0 obj\n'+objects[i]+'\nendobj\n';}
+      const xref=encoder.encode(pdf).length;pdf+='xref\n0 '+(objects.length+1)+'\n0000000000 65535 f \n';
+      for(let i=1;i<offsets.length;i++)pdf+=String(offsets[i]).padStart(10,'0')+' 00000 n \n';
+      pdf+='trailer\n<< /Size '+(objects.length+1)+' /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF';
+      return pdfBytesToBase64(encoder.encode(pdf));
+    }
+    function buildChallanEmailHtml(x){
+      const items=normalizeChallanItems(x);
+      const escMail=v=>String(v??'—').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      const pcs=items.reduce((n,v)=>n+(parseInt(v.pcs,10)||1),0);
+      const wt=items.reduce((n,v)=>n+(parseFloat(String(v.weight??'').replace(/[^0-9.]/g,''))||0),0);
+      const amount=items.reduce((n,v)=>n+(parseFloat(String(v.amount??'').replace(/[^0-9.]/g,''))||0),0);
+      const rows=items.map((v,i)=>`<tr><td>${i+1}</td><td>${escMail(v.awb||v.id)}</td><td>${escMail(v.pcs||1)}</td><td>${escMail(v.rate)}</td><td>${escMail(v.country)}</td><td>${escMail(v.postal)}</td><td>${escMail(v.city)}</td><td>${escMail(v.weight)}</td><td>${escMail(v.vat)}</td><td>${escMail(v.amount)}</td></tr>`).join('');
+      return `<div style="font-family:Arial,sans-serif;color:#111"><h2 style="margin-bottom:8px">Challan Details</h2><p><b>Customer Name:</b> ${escMail(x.customerName||x.email)}<br><b>Challan No:</b> ${escMail(x.id)} &nbsp;&nbsp;&nbsp; <b>Date:</b> ${escMail(new Date(x.date||Date.now()).toLocaleString())}</p><table style="border-collapse:collapse;width:100%;font-size:12px"><thead><tr>${['SL NO','AWB Number','PCS','RATE','DESTINATION COUNTRY','RECIPIENT POSTAL CODE','RECIPIENT CITY','WEIGHT / PACKAGE CODE','VAT','AMOUNT'].map(h=>`<th style="border:1px solid #555;padding:6px;background:#eee;text-align:left">${h}</th>`).join('')}</tr></thead><tbody>${rows||'<tr><td colspan="10" style="border:1px solid #555;padding:6px">No items</td></tr>'}</tbody></table><p style="margin-top:14px"><b>Total AWB:</b> ${items.length} &nbsp;&nbsp;&nbsp; <b>Total PCS:</b> ${pcs} &nbsp;&nbsp;&nbsp; <b>Total WT:</b> ${wt.toFixed(2)} &nbsp;&nbsp;&nbsp; <b>Total Amount:</b> ${amount.toFixed(2)} BDT</p><p>PDF Challan is attached with this email.</p></div>`;
+    }
+    function buildChallanEmailText(x){
+      const items=normalizeChallanItems(x);const pcs=items.reduce((n,v)=>n+(parseInt(v.pcs,10)||1),0);const wt=items.reduce((n,v)=>n+(parseFloat(String(v.weight??'').replace(/[^0-9.]/g,''))||0),0);const amount=items.reduce((n,v)=>n+(parseFloat(String(v.amount??'').replace(/[^0-9.]/g,''))||0),0);
+      const rows=items.map((v,i)=>`${i+1}. AWB: ${v.awb||v.id||'—'} | PCS: ${v.pcs||1} | RATE: ${v.rate||'—'} | COUNTRY: ${v.country||'—'} | POSTAL: ${v.postal||'—'} | CITY: ${v.city||'—'} | WEIGHT: ${v.weight||'—'} | VAT: ${v.vat||'—'} | AMOUNT: ${v.amount||'—'}`).join('\n');
+      return `Challan Details\nCustomer Name: ${x.customerName||x.email||'—'}\nChallan No: ${x.id||'—'}\nDate: ${new Date(x.date||Date.now()).toLocaleString()}\n\nSL NO | AWB Number | PCS | RATE | DESTINATION COUNTRY | RECIPIENT POSTAL CODE | RECIPIENT CITY | WEIGHT / PACKAGE CODE | VAT | AMOUNT\n${rows}\n\nTotal AWB: ${items.length}\nTotal PCS: ${pcs}\nTotal WT: ${wt.toFixed(2)}\nTotal Amount: ${amount.toFixed(2)} BDT\n\nPDF Challan is attached with this email.`;
+    }
+    async function sendChallanEmails(x,pdfBase64){
+      const recipients=new Set(); const me=currentProfile?.email||''; if(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(me))recipients.add(me.toLowerCase());
+      if(sb){const {data}=await sb.from('profiles').select('email,is_admin,can_challan_mail').or('is_admin.eq.true,can_challan_mail.eq.true');(data||[]).forEach(u=>{if(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(u.email||'')))recipients.add(String(u.email).toLowerCase());});}
+      const mailEndpoint=(window.CHALLAN_EMAIL_FUNCTION_URL||'').trim(); if(!mailEndpoint||!recipients.size)return {ok:false};
+      const resp=await fetch(mailEndpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY},body:JSON.stringify({to:[...recipients],challan:{...x,emailHtml:buildChallanEmailHtml(x),emailText:buildChallanEmailText(x)},pdfBase64,attachmentBase64:pdfBase64,filename:'FedEx-Challan-'+x.id+'.pdf',attachmentFilename:'FedEx-Challan-'+x.id+'.pdf',emailSubject:'FedEx Challan '+x.id,emailHtml:buildChallanEmailHtml(x),emailText:buildChallanEmailText(x)})});
+      const data=await resp.json().catch(()=>({})); if(!resp.ok)throw new Error(data.error||'Email service failed'); return {ok:true,recipients:[...recipients]};
+    }
+    $c('submitChallan')?.addEventListener('click',async()=>{
+      const id='CH-'+Date.now(); const current={awb:$c('challanAwbSelect').value,rate:$c('challanCreateRate').value,country:$c('challanCreateCountry').value.trim(),postal:$c('challanCreatePostal').value.trim(),city:$c('challanCreateCity').value.trim(),weight:$c('challanCreateWeight').value,vat:$c('challanCreateVat').value,amount:$c('challanCreateAmount').value||''};
+      const items=challanBatchAwbs.length?challanBatchAwbs:[current]; if(!items.some(x=>x.awb||x.id)){$c('challanCreateMsg').textContent='Please add/select at least one AWB.';return;}
+      const ids=items.map(v=>String(v.awb||v.id||'').trim()).filter(Boolean); if(new Set(ids).size!==ids.length){$c('challanCreateMsg').textContent='Duplicate AWB detected.';return;} if(ids.some(challanAwbInSubmittedChallan)){$c('challanCreateMsg').textContent='One or more AWB numbers already exist.';return;}
+      const total=items.reduce((sum,v)=>sum+(parseFloat(String(v.amount||'').replace(/[^0-9.]/g,''))||0),0).toFixed(2)+' BDT';
+      const x={id,awb:ids.join(', '),items,rate:items[0]?.rate||current.rate,country:items[0]?.country||current.country,postal:items[0]?.postal||current.postal,city:items[0]?.city||current.city,weight:items[0]?.weight||current.weight,vat:items[0]?.vat||current.vat,amount:total,date:new Date().toISOString(),email:currentProfile?.email||currentUser?.email||'Unknown',customerName:currentUser?.user_metadata?.full_name||currentUser?.user_metadata?.name||currentProfile?.agent_name||currentProfile?.full_name||currentProfile?.name||currentProfile?.email||currentUser?.email||'Unknown',fx:Number($c('fx')?.value)||0,fuel:Number($c('fuel')?.value)||0};
+      const pdfBase64=makeSimplePdfBase64({...x,items:normalizeChallanItems(x)}); const a=challanStore();a.push(x);saveChallanStore(a); const used=new Set(ids); saveChallanAwbStore(challanAwbStore().filter(v=>!used.has(String(v.id||'').trim()))); challanBatchAwbs=[];renderChallanBatch();refreshChallanAwbSelect();renderChallanCreateVisual();renderChallanReport();
+      $c('challanCreateMsg').textContent='Challan '+id+' created. PDF generated. Sending email...'; $c('challanCreateVisualMsg').textContent=$c('challanCreateMsg').textContent;
+      try{const mailed=await sendChallanEmails(x,pdfBase64); const msg=mailed.ok?'Challan '+id+' created. PDF attached and emailed to user/admin/authorized recipients.':'Challan '+id+' created, but no email recipient was configured.'; $c('challanCreateMsg').textContent=msg;$c('challanCreateVisualMsg').textContent=msg;}catch(err){const msg='Challan '+id+' created, but email failed: '+(err?.message||'Unknown error');$c('challanCreateMsg').textContent=msg;$c('challanCreateVisualMsg').textContent=msg;}
+    });
+    function renderChallanReport(){const body=$c('challanReportRows');if(!body)return;const a=challanStore();body.innerHTML=a.length?a.map(x=>`<tr><td>${new Date(x.date).toLocaleString()}</td><td>${esc(x.id)}</td><td>${esc(x.awb||'—')}</td><td>${esc(x.email||'—')}</td><td>${esc(x.country||'—')}</td><td>${esc(x.weight||'—')}</td><td>${esc(x.amount||'—')}</td></tr>`).join(''):'<tr><td colspan="7">No challan records.</td></tr>';}
+    $c('downloadChallanReport')?.addEventListener('click',()=>{renderChallanReport();const a=challanStore();const rows=[['Date','Challan','AWB','User','Country','Weight','Amount'],...a.map(x=>[new Date(x.date).toLocaleString(),x.id,x.awb||'',x.email||'',x.country||'',x.weight||'',x.amount||''])];const csv=rows.map(r=>r.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const url=URL.createObjectURL(blob);const el=document.createElement('a');el.href=url;el.download='challan-report.csv';el.click();URL.revokeObjectURL(url);$c('challanReportMsg').textContent='Report downloaded.';});
+    $c('searchChallan')?.addEventListener('click',()=>{if(!currentProfile?.is_admin){$c('challanSearchMsg').textContent='Admin access required.';return;} $c('challanSearchMsg').textContent='Admin search is ready.';});
+    $c('createChallanPdf')?.addEventListener('click',async()=>{const x=challanStore().slice(-1)[0];if(!x){$c('challanCreateMsg').textContent='Create a challan first.';return;}const w=window.open('','_blank','width=900,height=700');if(w){w.document.write(`<html><head><title>${x.id}</title><style>body{font-family:Arial;padding:35px}h1{color:#0b2a55}table{border-collapse:collapse;width:100%}td{padding:10px;border:1px solid #ddd}</style></head><body onload="window.print()"><h1>FedEx Challan</h1><p><b>Challan:</b> ${x.id}</p><table><tr><td>AWB</td><td>${x.awb||'—'}</td></tr><tr><td>User</td><td>${x.email||'—'}</td></tr><tr><td>Country</td><td>${x.country||'—'}</td></tr><tr><td>Postal / City</td><td>${x.postal||'—'} / ${x.city||'—'}</td></tr><tr><td>Weight</td><td>${x.weight||'—'}</td></tr><tr><td>VAT</td><td>${x.vat||'—'}</td></tr><tr><td>Amount</td><td>${x.amount||'—'}</td></tr></table></body></html>`);w.document.close();}setTimeout(async()=>{const to=prompt('Enter recipient email address:','');if(to===null)return;if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to.trim())){$c('challanCreateMsg').textContent='Please enter a valid recipient email address.';return;}const subject=encodeURIComponent('FedEx Challan '+x.id);const body=encodeURIComponent('Challan '+x.id+'\nAWB: '+(x.awb||'—')+'\nAmount: '+(x.amount||'—')+'\n\nThe generated Challan PDF is ready. Please attach the printed/saved PDF before sending.');try{
+        const mailEndpoint=(window.CHALLAN_EMAIL_FUNCTION_URL||'').trim();
+        if(!mailEndpoint){$c('challanCreateMsg').textContent='Challan created. Automatic email service is not configured yet.';return;}
+        const resp=await fetch(mailEndpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(window.SUPABASE_ANON_KEY||'')},body:JSON.stringify({to:to.trim(),challan:x})});
+        const data=await resp.json().catch(()=>({}));
+        if(!resp.ok)throw new Error(data.error||'Email service failed');
+        $c('challanCreateMsg').textContent='Challan created and email sent to '+to.trim()+'.';
+      }catch(err){$c('challanCreateMsg').textContent='Challan created, but email failed: '+(err?.message||'Unknown error');}},350);});
+
+    function renderChallanCreateVisual(){
+      const list=$c('challanAwbListForCreate'); const all=challanAwbStore(); const selected=new Set([...document.querySelectorAll('[data-challan-create-awb]:checked')].map(x=>x.value)); if(!list)return;
+      list.innerHTML=all.length?`<div style="overflow:auto;border:1px solid #dbe3ee;border-radius:9px;background:#fff"><table><thead><tr><th></th><th>AWB</th><th>PCS</th><th>RATE</th><th>COUNTRY</th><th>POSTAL</th><th>CITY</th><th>WEIGHT</th><th>VAT</th><th>AMOUNT</th></tr></thead><tbody>${all.map(x=>`<tr><td><input type="checkbox" data-challan-create-awb value="${esc(x.id)}" ${selected.has(x.id)?'checked':''}></td><td><b>${esc(x.id)}</b></td><td>${esc(x.pcs??'1')}</td><td>${esc(x.rate||'—')}</td><td>${esc(x.country||'—')}</td><td>${esc(x.postal||'—')}</td><td>${esc(x.city||'—')}</td><td>${esc(x.weight||'—')}</td><td>${esc(x.vat||'—')}</td><td>${esc(x.amount||'—')}</td></tr>`).join('')}</tbody></table></div>`:'<div style="padding:14px;color:#94a3b8;font-size:12px;border:1px dashed #cbd5e1;border-radius:9px;background:#fff">No saved AWB. First save AWB from AWB Entry.</div>';
+      const pending=all.length; if($c('challanRoutePending'))$c('challanRoutePending').textContent=pending; if($c('challanCourierPending'))$c('challanCourierPending').textContent=pending; if($c('challanAgentName'))$c('challanAgentName').innerHTML='<b>'+esc(currentProfile?.agent_name||currentProfile?.full_name||currentProfile?.name||currentProfile?.email||'—')+'</b>'; if($c('challanCourierLabel'))$c('challanCourierLabel').innerHTML='<b>Courier</b>'; if($c('challanRouteCounter'))$c('challanRouteCounter').checked=pending>0&&selected.size===pending; if($c('challanCourierSelect'))$c('challanCourierSelect').checked=pending>0&&selected.size===pending;
+    }
+    $c('challanSelectAll')?.addEventListener('change',e=>{
+      document.querySelectorAll('[data-challan-create-awb]').forEach(x=>x.checked=e.target.checked);
+      if($c('challanRouteCounter')) $c('challanRouteCounter').checked=e.target.checked;
+      if($c('challanCourierSelect')) $c('challanCourierSelect').checked=e.target.checked;
+    });
+    $c('challanRouteCounter')?.addEventListener('change',e=>{
+      document.querySelectorAll('[data-challan-create-awb]').forEach(x=>x.checked=e.target.checked);
+      if($c('challanSelectAll')) $c('challanSelectAll').checked=e.target.checked;
+      if($c('challanCourierSelect')) $c('challanCourierSelect').checked=e.target.checked;
+    });
+    $c('challanCourierSelect')?.addEventListener('change',e=>{
+      document.querySelectorAll('[data-challan-create-awb]').forEach(x=>x.checked=e.target.checked);
+      if($c('challanSelectAll')) $c('challanSelectAll').checked=e.target.checked;
+      if($c('challanRouteCounter')) $c('challanRouteCounter').checked=e.target.checked;
+    });
+    $c('challanAwbListForCreate')?.addEventListener('change',e=>{
+      if(!e.target.matches('[data-challan-create-awb]'))return;
+      const boxes=[...document.querySelectorAll('[data-challan-create-awb]')];
+      const checked=boxes.filter(x=>x.checked).length;
+      if($c('challanSelectAll')) $c('challanSelectAll').checked=boxes.length>0 && checked===boxes.length;
+      if($c('challanRouteCounter')) $c('challanRouteCounter').checked=boxes.length>0 && checked===boxes.length;
+      if($c('challanCourierSelect')) $c('challanCourierSelect').checked=boxes.length>0 && checked===boxes.length;
+    });
+
+    function validateChallanVisualAwb(){
+  const el=$c('challanVisualAwb');
+  if(!el)return true;
+  const v=String(el.value||'').trim();
+  const ok=/^\d{12}$/.test(v);
+  el.setCustomValidity(ok?'':'AWB must be exactly 12 digits.');
+  return ok;
+}
+$c('challanVisualAwb')?.addEventListener('input',function(){
+  this.value=this.value.replace(/\D/g,'').slice(0,12);
+  validateChallanVisualAwb();
+});
+
+function syncChallanVisualAwbFromRecord(rec){
+  if(!rec)return;
+  if($c('challanVisualAwb')){
+    $c('challanVisualAwb').value=String(rec.id||'').replace(/\D/g,'').slice(0,12);
+    validateChallanVisualAwb();
+  }
+}
+
+function syncChallanVisualFromAwb(){
+  const id=$c('challanAwbSelect')?.value||'';
+  const rec=challanAwbStore().find(x=>String(x.id)===String(id));
+  if(!rec)return;
+  syncChallanVisualAwbFromRecord(rec);
+  if($c('challanVisualCountry'))$c('challanVisualCountry').value=rec.country||'';
+  if($c('challanVisualWeight'))$c('challanVisualWeight').value=rec.weight||'';
+  if($c('challanVisualPcs'))$c('challanVisualPcs').value=rec.pcs||1;
+  if($c('challanVisualIcpc'))$c('challanVisualIcpc').value=rec.icpc||'';
+}
+$c('challanAwbSelect')?.addEventListener('change',syncChallanVisualFromAwb);
+
+$c('challanCreateVisualBtn')?.addEventListener('click',async()=>{
+      const ids=[...document.querySelectorAll('[data-challan-create-awb]:checked')].map(x=>String(x.value));
+      const msg=$c('challanCreateVisualMsg');
+      if(!ids.length){if(msg)msg.textContent='Please select at least one AWB.';return;}
+      const records=challanAwbStore().filter(x=>ids.includes(String(x.id)));
+      if(!records.length){if(msg)msg.textContent='No saved AWB selected.';return;}
+      const duplicate=records.map(x=>String(x.id||'')).filter((v,i,a)=>v&&a.indexOf(v)!==i);
+      if(duplicate.length){if(msg)msg.textContent='Duplicate AWB detected.';return;}
+      if(records.some(x=>challanAwbInSubmittedChallan(String(x.id||'')))){if(msg)msg.textContent='One or more AWB numbers already exist in a previous challan.';return;}
+      const id='CH-'+Date.now();
+      const total=records.reduce((sum,v)=>sum+(parseFloat(String(v.amount||'').replace(/[^0-9.]/g,''))||0),0).toFixed(2)+' BDT';
+      const x={id,awb:records.map(v=>v.id).join(', '),items:records.map(v=>({...v,id:String(v.id||'').trim(),awb:String(v.awb||v.id||'').trim(),pcs:v.pcs??1})),rate:records[0]?.rate||'Normal',country:records[0]?.country||'',postal:records[0]?.postal||'',city:records[0]?.city||'',weight:records[0]?.weight||'',vat:records[0]?.vat||'yes',amount:total,date:new Date().toISOString(),email:currentProfile?.email||currentUser?.email||'Unknown',customerName:currentUser?.user_metadata?.full_name||currentUser?.user_metadata?.name||currentProfile?.agent_name||currentProfile?.full_name||currentProfile?.name||currentProfile?.email||currentUser?.email||'Unknown',fx:Number($c('fx')?.value)||0,fuel:Number($c('fuel')?.value)||0};
+      try{
+        const pdfBase64=makeSimplePdfBase64({...x,items:normalizeChallanItems(x)});
+        const saved=challanStore(); saved.push(x); saveChallanStore(saved);
+        const used=new Set(ids); saveChallanAwbStore(challanAwbStore().filter(v=>!used.has(String(v.id||''))));
+        challanBatchAwbs=[]; refreshChallanAwbSelect(); renderChallanCreateVisual(); renderChallanReport();
+        if(msg)msg.textContent='Challan '+id+' created. PDF generated. Sending email...';
+        const mailed=await sendChallanEmails(x,pdfBase64);
+        const done=mailed?.ok?'Challan '+id+' created. PDF attached and emailed to user/admin/authorized recipients.':'Challan '+id+' created, but no email recipient was configured.';
+        if(msg)msg.textContent=done;
+      }catch(err){
+        const text='Challan '+id+' created, but email failed: '+(err?.message||'Unknown error');
+        if(msg)msg.textContent=text;
+      }
+    });
+    $c('challanDeleteVisualBtn')?.addEventListener('click',()=>{
+      const ids=new Set([...document.querySelectorAll('[data-challan-create-awb]:checked')].map(x=>x.value));
+      if(!ids.size){$c('challanCreateVisualMsg').textContent='Please select AWB to delete.';return;}
+      saveChallanAwbStore(challanAwbStore().filter(x=>!ids.has(x.id)));
+      if($c('challanSelectAll'))$c('challanSelectAll').checked=false;
+      refreshChallanAwbSelect();
+      renderChallanCreateVisual();
+      $c('challanCreateVisualMsg').textContent=ids.size+' AWB(s) deleted.';
+    });
+
+    $c('challanDashboardVisualBtn')?.addEventListener('click',()=>{
+      // Challan Dashboard = Challan Report/Dashboard, not the main calculator dashboard.
+      const reportBtn=document.querySelector('[data-challan-tab="report"]');
+      if(reportBtn){
+        reportBtn.click();
+        $c('challanReport')?.scrollIntoView({behavior:'smooth',block:'start'});
+        renderChallanReport();
+      }else{
+        const report=$c('challanReport');
+        const views=[challanViews.awb,challanViews.create,challanViews.report,challanViews.search];
+        views.forEach(v=>{if(v)v.style.display=v===report?'block':'none';});
+        renderChallanReport();
+        report?.scrollIntoView({behavior:'smooth',block:'start'});
+      }
+    });
+    $c('challanLogoutVisualBtn')?.addEventListener('click',()=>{$c('logoutBtn')?.click();});
+
+    initChallanFields();refreshChallanAwbSelect();renderChallanReport();
+    renderChallanCreateVisual();
+  })();
   document.querySelectorAll('[data-admin-nav]').forEach(b=>b.addEventListener('click',()=>nav(b.dataset.adminNav)));
   document.querySelector('#sidebarLogout')?.addEventListener('click',()=>document.querySelector('#logoutBtn')?.click());
   const src=document.querySelector('#authUser'), dst=document.querySelector('#sidebarUser');
@@ -1207,5 +2003,6 @@ document.addEventListener('DOMContentLoaded',()=>{
     sync(); new MutationObserver(sync).observe(src,{childList:true,characterData:true,subtree:true});
   }
 });
+
 </script>
 </body></html>
