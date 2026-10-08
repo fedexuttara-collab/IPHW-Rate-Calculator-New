@@ -601,9 +601,9 @@ body.auth-locked > *:not(.auth-modal):not(.forgot-modal):not(.reset-modal):not(.
       <div class="field"><label>FROM DATE</label><input id="challanReportFrom" type="date"></div>
       <div class="field"><label>TO DATE</label><input id="challanReportTo" type="date"></div>
     </div>
-    <div class="actions" style="margin-top:12px"><button type="button" class="btn primary" id="downloadChallanReport">Download Report</button></div>
+    <div class="actions" style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn primary" id="downloadChallanReport">⬇ Download Excel Report</button><button type="button" class="btn secondary" id="downloadChallanReportCsv">⬇ Download CSV</button></div>
     <div id="challanReportMsg" style="margin-top:8px;font-size:12px;color:#64748b"></div>
-    <div class="dash-table" style="margin-top:12px"><table><thead><tr><th>Date</th><th>Challan</th><th>AWB</th><th>User</th><th>Country</th><th>Weight</th><th>Amount</th></tr></thead><tbody id="challanReportRows"><tr><td colspan="7">No challan records.</td></tr></tbody></table></div>
+    <div class="dash-table" style="margin-top:12px;overflow:auto"><table><thead><tr><th>SL NO</th><th>Date</th><th>Challan</th><th>AWB Number</th><th>PCS</th><th>RATE</th><th>DESTINATION COUNTRY</th><th>RECIPIENT POSTAL CODE</th><th>RECIPIENT CITY</th><th>WEIGHT / PACKAGE CODE</th><th>VAT</th><th>AMOUNT</th><th>USED ICPC</th><th>REMARKS</th><th>USER</th></tr></thead><tbody id="challanReportRows"><tr><td colspan="15">No challan records.</td></tr></tbody></table></div>
   </div>
 
   <div id="challanSearch" class="challan-view" style="display:none;margin-top:16px;padding:14px;border:1px solid #dbe3ee;border-radius:10px;background:#fff">
@@ -621,20 +621,28 @@ body.auth-locked > *:not(.auth-modal):not(.forgot-modal):not(.reset-modal):not(.
 </section>
 <section class="card admin-section admin-only" id="usersPanel">
   <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">♙ User Access Control</h2><button class="btn secondary" id="refreshUsers">↻ Refresh Users</button></div>
-  <div class="user-table"><table><thead><tr><th>Email</th><th>Role</th><th>Rate A</th><th>Rate B</th><th>Normal Rate</th><th>Dashboard</th><th>Challan Access</th><th>Save</th></tr></thead><tbody id="userRows"><tr><td colspan="8">Admin only.</td></tr></tbody></table></div>
+  <div class="user-table"><table><thead><tr><th>Email</th><th>Name</th><th>Address</th><th>Contact No</th><th>Role</th><th>Rate A</th><th>Rate B</th><th>Normal Rate</th><th>Dashboard</th><th>Challan</th><th>Challan Email Notification</th><th>Save</th></tr></thead><tbody id="userRows"><tr><td colspan="12">Admin only.</td></tr></tbody></table></div>
   <div id="selectedUserAccess" style="margin-top:14px;display:none;border-top:1px solid #dbe4ef;padding-top:14px">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
       <label for="userAccessSelect" style="font-weight:700;color:#0b1f3a">Select User</label>
       <select id="userAccessSelect" style="min-width:280px;padding:9px 12px;border:1px solid #cbd5e1;border-radius:8px;background:#fff"></select>
     </div>
     <div id="userAccessEditor" style="display:none">
+      <div style="font-weight:700;color:#0b1f3a;margin-bottom:8px">User Information &amp; Access</div>
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(180px,1fr));gap:10px;margin-bottom:12px">
+        <div class="field"><label>NAME</label><input id="selectedUserName" type="text" placeholder="User name"></div>
+        <div class="field"><label>CONTACT NO</label><input id="selectedUserContact" type="text" placeholder="Contact number"></div>
+        <div class="field" style="grid-column:1/-1"><label>ADDRESS</label><input id="selectedUserAddress" type="text" placeholder="User address"></div>
+      </div>
       <div style="font-weight:700;color:#0b1f3a;margin-bottom:8px">Access Control</div>
       <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center">
         <label><input type="checkbox" id="selectedCanRateA"> Rate A</label>
         <label><input type="checkbox" id="selectedCanRateB"> Rate B</label>
         <label><input type="checkbox" id="selectedCanNormal"> Normal Rate</label>
-        <label><input type="checkbox" id="selectedCanDashboard"> Dashboard</label><label><input type="checkbox" id="selectedCanChallanMail"> Challan Access</label>
-        <button type="button" class="btn primary" id="saveSelectedUserAccess">Save Access</button>
+        <label><input type="checkbox" id="selectedCanDashboard"> Dashboard</label>
+        <label><input type="checkbox" id="selectedCanChallan"> Challan</label>
+        <label><input type="checkbox" id="selectedCanChallanMail"> Challan Email Notification</label>
+        <button type="button" class="btn primary" id="saveSelectedUserAccess">Save User &amp; Access</button>
       </div>
       <div id="selectedUserMsg" style="margin-top:8px;font-size:12px;color:#64748b"></div>
     </div>
@@ -1106,23 +1114,26 @@ let adminUserAccessList=[];
 function fillSelectedUserAccess(id){
   const u=adminUserAccessList.find(x=>String(x.id)===String(id)); const box=$('userAccessEditor'); const msg=$('selectedUserMsg');
   if(!u||u.is_admin){if(box)box.style.display='none';return;}
-  $('selectedCanRateA').checked=u.can_rate_a!==false; $('selectedCanRateB').checked=u.can_rate_b!==false; $('selectedCanNormal').checked=u.can_normal!==false; $('selectedCanDashboard').checked=u.can_dashboard!==false; $('selectedCanChallanMail').checked=u.can_challan_mail===true;
+  $('selectedCanRateA').checked=u.can_rate_a!==false; $('selectedCanRateB').checked=u.can_rate_b!==false; $('selectedCanNormal').checked=u.can_normal!==false; $('selectedCanDashboard').checked=u.can_dashboard!==false; $('selectedCanChallan').checked=u.can_challan!==false; $('selectedCanChallanMail').checked=u.can_challan_mail===true;
+  $('selectedUserName').value=u.full_name||u.name||''; $('selectedUserContact').value=u.contact_no||''; $('selectedUserAddress').value=u.address||'';
   if(msg)msg.textContent='Selected: '+(u.email||'User'); if(box)box.style.display='block';
 }
 async function loadUsers(){
   if(!sb||!currentProfile?.is_admin)return;
-  const {data,error}=await sb.from('profiles').select('id,email,is_admin,can_rate_a,can_rate_b,can_normal,can_dashboard,can_challan_mail').order('email',{ascending:true});
-  if(error){$('userRows').innerHTML='<tr><td colspan="8">User access error: '+esc(error.message)+'</td></tr>';return;}
+  const {data,error}=await sb.from('profiles').select('id,email,is_admin,full_name,name,address,contact_no,can_rate_a,can_rate_b,can_normal,can_dashboard,can_challan,can_challan_mail').order('email',{ascending:true});
+  if(error){$('userRows').innerHTML='<tr><td colspan="11">User access error: '+esc(error.message)+'</td></tr>';return;}
   adminUserAccessList=data||[];
-  const d=u=>({can_rate_a:u.can_rate_a!==false,can_rate_b:u.can_rate_b!==false,can_normal:u.can_normal!==false,can_dashboard:u.can_dashboard!==false,can_challan_mail:u.can_challan_mail===true});
-  $('userRows').innerHTML=(data||[]).map(u=>{if(u.is_admin)return `<tr><td>${esc(u.email||'')}</td><td><b>ADMIN</b></td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>Full Admin</td></tr>`;const a=d(u);return `<tr><td>${esc(u.email||'')}</td><td>USER</td><td><input type="checkbox" id="ra_${u.id}" ${a.can_rate_a?'checked':''}></td><td><input type="checkbox" id="rb_${u.id}" ${a.can_rate_b?'checked':''}></td><td><input type="checkbox" id="rn_${u.id}" ${a.can_normal?'checked':''}></td><td><input type="checkbox" id="rd_${u.id}" ${a.can_dashboard?'checked':''}></td><td><input type="checkbox" id="rcm_${u.id}" ${a.can_challan_mail?'checked':''}></td><td><button class="btn secondary" style="padding:5px 8px" onclick="saveUserAccess('${u.id}')">Save</button></td></tr>`}).join('')||'<tr><td colspan="8">No users found.</td></tr>';
-  const sel=$('userAccessSelect'); if(sel){sel.innerHTML='<option value="">Select a user...</option>'+(data||[]).filter(u=>!u.is_admin).map(u=>`<option value="${esc(u.id)}">${esc(u.email||'')}</option>`).join('');$('selectedUserAccess').style.display=(data||[]).some(u=>!u.is_admin)?'block':'none';$('userAccessEditor').style.display='none';$('selectedUserMsg').textContent='';}
+  const d=u=>({can_rate_a:u.can_rate_a!==false,can_rate_b:u.can_rate_b!==false,can_normal:u.can_normal!==false,can_dashboard:u.can_dashboard!==false,can_challan:u.can_challan!==false,can_challan_mail:u.can_challan_mail===true});
+  $('userRows').innerHTML=(data||[]).map(u=>{if(u.is_admin)return `<tr><td>${esc(u.email||'')}</td><td>${esc(u.full_name||u.name||'')}</td><td>${esc(u.address||'')}</td><td>${esc(u.contact_no||'')}</td><td><b>ADMIN</b></td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>Full Admin</td></tr>`;const a=d(u);return `<tr><td>${esc(u.email||'')}</td><td>${esc(u.full_name||u.name||'')}</td><td>${esc(u.address||'')}</td><td>${esc(u.contact_no||'')}</td><td>USER</td><td><input type="checkbox" id="ra_${u.id}" ${a.can_rate_a?'checked':''}></td><td><input type="checkbox" id="rb_${u.id}" ${a.can_rate_b?'checked':''}></td><td><input type="checkbox" id="rn_${u.id}" ${a.can_normal?'checked':''}></td><td><input type="checkbox" id="rd_${u.id}" ${a.can_dashboard?'checked':''}></td><td><input type="checkbox" id="rc_${u.id}" ${a.can_challan?'checked':''}></td><td><input type="checkbox" id="rcm_${u.id}" ${a.can_challan_mail?'checked':''}></td><td><button class="btn secondary" style="padding:5px 8px" onclick="saveUserAccess('${u.id}')">Save</button></td></tr>`}).join('')||'<tr><td colspan="12">No users found.</td></tr>';
+  const sel=$('userAccessSelect'); if(sel){sel.innerHTML='<option value="">Select a user...</option>'+(data||[]).filter(u=>!u.is_admin).map(u=>`<option value="${esc(u.id)}">${esc((u.full_name||u.name||u.email||'User')+' — '+(u.email||''))}</option>`).join('');$('selectedUserAccess').style.display=(data||[]).some(u=>!u.is_admin)?'block':'none';$('userAccessEditor').style.display='none';$('selectedUserMsg').textContent='';}
 }
 async function saveUserAccess(id){
   if(!currentProfile?.is_admin||!sb)return;
-  const payload={can_rate_a:document.getElementById('ra_'+id)?.checked===true,can_rate_b:document.getElementById('rb_'+id)?.checked===true,can_normal:document.getElementById('rn_'+id)?.checked===true,can_dashboard:document.getElementById('rd_'+id)?.checked===true,can_challan_mail:document.getElementById('rcm_'+id)?.checked===true};
-  const {error}=await sb.from('profiles').update(payload).eq('id',id); if(error){alert('Access update failed: '+error.message+'\nRun the supplied Supabase SQL migration first.');return;}
-  alert('User access updated successfully.'); await loadUsers(); if($('userAccessSelect')){$('userAccessSelect').value=id;fillSelectedUserAccess(id);}
+  const payload={full_name:document.getElementById('full_'+id)?.value||undefined,name:document.getElementById('name_'+id)?.value||undefined,can_rate_a:document.getElementById('ra_'+id)?.checked===true,can_rate_b:document.getElementById('rb_'+id)?.checked===true,can_normal:document.getElementById('rn_'+id)?.checked===true,can_dashboard:document.getElementById('rd_'+id)?.checked===true,can_challan:document.getElementById('rc_'+id)?.checked===true,can_challan_mail:document.getElementById('rcm_'+id)?.checked===true};
+  const u=adminUserAccessList.find(x=>String(x.id)===String(id));
+  if(u){payload.full_name=u.full_name||u.name||'';payload.address=u.address||'';payload.contact_no=u.contact_no||'';}
+  const {error}=await sb.from('profiles').update(payload).eq('id',id); if(error){alert('User update failed: '+error.message+'\nRun the supplied Supabase SQL migration first.');return;}
+  alert('User information & access updated successfully.'); await loadUsers(); if($('userAccessSelect')){$('userAccessSelect').value=id;fillSelectedUserAccess(id);}
 }
 window.saveUserAccess=saveUserAccess;
 $('userAccessSelect')?.addEventListener('change',e=>fillSelectedUserAccess(e.target.value));
@@ -1130,12 +1141,12 @@ $('saveSelectedUserAccess')?.addEventListener('click',async()=>{
   const id=$('userAccessSelect')?.value;
   if(!id)return;
   if(!currentProfile?.is_admin||!sb)return;
-  const payload={can_rate_a:$('selectedCanRateA').checked,can_rate_b:$('selectedCanRateB').checked,can_normal:$('selectedCanNormal').checked,can_dashboard:$('selectedCanDashboard').checked,can_challan_mail:$('selectedCanChallanMail').checked};
+  const payload={full_name:$('selectedUserName').value.trim(),name:$('selectedUserName').value.trim(),address:$('selectedUserAddress').value.trim(),contact_no:$('selectedUserContact').value.trim(),can_rate_a:$('selectedCanRateA').checked,can_rate_b:$('selectedCanRateB').checked,can_normal:$('selectedCanNormal').checked,can_dashboard:$('selectedCanDashboard').checked,can_challan:$('selectedCanChallan').checked,can_challan_mail:$('selectedCanChallanMail').checked};
   const {error}=await sb.from('profiles').update(payload).eq('id',id);
-  if(error){$('selectedUserMsg').textContent='Access update failed: '+error.message;return;}
-  $('selectedUserMsg').textContent='✓ Access updated successfully.';
+  if(error){$('selectedUserMsg').textContent='User update failed: '+error.message+' — Run the supplied Supabase SQL migration first.';return;}
+  $('selectedUserMsg').textContent='✓ Name, Address, Contact No & access updated successfully.';
   await loadUsers();
-  if($('userAccessSelect')){$('userAccessSelect').value=id;fillSelectedUserAccess(id);$('selectedUserMsg').textContent='✓ Access updated successfully.';}
+  if($('userAccessSelect')){$('userAccessSelect').value=id;fillSelectedUserAccess(id);$('selectedUserMsg').textContent='✓ Name, Address, Contact No & access updated successfully.';}
 });
 $('refreshUsers')?.addEventListener('click',loadUsers);
 function exportRatesExcel(){
@@ -1208,10 +1219,10 @@ function initSupabase(){
     $('authUser').textContent='Login service unavailable';
   }
 }
-function accessDefaults(){return {can_rate_a:true,can_rate_b:true,can_normal:true,can_dashboard:true,can_challan_mail:false};}
+function accessDefaults(){return {can_rate_a:true,can_rate_b:true,can_normal:true,can_dashboard:true,can_challan:true,can_challan_mail:true,full_name:'',name:'',address:'',contact_no:''};}
 function normalizeAccess(p){return Object.assign(accessDefaults(),p||{});}
 function canUse(plan){if(currentProfile?.is_admin)return true;return plan==='A'?currentProfile?.can_rate_a!==false:plan==='B'?currentProfile?.can_rate_b!==false:plan==='NORMAL'?currentProfile?.can_normal!==false:false;}
-function applyAccessUI(){const admin=!!currentProfile?.is_admin;document.querySelectorAll('.plan[data-plan]').forEach(b=>{const ok=admin||canUse(b.dataset.plan);b.style.display=ok?'inline-flex':'none';b.disabled=!ok;});const db=admin||currentProfile?.can_dashboard!==false;document.querySelector('[data-admin-nav="dashboard"]')?.style.setProperty('display',db?'flex':'none');document.querySelector('[data-admin-nav="logs"]')?.style.setProperty('display',admin?'flex':'none');$('dashboard').style.display=db?'block':'none';}
+function applyAccessUI(){const admin=!!currentProfile?.is_admin;document.querySelectorAll('.plan[data-plan]').forEach(b=>{const ok=admin||canUse(b.dataset.plan);b.style.display=ok?'inline-flex':'none';b.disabled=!ok;});const db=admin||currentProfile?.can_dashboard!==false;document.querySelector('[data-admin-nav="dashboard"]')?.style.setProperty('display',db?'flex':'none');document.querySelector('[data-admin-nav="logs"]')?.style.setProperty('display',admin?'flex':'none');$('dashboard').style.display=db?'block':'none';const challan=admin||currentProfile?.can_challan!==false;const cp=document.querySelector('#challanPanel');const cn=document.querySelector('[data-admin-nav="challan"]');if(cn)cn.style.display=challan?'flex':'none';if(cp&&!challan)cp.style.display='none';}
 async function handleSession(session){
   currentUser=session?.user||null;
   const gate=document.getElementById('accessGate');
@@ -1240,7 +1251,7 @@ async function handleSession(session){
 }
 async function loadProfile(){
   if(!sb||!currentUser)return;
-  const {data,error}=await sb.from('profiles').select('id,email,is_admin,can_rate_a,can_rate_b,can_normal,can_dashboard,can_challan_mail').eq('id',currentUser.id).maybeSingle();
+  const {data,error}=await sb.from('profiles').select('id,email,is_admin,full_name,name,address,contact_no,can_rate_a,can_rate_b,can_normal,can_dashboard,can_challan,can_challan_mail').eq('id',currentUser.id).maybeSingle();
   if(error){console.warn(error);return;}
   currentProfile=normalizeAccess(data||{id:currentUser.id,email:currentUser.email,is_admin:false});
 }
@@ -1384,7 +1395,7 @@ $('doRegister').addEventListener('click',async()=>{
   try{
     const {data,error}=await sb.auth.signUp({email,password});
     if(!error && data?.user && data?.session){
-      await sb.from('profiles').upsert({id:data.user.id,email:data.user.email,is_admin:false,can_rate_a:false,can_rate_b:false,can_normal:true,can_dashboard:false},{onConflict:'id'});
+      await sb.from('profiles').upsert({id:data.user.id,email:data.user.email,is_admin:false,full_name:'',name:'',address:'',contact_no:'',can_rate_a:false,can_rate_b:false,can_normal:true,can_dashboard:false,can_challan:true,can_challan_mail:true},{onConflict:'id'});
     }
     $('authMsg').textContent=error?error.message:(data?.session?'Registration & login successful. Admin can now assign access from Users.':'Registration successful. After email verification, Admin can assign access from Users.');
   }
@@ -1425,6 +1436,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
     else if(key==='settings') document.querySelector('#fx')?.scrollIntoView({behavior:'smooth',block:'center'});
     else if(key==='challan'){
+      if(!currentProfile?.is_admin && currentProfile?.can_challan===false){alert('Challan access is disabled for this user.');return;}
       if(challanPanel){
         challanPanel.style.display='block';
         challanPanel.classList.add('show');
@@ -1556,7 +1568,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       updateChallanAmount('challanAwb'); updateChallanAmount('challanCreate');
     }
     const challanViews={awb:$c('challanAwb'),create:$c('challanCreate'),report:$c('challanReport'),search:$c('challanSearch')};
-    document.querySelectorAll('[data-challan-tab]').forEach(btn=>btn.addEventListener('click',()=>{const key=btn.dataset.challanTab;Object.entries(challanViews).forEach(([k,v])=>{if(v)v.style.display=k===key?'block':'none';});document.querySelectorAll('[data-challan-tab]').forEach(b=>b.classList.toggle('primary',b.dataset.challanTab===key));document.querySelectorAll('[data-challan-tab]').forEach(b=>b.classList.toggle('secondary',b.dataset.challanTab!==key));}));
+    document.querySelectorAll('[data-challan-tab]').forEach(btn=>btn.addEventListener('click',()=>{if(!currentProfile?.is_admin && currentProfile?.can_challan===false){alert('Challan access is disabled for this user.');return;} const key=btn.dataset.challanTab;Object.entries(challanViews).forEach(([k,v])=>{if(v)v.style.display=k===key?'block':'none';});document.querySelectorAll('[data-challan-tab]').forEach(b=>b.classList.toggle('primary',b.dataset.challanTab===key));document.querySelectorAll('[data-challan-tab]').forEach(b=>b.classList.toggle('secondary',b.dataset.challanTab!==key));}));
     function challanAwbStore(){try{return JSON.parse(localStorage.getItem('iphw_challan_awbs')||'[]')}catch(e){return []}}
     function saveChallanAwbStore(a){localStorage.setItem('iphw_challan_awbs',JSON.stringify(a));}
     function challanStore(){try{return JSON.parse(localStorage.getItem('iphw_challans')||'[]')}catch(e){return []}}
@@ -1755,20 +1767,38 @@ function challanAwbAlreadyUsed(id){
         };
       });
     }
+    function challanIcpcForItem(item){
+      const country=canonicalCountry(item?.country||'');
+      const zone=String(DATA.zones?.[country]||'').match(/[A-L]/)?.[0]||'';
+      const code=String(item?.weight??'').trim();
+      const weight=Number(code.replace(/[EP]$/i,''));
+      let icpc='799699109';
+      if(zone==='B' && Number.isFinite(weight) && weight>0 && weight<=40) icpc='806659533';
+      else if(zone==='G' && Number.isFinite(weight) && weight>=41) icpc='629048715';
+      return icpc;
+    }
+    function getCurrentUserProfileDetails(){
+      const p=currentProfile||{}; const u=currentUser?.user_metadata||{};
+      return {
+        name:String(p.name||p.full_name||p.agent_name||u.full_name||u.name||p.email||currentUser?.email||'Unknown'),
+        address:String(p.address||p.user_address||u.address||'—'),
+        contact:String(p.contact_no||p.contact||p.phone||p.mobile||u.contact_no||u.phone||u.mobile||'—')
+      };
+    }
     function makeSimplePdfBase64(x){
-      /* PDF only: keep website UI unchanged. Landscape Challan with guaranteed AWB mapping. */
+      /* PDF only: keep website UI unchanged. Portrait Challan with ICPC + Remarks. */
       const items=normalizeChallanItems(x);
-      const customerName=x.customerName||currentUser?.user_metadata?.full_name||currentUser?.user_metadata?.name||currentProfile?.agent_name||currentProfile?.full_name||currentProfile?.name||x.email||'—';
+      const profile=x.profile||getCurrentUserProfileDetails(); const customerName=profile.name||x.customerName||x.email||'—';
       const totalPcs=items.reduce((n,v)=>n+(parseInt(v.pcs,10)||1),0);
       const totalWt=items.reduce((n,v)=>{const z=String(v.weight??'').replace(/[^0-9.]/g,'');return n+(parseFloat(z)||0);},0);
       const totalAmount=items.reduce((n,v)=>n+(parseFloat(String(v.amount??'').replace(/[^0-9.]/g,''))||0),0);
-      const headers=['SL NO','AWB Number','PCS','RATE','DESTINATION COUNTRY','RECIPIENT POSTAL CODE','RECIPIENT CITY','WEIGHT / PACKAGE CODE','VAT','AMOUNT'];
+      const headers=['SL NO','AWB Number','PCS','RATE','DESTINATION COUNTRY','RECIPIENT POSTAL CODE','RECIPIENT CITY','WEIGHT / PACKAGE CODE','VAT','AMOUNT','USED ICPC','REMARKS'];
       const rows=items.map((v,i)=>[
-        String(i+1),String(v.awb||v.id||'—'),String(v.pcs??1),String(v.rate||'—'),String(v.country||'—'),String(v.postal||'—'),String(v.city||'—'),String(v.weight||'—'),String(v.vat||'—'),String(v.amount||'—')
+        String(i+1),String(v.awb||v.id||'—'),String(v.pcs??1),String(v.rate||'—'),String(v.country||'—'),String(v.postal||'—'),String(v.city||'—'),String(v.weight||'—'),String(v.vat||'—'),String(v.amount||'—'),challanIcpcForItem(v),String(v.remarks||'')
       ]);
-      const pageW=842,pageH=595,left=31,right=31,tableW=780;
-      const cols=[34,105,38,58,100,100,88,100,48,109];
-      const headerH=38,rowH=27,topY=450,rowsPerPage=15;
+      const pageW=595,pageH=842,left=20,right=20,tableW=555;
+      const cols=[22,58,24,30,52,55,48,65,27,55,70,49];
+      const headerH=48,rowH=32,topY=655,rowsPerPage=18;
       const pageCount=Math.max(1,Math.ceil(rows.length/rowsPerPage));
       const pageObjNums=[],contentObjNums=[];let nextObj=3;
       for(let i=0;i<pageCount;i++){pageObjNums.push(nextObj++);contentObjNums.push(nextObj++);}
@@ -1778,32 +1808,36 @@ function challanAwbAlreadyUsed(id){
       const text=(xx,yy,str,size=7,font='F1')=>`BT /${font} ${size} Tf ${xx.toFixed(2)} ${yy.toFixed(2)} Td (${safePdfText(str)}) Tj ET\n`;
       const line=(x1,y1,x2,y2)=>`${x1.toFixed(2)} ${y1.toFixed(2)} m ${x2.toFixed(2)} ${y2.toFixed(2)} l S\n`;
       const rect=(xx,yy,w,h,fill)=>fill?`${xx.toFixed(2)} ${yy.toFixed(2)} ${w.toFixed(2)} ${h.toFixed(2)} re f\n`:`${xx.toFixed(2)} ${yy.toFixed(2)} ${w.toFixed(2)} ${h.toFixed(2)} re S\n`;
-      const cellText=(str,xx,yy,w,size=7,bold=false)=>{
+      const cellText=(str,xx,yy,w,size=6.5,bold=true)=>{
         let t=String(str??'');
         const max=Math.max(2,Math.floor((w-6)/(size*0.48)));
         if(t.length>max)t=t.slice(0,Math.max(1,max-1))+'…';
-        return text(xx+3,yy,t,size,bold?'F2':'F1');
+        const approx=t.length*size*0.48;
+        const tx=xx+Math.max(3,(w-approx)/2);
+        return text(tx,yy,t,size,bold?'F2':'F1');
       };
       const contents=[];
       for(let pno=0;pno<pageCount;pno++){
         let c='0.12 0.12 0.12 rg\n0.12 0.12 0.12 RG\n';
-        c+=text(left,558,'CHALLAN DETAILS',20,'F2');
-        c+=text(left,534,'Customer Name: '+customerName,9,'F2');
-        c+=text(left,517,'Challan No: '+(x.id||'—'),8);
-        c+=text(470,517,'Date: '+new Date(x.date||Date.now()).toLocaleString(),8);
-        c+=text(left,499,'USD → BDT Rate: '+(x.fx!=null?Number(x.fx).toFixed(2):(Number($c('fx')?.value)||0).toFixed(2)),9,'F2');
-        c+=text(250,499,'Fuel Surcharge: '+(x.fuel!=null?Number(x.fuel).toFixed(2):(Number($c('fuel')?.value)||0).toFixed(2))+' %',9,'F2');
+        c+=text(left,810,'CHALLAN DETAILS',18,'F2');
+        c+=text(left,786,'Name: '+customerName,10.5,'F2');
+        c+=text(left,772,'Address: '+(profile.address||'—'),9.5,'F2');
+        c+=text(300,772,'Contact No: '+(profile.contact||'—'),9.5,'F2');
+        c+=text(left,756,'Challan No: '+(x.id||'—'),8,'F2');
+        c+=text(300,756,'Date: '+new Date(x.date||Date.now()).toLocaleDateString(),8,'F2');
+        c+=text(left,738,'USD → BDT Rate: '+(x.fx!=null?Number(x.fx).toFixed(2):(Number($c('fx')?.value)||0).toFixed(2)),8.5,'F2');
+        c+=text(250,738,'Fuel Surcharge: '+(x.fuel!=null?Number(x.fuel).toFixed(2):(Number($c('fuel')?.value)||0).toFixed(2))+' %',8.5,'F2');
         const tableTop=topY;
         let xx=left;
         c+='0.90 0.90 0.90 rg\n'+rect(left,tableTop-headerH,tableW,headerH,true)+'0.12 0.12 0.12 rg\n';
-        for(let j=0;j<headers.length;j++){c+=cellText(headers[j],xx,tableTop-15,cols[j],6.1,true);xx+=cols[j];}
+        for(let j=0;j<headers.length;j++){c+=cellText(headers[j],xx,tableTop-18,cols[j],5.0,true);xx+=cols[j];}
         c+=rect(left,tableTop-headerH,tableW,headerH,false);
         xx=left;for(const w of cols){c+=line(xx,tableTop,xx,tableTop-headerH);xx+=w;}c+=line(left+tableW,tableTop,left+tableW,tableTop-headerH);
         const start=pno*rowsPerPage,end=Math.min(rows.length,start+rowsPerPage);let y=tableTop-headerH;
         for(let i=start;i<end;i++){
           if((i-start)%2===1)c+='0.97 0.97 0.97 rg\n'+rect(left,y-rowH,tableW,rowH,true)+'0.12 0.12 0.12 rg\n';
           c+=rect(left,y-rowH,tableW,rowH,false);xx=left;
-          for(let j=0;j<cols.length;j++){c+=cellText(rows[i][j],xx,y-17,cols[j],7,false);c+=line(xx,y,xx,y-rowH);xx+=cols[j];}
+          for(let j=0;j<cols.length;j++){const valueSize=(j===8?13.5:6.8); c+=cellText(rows[i][j],xx,y-(j===8?15:19),cols[j],valueSize,true);c+=line(xx,y,xx,y-rowH);xx+=cols[j];}
           c+=line(left+tableW,y,left+tableW,y-rowH);y-=rowH;
         }
         c+=line(left,y,left+tableW,y);
@@ -1814,7 +1848,7 @@ function challanAwbAlreadyUsed(id){
           c+=text(300,ty,'Total WT: '+(Number.isInteger(totalWt)?totalWt:totalWt.toFixed(2)),8,'F2');
           c+=text(465,ty,'Total Amount: '+fmt(totalAmount)+' BDT',8,'F2');
         }
-        c+=text(755,20,'Page '+(pno+1)+'/'+pageCount,7);
+        c+=text(520,20,'Page '+(pno+1)+'/'+pageCount,7,'F2');
         contents.push(c);
       }
       objects[0]=`<< /Type /Catalog /Pages 2 0 R >>`;
@@ -1840,33 +1874,65 @@ function challanAwbAlreadyUsed(id){
       const pcs=items.reduce((n,v)=>n+(parseInt(v.pcs,10)||1),0);
       const wt=items.reduce((n,v)=>n+(parseFloat(String(v.weight??'').replace(/[^0-9.]/g,''))||0),0);
       const amount=items.reduce((n,v)=>n+(parseFloat(String(v.amount??'').replace(/[^0-9.]/g,''))||0),0);
-      const rows=items.map((v,i)=>`<tr><td>${i+1}</td><td>${escMail(v.awb||v.id)}</td><td>${escMail(v.pcs||1)}</td><td>${escMail(v.rate)}</td><td>${escMail(v.country)}</td><td>${escMail(v.postal)}</td><td>${escMail(v.city)}</td><td>${escMail(v.weight)}</td><td>${escMail(v.vat)}</td><td>${escMail(v.amount)}</td></tr>`).join('');
-      return `<div style="font-family:Arial,sans-serif;color:#111"><h2 style="margin-bottom:8px">Challan Details</h2><p><b>Customer Name:</b> ${escMail(x.customerName||x.email)}<br><b>Challan No:</b> ${escMail(x.id)} &nbsp;&nbsp;&nbsp; <b>Date:</b> ${escMail(new Date(x.date||Date.now()).toLocaleString())}</p><table style="border-collapse:collapse;width:100%;font-size:12px"><thead><tr>${['SL NO','AWB Number','PCS','RATE','DESTINATION COUNTRY','RECIPIENT POSTAL CODE','RECIPIENT CITY','WEIGHT / PACKAGE CODE','VAT','AMOUNT'].map(h=>`<th style="border:1px solid #555;padding:6px;background:#eee;text-align:left">${h}</th>`).join('')}</tr></thead><tbody>${rows||'<tr><td colspan="10" style="border:1px solid #555;padding:6px">No items</td></tr>'}</tbody></table><p style="margin-top:14px"><b>Total AWB:</b> ${items.length} &nbsp;&nbsp;&nbsp; <b>Total PCS:</b> ${pcs} &nbsp;&nbsp;&nbsp; <b>Total WT:</b> ${wt.toFixed(2)} &nbsp;&nbsp;&nbsp; <b>Total Amount:</b> ${amount.toFixed(2)} BDT</p><p>PDF Challan is attached with this email.</p></div>`;
+      const profile=x.profile||getCurrentUserProfileDetails();
+      const rows=items.map((v,i)=>`<tr>${[i+1,v.awb||v.id,v.pcs||1,v.rate,v.country,v.postal,v.city,v.weight,v.vat,v.amount,challanIcpcForItem(v),v.remarks||''].map((z,j)=>`<td style="border:1px solid #555;padding:6px;text-align:center;font-weight:700">${escMail(z)}</td>`).join('')}</tr>`).join('');
+      const heads=['SL NO','AWB Number','PCS','RATE','DESTINATION COUNTRY','RECIPIENT POSTAL CODE','RECIPIENT CITY','WEIGHT / PACKAGE CODE','VAT','AMOUNT','USED ICPC','REMARKS'];
+      return `<div style="font-family:Arial,sans-serif;color:#111"><h2 style="margin-bottom:8px">Challan Details</h2><p><b>Name:</b> ${escMail(profile.name||x.customerName||x.email)}<br><b>Address:</b> ${escMail(profile.address)}<br><b>Contact No:</b> ${escMail(profile.contact)}<br><b>Challan No:</b> ${escMail(x.id)} &nbsp;&nbsp;&nbsp; <b>Date:</b> ${escMail(new Date(x.date||Date.now()).toLocaleString())}</p><table style="border-collapse:collapse;width:100%;font-size:11px"><thead><tr>${heads.map(h=>`<th style="border:1px solid #555;padding:6px;background:#eee;text-align:center;font-weight:700">${h}</th>`).join('')}</tr></thead><tbody>${rows||'<tr><td colspan="12" style="border:1px solid #555;padding:6px">No items</td></tr>'}</tbody></table><p style="margin-top:14px"><b>Total AWB:</b> ${items.length} &nbsp;&nbsp;&nbsp; <b>Total PCS:</b> ${pcs} &nbsp;&nbsp;&nbsp; <b>Total WT:</b> ${wt.toFixed(2)} &nbsp;&nbsp;&nbsp; <b>Total Amount:</b> ${amount.toFixed(2)} BDT</p><p><b>PDF Challan is attached with this email.</b></p></div>`;
     }
     function buildChallanEmailText(x){
-      const items=normalizeChallanItems(x);const pcs=items.reduce((n,v)=>n+(parseInt(v.pcs,10)||1),0);const wt=items.reduce((n,v)=>n+(parseFloat(String(v.weight??'').replace(/[^0-9.]/g,''))||0),0);const amount=items.reduce((n,v)=>n+(parseFloat(String(v.amount??'').replace(/[^0-9.]/g,''))||0),0);
+      const items=normalizeChallanItems(x);const profile=x.profile||getCurrentUserProfileDetails();const pcs=items.reduce((n,v)=>n+(parseInt(v.pcs,10)||1),0);const wt=items.reduce((n,v)=>n+(parseFloat(String(v.weight??'').replace(/[^0-9.]/g,''))||0),0);const amount=items.reduce((n,v)=>n+(parseFloat(String(v.amount??'').replace(/[^0-9.]/g,''))||0),0);
       const rows=items.map((v,i)=>`${i+1}. AWB: ${v.awb||v.id||'—'} | PCS: ${v.pcs||1} | RATE: ${v.rate||'—'} | COUNTRY: ${v.country||'—'} | POSTAL: ${v.postal||'—'} | CITY: ${v.city||'—'} | WEIGHT: ${v.weight||'—'} | VAT: ${v.vat||'—'} | AMOUNT: ${v.amount||'—'}`).join('\n');
-      return `Challan Details\nCustomer Name: ${x.customerName||x.email||'—'}\nChallan No: ${x.id||'—'}\nDate: ${new Date(x.date||Date.now()).toLocaleString()}\n\nSL NO | AWB Number | PCS | RATE | DESTINATION COUNTRY | RECIPIENT POSTAL CODE | RECIPIENT CITY | WEIGHT / PACKAGE CODE | VAT | AMOUNT\n${rows}\n\nTotal AWB: ${items.length}\nTotal PCS: ${pcs}\nTotal WT: ${wt.toFixed(2)}\nTotal Amount: ${amount.toFixed(2)} BDT\n\nPDF Challan is attached with this email.`;
+      return `Challan Details\nName: ${profile.name||x.customerName||x.email||'—'}\nAddress: ${profile.address||'—'}\nContact No: ${profile.contact||'—'}\nChallan No: ${x.id||'—'}\nDate: ${new Date(x.date||Date.now()).toLocaleString()}\n\nSL NO | AWB Number | PCS | RATE | DESTINATION COUNTRY | RECIPIENT POSTAL CODE | RECIPIENT CITY | WEIGHT / PACKAGE CODE | VAT | AMOUNT\n${rows}\n\nTotal AWB: ${items.length}\nTotal PCS: ${pcs}\nTotal WT: ${wt.toFixed(2)}\nTotal Amount: ${amount.toFixed(2)} BDT\n\nPDF Challan is attached with this email.`;
     }
     async function sendChallanEmails(x,pdfBase64){
-      const recipients=new Set(); const me=currentProfile?.email||''; if(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(me))recipients.add(me.toLowerCase());
-      if(sb){const {data}=await sb.from('profiles').select('email,is_admin,can_challan_mail').or('is_admin.eq.true,can_challan_mail.eq.true');(data||[]).forEach(u=>{if(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(u.email||'')))recipients.add(String(u.email).toLowerCase());});}
+      const recipients=new Set(); const me=currentProfile?.email||currentUser?.email||''; if((currentProfile?.is_admin||currentProfile?.can_challan_mail!==false) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(me))recipients.add(me.toLowerCase());
+      if(sb){const {data}=await sb.from('profiles').select('email,is_admin,can_challan,can_challan_mail');(data||[]).forEach(u=>{const em=String(u.email||'').toLowerCase(); if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em))return; if(u.is_admin || (u.id!==currentUser?.id && u.can_challan_mail===true))recipients.add(em);});}
       const mailEndpoint=(window.CHALLAN_EMAIL_FUNCTION_URL||'').trim(); if(!mailEndpoint||!recipients.size)return {ok:false};
       const resp=await fetch(mailEndpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY},body:JSON.stringify({to:[...recipients],challan:{...x,emailHtml:buildChallanEmailHtml(x),emailText:buildChallanEmailText(x)},pdfBase64,attachmentBase64:pdfBase64,filename:'FedEx-Challan-'+x.id+'.pdf',attachmentFilename:'FedEx-Challan-'+x.id+'.pdf',emailSubject:'FedEx Challan '+x.id,emailHtml:buildChallanEmailHtml(x),emailText:buildChallanEmailText(x)})});
       const data=await resp.json().catch(()=>({})); if(!resp.ok)throw new Error(data.error||'Email service failed'); return {ok:true,recipients:[...recipients]};
     }
     $c('submitChallan')?.addEventListener('click',async()=>{
+      if(!currentProfile?.is_admin && currentProfile?.can_challan===false){$c('challanCreateMsg').textContent='Challan access is disabled for this user.';return;}
       const id='CH-'+Date.now(); const current={awb:$c('challanAwbSelect').value,rate:$c('challanCreateRate').value,country:$c('challanCreateCountry').value.trim(),postal:$c('challanCreatePostal').value.trim(),city:$c('challanCreateCity').value.trim(),weight:$c('challanCreateWeight').value,vat:$c('challanCreateVat').value,amount:$c('challanCreateAmount').value||''};
       const items=challanBatchAwbs.length?challanBatchAwbs:[current]; if(!items.some(x=>x.awb||x.id)){$c('challanCreateMsg').textContent='Please add/select at least one AWB.';return;}
       const ids=items.map(v=>String(v.awb||v.id||'').trim()).filter(Boolean); if(new Set(ids).size!==ids.length){$c('challanCreateMsg').textContent='Duplicate AWB detected.';return;} if(ids.some(challanAwbInSubmittedChallan)){$c('challanCreateMsg').textContent='One or more AWB numbers already exist.';return;}
       const total=items.reduce((sum,v)=>sum+(parseFloat(String(v.amount||'').replace(/[^0-9.]/g,''))||0),0).toFixed(2)+' BDT';
-      const x={id,awb:ids.join(', '),items,rate:items[0]?.rate||current.rate,country:items[0]?.country||current.country,postal:items[0]?.postal||current.postal,city:items[0]?.city||current.city,weight:items[0]?.weight||current.weight,vat:items[0]?.vat||current.vat,amount:total,date:new Date().toISOString(),email:currentProfile?.email||currentUser?.email||'Unknown',customerName:currentUser?.user_metadata?.full_name||currentUser?.user_metadata?.name||currentProfile?.agent_name||currentProfile?.full_name||currentProfile?.name||currentProfile?.email||currentUser?.email||'Unknown',fx:Number($c('fx')?.value)||0,fuel:Number($c('fuel')?.value)||0};
+      const x={id,awb:ids.join(', '),items,rate:items[0]?.rate||current.rate,country:items[0]?.country||current.country,postal:items[0]?.postal||current.postal,city:items[0]?.city||current.city,weight:items[0]?.weight||current.weight,vat:items[0]?.vat||current.vat,amount:total,date:new Date().toISOString(),email:currentProfile?.email||currentUser?.email||'Unknown',profile:getCurrentUserProfileDetails(),customerName:getCurrentUserProfileDetails().name,fx:Number($c('fx')?.value)||0,fuel:Number($c('fuel')?.value)||0};
       const pdfBase64=makeSimplePdfBase64({...x,items:normalizeChallanItems(x)}); const a=challanStore();a.push(x);saveChallanStore(a); const used=new Set(ids); saveChallanAwbStore(challanAwbStore().filter(v=>!used.has(String(v.id||'').trim()))); challanBatchAwbs=[];renderChallanBatch();refreshChallanAwbSelect();renderChallanCreateVisual();renderChallanReport();
       $c('challanCreateMsg').textContent='Challan '+id+' created. PDF generated. Sending email...'; $c('challanCreateVisualMsg').textContent=$c('challanCreateMsg').textContent;
       try{const mailed=await sendChallanEmails(x,pdfBase64); const msg=mailed.ok?'Challan '+id+' created. PDF attached and emailed to user/admin/authorized recipients.':'Challan '+id+' created, but no email recipient was configured.'; $c('challanCreateMsg').textContent=msg;$c('challanCreateVisualMsg').textContent=msg;}catch(err){const msg='Challan '+id+' created, but email failed: '+(err?.message||'Unknown error');$c('challanCreateMsg').textContent=msg;$c('challanCreateVisualMsg').textContent=msg;}
     });
-    function renderChallanReport(){const body=$c('challanReportRows');if(!body)return;const a=challanStore();body.innerHTML=a.length?a.map(x=>`<tr><td>${new Date(x.date).toLocaleString()}</td><td>${esc(x.id)}</td><td>${esc(x.awb||'—')}</td><td>${esc(x.email||'—')}</td><td>${esc(x.country||'—')}</td><td>${esc(x.weight||'—')}</td><td>${esc(x.amount||'—')}</td></tr>`).join(''):'<tr><td colspan="7">No challan records.</td></tr>';}
-    $c('downloadChallanReport')?.addEventListener('click',()=>{renderChallanReport();const a=challanStore();const rows=[['Date','Challan','AWB','User','Country','Weight','Amount'],...a.map(x=>[new Date(x.date).toLocaleString(),x.id,x.awb||'',x.email||'',x.country||'',x.weight||'',x.amount||''])];const csv=rows.map(r=>r.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const url=URL.createObjectURL(blob);const el=document.createElement('a');el.href=url;el.download='challan-report.csv';el.click();URL.revokeObjectURL(url);$c('challanReportMsg').textContent='Report downloaded.';});
+    function getChallanReportRows(){
+      const from=$c('challanReportFrom')?.value||'';
+      const to=$c('challanReportTo')?.value||'';
+      const all=challanStore();
+      const out=[];
+      all.forEach(ch=>{
+        const dt=new Date(ch.date); const day=Number.isNaN(dt.getTime())?'':dt.toISOString().slice(0,10);
+        if(from && day<from)return; if(to && day>to)return;
+        const items=normalizeChallanItems(ch);
+        items.forEach((v,i)=>out.push({date:dt,id:ch.id||'',sl:i+1,awb:v.awb||v.id||'',pcs:v.pcs??1,rate:v.rate||'—',country:v.country||'—',postal:v.postal||'—',city:v.city||'—',weight:v.weight||'—',vat:v.vat||'—',amount:v.amount||'—',icpc:challanIcpcForItem(v),remarks:v.remarks||'',email:ch.email||'—'}));
+      });
+      return out;
+    }
+    function renderChallanReport(){
+      const body=$c('challanReportRows');if(!body)return;
+      const rows=getChallanReportRows();
+      body.innerHTML=rows.length?rows.map(x=>`<tr><td>${x.sl}</td><td>${x.date?x.date.toLocaleString():'—'}</td><td>${esc(x.id)}</td><td>${esc(x.awb)}</td><td>${esc(x.pcs)}</td><td>${esc(x.rate)}</td><td>${esc(x.country)}</td><td>${esc(x.postal)}</td><td>${esc(x.city)}</td><td>${esc(x.weight)}</td><td>${esc(x.vat)}</td><td>${esc(x.amount)}</td><td>${esc(x.icpc)}</td><td>${esc(x.remarks)}</td><td>${esc(x.email)}</td></tr>`).join(''):'<tr><td colspan="15">No challan records for selected date range.</td></tr>';
+    }
+    function downloadChallanExcel(){
+      const rows=getChallanReportRows();
+      if(!rows.length){$c('challanReportMsg').textContent='No challan records for selected date range.';return;}
+      if(!window.XLSX){$c('challanReportMsg').textContent='Excel library is not loaded.';return;}
+      const data=[['SL NO','DATE','CHALLAN','AWB NUMBER','PCS','RATE','DESTINATION COUNTRY','RECIPIENT POSTAL CODE','RECIPIENT CITY','WEIGHT / PACKAGE CODE','VAT','AMOUNT','USED ICPC','REMARKS','USER'],...rows.map(x=>[x.sl,x.date?x.date.toLocaleString():'',x.id,x.awb,x.pcs,x.rate,x.country,x.postal,x.city,x.weight,x.vat,x.amount,x.icpc,x.remarks,x.email])];
+      const ws=XLSX.utils.aoa_to_sheet(data); ws['!cols']=[6,20,18,18,7,12,24,24,20,22,10,16,16,24,30].map(w=>({wch:w}));
+      const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Challan Report');
+      XLSX.writeFile(wb,'FedEx-Challan-AWB-Report.xlsx');$c('challanReportMsg').textContent='Excel report downloaded successfully.';
+    }
+    $c('downloadChallanReport')?.addEventListener('click',downloadChallanExcel);
+    $c('downloadChallanReportCsv')?.addEventListener('click',()=>{const rows=getChallanReportRows();if(!rows.length){$c('challanReportMsg').textContent='No challan records for selected date range.';return;}const data=[['SL NO','DATE','CHALLAN','AWB NUMBER','PCS','RATE','DESTINATION COUNTRY','RECIPIENT POSTAL CODE','RECIPIENT CITY','WEIGHT / PACKAGE CODE','VAT','AMOUNT','USED ICPC','REMARKS','USER'],...rows.map(x=>[x.sl,x.date?x.date.toLocaleString():'',x.id,x.awb,x.pcs,x.rate,x.country,x.postal,x.city,x.weight,x.vat,x.amount,x.icpc,x.remarks,x.email])];const csv=data.map(r=>r.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const url=URL.createObjectURL(blob);const el=document.createElement('a');el.href=url;el.download='FedEx-Challan-AWB-Report.csv';el.click();URL.revokeObjectURL(url);$c('challanReportMsg').textContent='CSV report downloaded.';});
+    $c('challanReportFrom')?.addEventListener('change',renderChallanReport);
+    $c('challanReportTo')?.addEventListener('change',renderChallanReport);
     $c('searchChallan')?.addEventListener('click',()=>{if(!currentProfile?.is_admin){$c('challanSearchMsg').textContent='Admin access required.';return;} $c('challanSearchMsg').textContent='Admin search is ready.';});
     $c('createChallanPdf')?.addEventListener('click',async()=>{const x=challanStore().slice(-1)[0];if(!x){$c('challanCreateMsg').textContent='Create a challan first.';return;}const w=window.open('','_blank','width=900,height=700');if(w){w.document.write(`<html><head><title>${x.id}</title><style>body{font-family:Arial;padding:35px}h1{color:#0b2a55}table{border-collapse:collapse;width:100%}td{padding:10px;border:1px solid #ddd}</style></head><body onload="window.print()"><h1>FedEx Challan</h1><p><b>Challan:</b> ${x.id}</p><table><tr><td>AWB</td><td>${x.awb||'—'}</td></tr><tr><td>User</td><td>${x.email||'—'}</td></tr><tr><td>Country</td><td>${x.country||'—'}</td></tr><tr><td>Postal / City</td><td>${x.postal||'—'} / ${x.city||'—'}</td></tr><tr><td>Weight</td><td>${x.weight||'—'}</td></tr><tr><td>VAT</td><td>${x.vat||'—'}</td></tr><tr><td>Amount</td><td>${x.amount||'—'}</td></tr></table></body></html>`);w.document.close();}setTimeout(async()=>{const to=prompt('Enter recipient email address:','');if(to===null)return;if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to.trim())){$c('challanCreateMsg').textContent='Please enter a valid recipient email address.';return;}const subject=encodeURIComponent('FedEx Challan '+x.id);const body=encodeURIComponent('Challan '+x.id+'\nAWB: '+(x.awb||'—')+'\nAmount: '+(x.amount||'—')+'\n\nThe generated Challan PDF is ready. Please attach the printed/saved PDF before sending.');try{
         const mailEndpoint=(window.CHALLAN_EMAIL_FUNCTION_URL||'').trim();
@@ -1940,6 +2006,7 @@ function syncChallanVisualFromAwb(){
 $c('challanAwbSelect')?.addEventListener('change',syncChallanVisualFromAwb);
 
 $c('challanCreateVisualBtn')?.addEventListener('click',async()=>{
+      if(!currentProfile?.is_admin && currentProfile?.can_challan===false){if($c('challanCreateVisualMsg'))$c('challanCreateVisualMsg').textContent='Challan access is disabled for this user.';return;}
       const ids=[...document.querySelectorAll('[data-challan-create-awb]:checked')].map(x=>String(x.value));
       const msg=$c('challanCreateVisualMsg');
       if(!ids.length){if(msg)msg.textContent='Please select at least one AWB.';return;}
@@ -1950,7 +2017,7 @@ $c('challanCreateVisualBtn')?.addEventListener('click',async()=>{
       if(records.some(x=>challanAwbInSubmittedChallan(String(x.id||'')))){if(msg)msg.textContent='One or more AWB numbers already exist in a previous challan.';return;}
       const id='CH-'+Date.now();
       const total=records.reduce((sum,v)=>sum+(parseFloat(String(v.amount||'').replace(/[^0-9.]/g,''))||0),0).toFixed(2)+' BDT';
-      const x={id,awb:records.map(v=>v.id).join(', '),items:records.map(v=>({...v,id:String(v.id||'').trim(),awb:String(v.awb||v.id||'').trim(),pcs:v.pcs??1})),rate:records[0]?.rate||'Normal',country:records[0]?.country||'',postal:records[0]?.postal||'',city:records[0]?.city||'',weight:records[0]?.weight||'',vat:records[0]?.vat||'yes',amount:total,date:new Date().toISOString(),email:currentProfile?.email||currentUser?.email||'Unknown',customerName:currentUser?.user_metadata?.full_name||currentUser?.user_metadata?.name||currentProfile?.agent_name||currentProfile?.full_name||currentProfile?.name||currentProfile?.email||currentUser?.email||'Unknown',fx:Number($c('fx')?.value)||0,fuel:Number($c('fuel')?.value)||0};
+      const x={id,awb:records.map(v=>v.id).join(', '),items:records.map(v=>({...v,id:String(v.id||'').trim(),awb:String(v.awb||v.id||'').trim(),pcs:v.pcs??1})),rate:records[0]?.rate||'Normal',country:records[0]?.country||'',postal:records[0]?.postal||'',city:records[0]?.city||'',weight:records[0]?.weight||'',vat:records[0]?.vat||'yes',amount:total,date:new Date().toISOString(),email:currentProfile?.email||currentUser?.email||'Unknown',profile:getCurrentUserProfileDetails(),customerName:getCurrentUserProfileDetails().name,fx:Number($c('fx')?.value)||0,fuel:Number($c('fuel')?.value)||0};
       try{
         const pdfBase64=makeSimplePdfBase64({...x,items:normalizeChallanItems(x)});
         const saved=challanStore(); saved.push(x); saveChallanStore(saved);
