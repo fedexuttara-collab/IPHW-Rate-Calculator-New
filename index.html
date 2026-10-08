@@ -1904,11 +1904,87 @@ function challanAwbAlreadyUsed(id){
       return `Dear FedEx Team,\n\nPlease find the attached Challan for below shipment(s).\n\nChallan AWB Details:\n${rows}\n\nPlease find the attached Challan PDF for the above AWB(s) for your reference.\n\nThanks & Regards,\n${profile.name||x.customerName||x.email||'—'}\n${profile.address||'—'}\n${profile.contact||'—'}`;
     }
     async function sendChallanEmails(x,pdfBase64){
-      const recipients=new Set(); const me=currentProfile?.email||currentUser?.email||''; if((currentProfile?.is_admin||currentProfile?.can_challan_mail!==false) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(me))recipients.add(me.toLowerCase());
-      if(sb){const {data}=await sb.from('profiles').select('email,is_admin,can_challan,can_challan_mail');(data||[]).forEach(u=>{const em=String(u.email||'').toLowerCase(); if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em))return; if(u.is_admin || (u.id!==currentUser?.id && u.can_challan_mail===true))recipients.add(em);});}
-      const mailEndpoint=(window.CHALLAN_EMAIL_FUNCTION_URL||'').trim(); if(!mailEndpoint||!recipients.size)return {ok:false};
-      const resp=await fetch(mailEndpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY},body:JSON.stringify({to:[...recipients],challan:{...x,emailHtml:buildChallanEmailHtml(x),emailText:buildChallanEmailText(x)},pdfBase64,attachmentBase64:pdfBase64,filename:'FedEx-Challan-'+x.id+'.pdf',attachmentFilename:'FedEx-Challan-'+x.id+'.pdf',emailSubject:'FedEx Challan '+x.id,emailHtml:buildChallanEmailHtml(x),emailText:buildChallanEmailText(x),bodyHtml:buildChallanEmailHtml(x),bodyText:buildChallanEmailText(x),html:buildChallanEmailHtml(x),text:buildChallanEmailText(x),body:buildChallanEmailText(x),message:buildChallanEmailText(x)})});
-      const data=await resp.json().catch(()=>({})); if(!resp.ok)throw new Error(data.error||'Email service failed'); return {ok:true,recipients:[...recipients]};
+      const recipients=new Set();
+      // Always send to the authenticated user who created the Challan.
+      // can_challan_mail controls receiving other users' Challans, not the creator's own Challan.
+      const me=currentProfile?.email||currentUser?.email||x?.email||'';
+      if(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(me).trim()))recipients.add(String(me).trim().toLowerCase());
+
+      // Admins always receive Challans, even when their notification checkbox is OFF.
+      // The user who created the Challan always receives their own Challan.
+      // can_challan_mail is used only for optional additional recipients.
+      // Always include the configured Admin recipient, independent of notification permissions or profile RLS.
+      // The profiles query below still adds any additional admins/authorized recipients.
+      const configuredAdminEmails=['amir.hamza@bdexpress.com'];
+      configuredAdminEmails.forEach(em=>{
+        const v=String(em||'').trim().toLowerCase();
+        if(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v))recipients.add(v);
+      });
+
+      if(sb){
+        const {data}=await sb.from('profiles').select('id,email,is_admin,can_challan,can_challan_mail');
+        (data||[]).forEach(u=>{
+          const em=String(u.email||'').trim().toLowerCase();
+          if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em))return;
+          const isCreator=String(u.id||'')===String(currentUser?.id||'');
+          if(u.is_admin || isCreator || u.can_challan_mail===true) recipients.add(em);
+        });
+      }
+
+      const mailEndpoint=(window.CHALLAN_EMAIL_FUNCTION_URL||'').trim();
+      if(!mailEndpoint||!recipients.size)return {ok:false};
+      const recipientList=[...recipients];
+
+      // Use the logged-in Supabase session token for the Edge Function.
+      // The publishable/anon key is sent separately as the API key.
+      let accessToken=SUPABASE_ANON_KEY;
+      try{
+        const sessionResult=await sb?.auth?.getSession();
+        accessToken=sessionResult?.data?.session?.access_token||SUPABASE_ANON_KEY;
+      }catch(_e){}
+
+      const payload={
+        to:recipientList,
+        forceRecipients:recipientList,
+        ignoreNotificationPermission:true,
+        challan:{...x,emailHtml:buildChallanEmailHtml(x),emailText:buildChallanEmailText(x)},
+        pdfBase64,
+        attachmentBase64:pdfBase64,
+        filename:'FedEx-Challan-'+x.id+'.pdf',
+        attachmentFilename:'FedEx-Challan-'+x.id+'.pdf',
+        emailSubject:'FedEx Challan '+x.id,
+        emailHtml:buildChallanEmailHtml(x),
+        emailText:buildChallanEmailText(x),
+        bodyHtml:buildChallanEmailHtml(x),
+        bodyText:buildChallanEmailText(x),
+        html:buildChallanEmailHtml(x),
+        text:buildChallanEmailText(x),
+        body:buildChallanEmailText(x),
+        message:buildChallanEmailText(x)
+      };
+
+      const resp=await fetch(mailEndpoint,{
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'apikey':SUPABASE_ANON_KEY,
+          'Authorization':'Bearer '+accessToken
+        },
+        body:JSON.stringify(payload)
+      });
+
+      const raw=await resp.text();
+      let data={};
+      try{data=raw?JSON.parse(raw):{};}catch(_e){data={raw};}
+
+      if(!resp.ok){
+        throw new Error(data?.error||data?.message||data?.detail||raw||('Email service HTTP '+resp.status));
+      }
+      if(data && (data.ok===false || data.success===false || data.sent===false || data.emailSent===false)){
+        throw new Error(data.error||data.message||data.detail||'Email service reported that the email was not sent.');
+      }
+
+      return {ok:true,recipients:[...recipients],response:data};
     }
     $c('submitChallan')?.addEventListener('click',async()=>{
       if(!currentProfile?.is_admin && currentProfile?.can_challan===false){$c('challanCreateMsg').textContent='Challan access is disabled for this user.';return;}
