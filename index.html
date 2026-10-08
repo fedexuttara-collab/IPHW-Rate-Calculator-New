@@ -528,7 +528,7 @@ body.auth-locked > *:not(.auth-modal):not(.forgot-modal):not(.reset-modal):not(.
       <div class="field"><label>RECIPIENT POSTAL CODE</label><input id="challanAwbPostal" type="text" placeholder="As per destination selection"></div>
       <div class="field"><label>RECIPIENT CITY</label><div style="width:100%;position:relative"><input id="challanAwbCity" type="text" placeholder="As per destination &amp; ODA data" autocomplete="off"><div id="challanCitySuggest" class="suggest"></div></div></div>
       <div class="field"><label>WEIGHT / PACKAGE CODE</label><input id="challanAwbWeight" type="text" inputmode="decimal" placeholder="e.g. 11, 15, 25, 50"><div class="note">Rate A / B: enter actual KG (e.g. 11, 15, 25, 50). Normal Rate keeps package options.</div></div>
-      <div class="field"><label>VAT</label><select id="challanAwbVat"><option value="yes">Yes</option><option value="no">No</option></select></div>
+      <div class="field"><label>VAT</label><select id="challanAwbVat"><option value="yes">YES</option><option value="no">NO</option></select></div>
       <div class="field"><label>AMOUNT</label><input id="challanAwbAmount" type="text" inputmode="decimal" placeholder="Grand Total Amount (BDT)" readonly></div>
     </div>
     </div>
@@ -582,7 +582,7 @@ body.auth-locked > *:not(.auth-modal):not(.forgot-modal):not(.reset-modal):not(.
       <input id="challanCreatePostal">
       <input id="challanCreateCity">
       <input id="challanCreateWeight">
-      <select id="challanCreateVat"><option value="yes">Yes</option><option value="no">No</option></select>
+      <select id="challanCreateVat"><option value="yes">YES</option><option value="no">NO</option></select>
       <input id="challanCreateAmount">
       <button type="button" id="addAwbToChallan">Add AWB to Challan</button>
       <button type="button" id="submitChallan">Challan Create / Submit</button>
@@ -1450,10 +1450,12 @@ document.addEventListener('DOMContentLoaded',()=>{
     const $c=id=>document.getElementById(id);
     const rateOptions=()=>{
       const opts=[];
+      // PP is a Challan/AWB settlement type: amount is always CREDIT.
+      opts.push(['PP','PP']);
       if(currentProfile?.is_admin || canUse('A')) opts.push(['A','Rate A']);
       if(currentProfile?.is_admin || canUse('B')) opts.push(['B','Rate B']);
       if(currentProfile?.is_admin || canUse('NORMAL')) opts.push(['Normal','Normal Rate']);
-      return opts.length?opts:[['Normal','Normal Rate']];
+      return opts.length?opts:[['PP','PP']];
     };
     const weightOptions=rate=> rate==='Normal'
       ? DATA.normalRates.map(r=>r[0])
@@ -1516,8 +1518,13 @@ document.addEventListener('DOMContentLoaded',()=>{
       rate.addEventListener('change',()=>{
         if(rate.value==='Normal'){
           weight.value='0.5E'; fillWeightSelect(weightId,rate.value,weight.value);
+        }else if(rate.value==='PP'){
+          weight.value='';
+          weight.removeAttribute('list');
+          weight.placeholder='Optional for PP — Amount will be CREDIT';
         }else{
           weight.value='';
+          weight.removeAttribute('list');
           weight.placeholder='e.g. 11, 15, 25, 50';
         }
         updateChallanAmount(prefix);
@@ -1536,9 +1543,23 @@ document.addEventListener('DOMContentLoaded',()=>{
       currentPlan=s.plan;
       syncPlanInputs();
     }
+    function formatChallanAmount(value){
+      const raw=String(value??'').trim();
+      if(!raw)return '';
+      if(raw.toUpperCase()==='CREDIT')return 'CREDIT';
+      const cleaned=raw.replace(/[^0-9.-]/g,'');
+      const num=Number(cleaned);
+      if(!Number.isFinite(num))return raw;
+      return num.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' BDT';
+    }
+    function normalizeChallanVat(value){
+      return String(value??'').toLowerCase()==='yes'?'YES':'NO';
+    }
     function calculateChallanAmount(prefix){
-      const rate=$c(prefix+'Rate')?.value||'Normal', country=$c(prefix+'Country')?.value.trim()||'', postal=$c(prefix+'Postal')?.value.trim()||'', city=$c(prefix+'City')?.value.trim()||'', vatYes=($c(prefix+'Vat')?.value||'yes')==='yes';
+      const rate=$c(prefix+'Rate')?.value||'Normal', country=$c(prefix+'Country')?.value.trim()||'', postal=$c(prefix+'Postal')?.value.trim()||'', city=$c(prefix+'City')?.value.trim()||'', vatYes=($c(prefix+'Vat')?.value||'yes').toLowerCase()==='yes';
       const wv=$c(prefix+'Weight')?.value||'';
+      // PP is a credit settlement type and never runs VAT/amount calculation.
+      if(rate==='PP')return 'CREDIT';
       if(!country||!wv){return '';}
       const snap=snapshotMain();
       try{
@@ -1549,13 +1570,14 @@ document.addEventListener('DOMContentLoaded',()=>{
         $('vat').value=vatYes?($('vat').value||15):0;
         calculate();
         const out=vatYes?$('grandVat').textContent:$('grandNoVat').textContent;
-        return out==='—'?'':out;
+        return out==='—'?'':formatChallanAmount(out);
       }catch(e){return '';}
       finally{restoreMain(snap);calculate();}
     }
     function updateChallanAmount(prefix){
       const amount=calculateChallanAmount(prefix);
       const out=$c(prefix+'Amount'); if(out)out.value=amount||'';
+      const vat=$c(prefix+'Vat'); if(vat)vat.value=normalizeChallanVat(vat.value)==='YES'?'yes':'no';
     }
     function initChallanFields(){
       fillRateSelect('challanAwbRate'); fillRateSelect('challanCreateRate');
@@ -1624,7 +1646,7 @@ function challanAwbAlreadyUsed(id){
       if(rate!=='Normal' && (!/^\d+(?:\.\d+)?$/.test(weight) || Number(weight)<=0)) return {error:'Rate A / Rate B weight must be actual numeric KG, e.g. 11, 15, 25 or 50.'};
       if(rate!=='Normal' && Number(weight)<=0) return {error:'Rate A / Rate B weight must be actual KG.'};
       if(requireAmount && !amount) return {error:'Amount could not be calculated. Please check destination, weight and VAT.'};
-      return {data:{id,manualAwb:true,pcs:Number(pcs),rate,country,postal,city,weight,vat,amount,date:new Date().toISOString(),email:currentProfile?.email||''}};
+      return {data:{id,manualAwb:true,pcs:Number(pcs),rate,country,postal,city,weight,vat:normalizeChallanVat(vat),amount:formatChallanAmount(amount),date:new Date().toISOString(),email:currentProfile?.email||''}};
     }
     function challanAwbSuggestBoxes(prefix){return {countryBox:prefix==='challanAwb'?'challanCountrySuggest':prefix+'CountrySuggest',cityBox:prefix==='challanAwb'?'challanCitySuggest':prefix+'CitySuggest'};}
     function wireChallanAwbCountryCity(prefix){
@@ -1729,12 +1751,12 @@ function challanAwbAlreadyUsed(id){
       const a=challanAwbStore(); batch.forEach(x=>a.push(x)); saveChallanAwbStore(a);
       pendingChallanAwbs=[]; renderPendingChallanAwbs();
       const wrap=$c('challanAwbEntryForms');
-      if(wrap){wrap.innerHTML=''; const tpl=document.createElement('div'); tpl.className='formgrid challan-awb-entry-form'; tpl.dataset.awbIndex='0'; tpl.dataset.prefix='challanAwb'; tpl.innerHTML=`<div class="field"><label>AWB</label><input id="challanAwbManual" type="text" inputmode="numeric" maxlength="12" minlength="12" pattern="[0-9]{12}" placeholder="Enter 12 digit AWB number" required><div class="note">Manual Import — exactly 12 digits.</div></div><div class="field"><label>PKG PCS</label><input id="challanAwbPcs" type="number" min="1" value="1" required></div><div class="field"><label>RATE</label><select id="challanAwbRate"></select><div class="note">Rate A / B: actual KG only. Normal Rate keeps package options.</div></div><div class="field"><label>DESTINATION COUNTRY</label><div style="width:100%;position:relative"><input id="challanAwbCountry" type="text" placeholder="Destination Country" autocomplete="off"><div id="challanCountrySuggest" class="suggest"></div></div></div><div class="field"><label>RECIPIENT POSTAL CODE</label><input id="challanAwbPostal" type="text" placeholder="As per destination selection"></div><div class="field"><label>RECIPIENT CITY</label><div style="width:100%;position:relative"><input id="challanAwbCity" type="text" placeholder="As per destination &amp; ODA data" autocomplete="off"><div id="challanCitySuggest" class="suggest"></div></div></div><div class="field"><label>WEIGHT / PACKAGE CODE</label><input id="challanAwbWeight" type="text" inputmode="decimal" placeholder="e.g. 11, 15, 25, 50"><div class="note">Rate A / B: enter actual KG. Normal Rate keeps package/weight options unchanged.</div></div><div class="field"><label>VAT</label><select id="challanAwbVat"><option value="yes">Yes</option><option value="no">No</option></select></div><div class="field"><label>AMOUNT</label><input id="challanAwbAmount" type="text" inputmode="decimal" placeholder="Grand Total Amount (BDT)" readonly></div>`; wrap.appendChild(tpl); initChallanAwbEntry('challanAwb'); }
+      if(wrap){wrap.innerHTML=''; const tpl=document.createElement('div'); tpl.className='formgrid challan-awb-entry-form'; tpl.dataset.awbIndex='0'; tpl.dataset.prefix='challanAwb'; tpl.innerHTML=`<div class="field"><label>AWB</label><input id="challanAwbManual" type="text" inputmode="numeric" maxlength="12" minlength="12" pattern="[0-9]{12}" placeholder="Enter 12 digit AWB number" required><div class="note">Manual Import — exactly 12 digits.</div></div><div class="field"><label>PKG PCS</label><input id="challanAwbPcs" type="number" min="1" value="1" required></div><div class="field"><label>RATE</label><select id="challanAwbRate"></select><div class="note">Rate A / B: actual KG only. Normal Rate keeps package options.</div></div><div class="field"><label>DESTINATION COUNTRY</label><div style="width:100%;position:relative"><input id="challanAwbCountry" type="text" placeholder="Destination Country" autocomplete="off"><div id="challanCountrySuggest" class="suggest"></div></div></div><div class="field"><label>RECIPIENT POSTAL CODE</label><input id="challanAwbPostal" type="text" placeholder="As per destination selection"></div><div class="field"><label>RECIPIENT CITY</label><div style="width:100%;position:relative"><input id="challanAwbCity" type="text" placeholder="As per destination &amp; ODA data" autocomplete="off"><div id="challanCitySuggest" class="suggest"></div></div></div><div class="field"><label>WEIGHT / PACKAGE CODE</label><input id="challanAwbWeight" type="text" inputmode="decimal" placeholder="e.g. 11, 15, 25, 50"><div class="note">Rate A / B: enter actual KG. Normal Rate keeps package/weight options unchanged.</div></div><div class="field"><label>VAT</label><select id="challanAwbVat"><option value="yes">YES</option><option value="no">NO</option></select></div><div class="field"><label>AMOUNT</label><input id="challanAwbAmount" type="text" inputmode="decimal" placeholder="Grand Total Amount (BDT)" readonly></div>`; wrap.appendChild(tpl); initChallanAwbEntry('challanAwb'); }
       $c('challanAwbMsg').textContent='AWB saved: '+batch.length+' record(s). You can start a new AWB entry.'; refreshChallanAwbSelect(); renderChallanCreateVisual();
     });
     $c('clearChallanAwb')?.addEventListener('click',()=>{
       const wrap=$c('challanAwbEntryForms');
-      if(wrap){wrap.innerHTML=''; const tpl=document.createElement('div'); tpl.className='formgrid challan-awb-entry-form'; tpl.dataset.awbIndex='0'; tpl.dataset.prefix='challanAwb'; tpl.innerHTML=`<div class="field"><label>AWB</label><input id="challanAwbManual" type="text" inputmode="numeric" maxlength="12" minlength="12" pattern="[0-9]{12}" placeholder="Enter 12 digit AWB number" required><div class="note">Manual Import — exactly 12 digits.</div></div><div class="field"><label>PKG PCS</label><input id="challanAwbPcs" type="number" min="1" value="1" required></div><div class="field"><label>RATE</label><select id="challanAwbRate"></select></div><div class="field"><label>DESTINATION COUNTRY</label><div style="width:100%;position:relative"><input id="challanAwbCountry" type="text" placeholder="Destination Country" autocomplete="off"><div id="challanCountrySuggest" class="suggest"></div></div></div><div class="field"><label>RECIPIENT POSTAL CODE</label><input id="challanAwbPostal" type="text" placeholder="As per destination selection"></div><div class="field"><label>RECIPIENT CITY</label><div style="width:100%;position:relative"><input id="challanAwbCity" type="text" placeholder="As per destination &amp; ODA data" autocomplete="off"><div id="challanCitySuggest" class="suggest"></div></div></div><div class="field"><label>WEIGHT / PACKAGE CODE</label><input id="challanAwbWeight" type="text" inputmode="decimal" placeholder="e.g. 11, 15, 25, 50"></div><div class="field"><label>VAT</label><select id="challanAwbVat"><option value="yes">Yes</option><option value="no">No</option></select></div><div class="field"><label>AMOUNT</label><input id="challanAwbAmount" type="text" inputmode="decimal" placeholder="Grand Total Amount (BDT)" readonly></div>`; wrap.appendChild(tpl); initChallanAwbEntry('challanAwb');}
+      if(wrap){wrap.innerHTML=''; const tpl=document.createElement('div'); tpl.className='formgrid challan-awb-entry-form'; tpl.dataset.awbIndex='0'; tpl.dataset.prefix='challanAwb'; tpl.innerHTML=`<div class="field"><label>AWB</label><input id="challanAwbManual" type="text" inputmode="numeric" maxlength="12" minlength="12" pattern="[0-9]{12}" placeholder="Enter 12 digit AWB number" required><div class="note">Manual Import — exactly 12 digits.</div></div><div class="field"><label>PKG PCS</label><input id="challanAwbPcs" type="number" min="1" value="1" required></div><div class="field"><label>RATE</label><select id="challanAwbRate"></select></div><div class="field"><label>DESTINATION COUNTRY</label><div style="width:100%;position:relative"><input id="challanAwbCountry" type="text" placeholder="Destination Country" autocomplete="off"><div id="challanCountrySuggest" class="suggest"></div></div></div><div class="field"><label>RECIPIENT POSTAL CODE</label><input id="challanAwbPostal" type="text" placeholder="As per destination selection"></div><div class="field"><label>RECIPIENT CITY</label><div style="width:100%;position:relative"><input id="challanAwbCity" type="text" placeholder="As per destination &amp; ODA data" autocomplete="off"><div id="challanCitySuggest" class="suggest"></div></div></div><div class="field"><label>WEIGHT / PACKAGE CODE</label><input id="challanAwbWeight" type="text" inputmode="decimal" placeholder="e.g. 11, 15, 25, 50"></div><div class="field"><label>VAT</label><select id="challanAwbVat"><option value="yes">YES</option><option value="no">NO</option></select></div><div class="field"><label>AMOUNT</label><input id="challanAwbAmount" type="text" inputmode="decimal" placeholder="Grand Total Amount (BDT)" readonly></div>`; wrap.appendChild(tpl); initChallanAwbEntry('challanAwb');}
       $c('challanAwbMsg').textContent='';
     });
     $c('deleteSelectedAwb')?.addEventListener('click',()=>{const id=$c('challanAwbSelect')?.value;if(!id){$c('challanCreateMsg').textContent='Please select an AWB.';return;}saveChallanAwbStore(challanAwbStore().filter(x=>x.id!==id));refreshChallanAwbSelect();renderChallanCreateVisual();$c('challanCreateMsg').textContent='AWB deleted: '+id;});
@@ -1762,8 +1784,8 @@ function challanAwbAlreadyUsed(id){
           postal:item.postal||'',
           city:item.city||'',
           weight:item.weight||'',
-          vat:item.vat||'yes',
-          amount:item.amount||''
+          vat:normalizeChallanVat(item.vat||'yes'),
+          amount:item.rate==='PP'||(item.rate==null && x?.rate==='PP')?'CREDIT':formatChallanAmount(item.amount||'')
         };
       });
     }
@@ -1871,24 +1893,21 @@ function challanAwbAlreadyUsed(id){
     function buildChallanEmailHtml(x){
       const items=normalizeChallanItems(x);
       const escMail=v=>String(v??'—').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-      const pcs=items.reduce((n,v)=>n+(parseInt(v.pcs,10)||1),0);
-      const wt=items.reduce((n,v)=>n+(parseFloat(String(v.weight??'').replace(/[^0-9.]/g,''))||0),0);
-      const amount=items.reduce((n,v)=>n+(parseFloat(String(v.amount??'').replace(/[^0-9.]/g,''))||0),0);
-      const profile=x.profile||getCurrentUserProfileDetails();
-      const rows=items.map((v,i)=>`<tr>${[i+1,v.awb||v.id,v.pcs||1,v.rate,v.country,v.postal,v.city,v.weight,v.vat,v.amount,challanIcpcForItem(v),v.remarks||''].map((z,j)=>`<td style="border:1px solid #555;padding:6px;text-align:center;font-weight:700">${escMail(z)}</td>`).join('')}</tr>`).join('');
-      const heads=['SL NO','AWB Number','PCS','RATE','DESTINATION COUNTRY','RECIPIENT POSTAL CODE','RECIPIENT CITY','WEIGHT / PACKAGE CODE','VAT','AMOUNT','USED ICPC','REMARKS'];
-      return `<div style="font-family:Arial,sans-serif;color:#111"><h2 style="margin-bottom:8px">Challan Details</h2><p><b>Name:</b> ${escMail(profile.name||x.customerName||x.email)}<br><b>Address:</b> ${escMail(profile.address)}<br><b>Contact No:</b> ${escMail(profile.contact)}<br><b>Challan No:</b> ${escMail(x.id)} &nbsp;&nbsp;&nbsp; <b>Date:</b> ${escMail(new Date(x.date||Date.now()).toLocaleString())}</p><table style="border-collapse:collapse;width:100%;font-size:11px"><thead><tr>${heads.map(h=>`<th style="border:1px solid #555;padding:6px;background:#eee;text-align:center;font-weight:700">${h}</th>`).join('')}</tr></thead><tbody>${rows||'<tr><td colspan="12" style="border:1px solid #555;padding:6px">No items</td></tr>'}</tbody></table><p style="margin-top:14px"><b>Total AWB:</b> ${items.length} &nbsp;&nbsp;&nbsp; <b>Total PCS:</b> ${pcs} &nbsp;&nbsp;&nbsp; <b>Total WT:</b> ${wt.toFixed(2)} &nbsp;&nbsp;&nbsp; <b>Total Amount:</b> ${amount.toFixed(2)} BDT</p><p><b>PDF Challan is attached with this email.</b></p></div>`;
+      const profile={...getCurrentUserProfileDetails(),...(x.profile||{})};
+      const rows=items.map((v,i)=>`<tr>${[i+1,v.awb||v.id,v.pcs||1,v.rate,v.country,v.postal,v.city,v.weight,v.vat,v.amount].map((z,j)=>`<td style="border:1px solid #555;padding:6px;text-align:center;font-weight:${j===1?'700':'600'}">${escMail(z)}</td>`).join('')}</tr>`).join('');
+      const heads=['SL NO','AWB Number','PCS','RATE','DESTINATION COUNTRY','RECIPIENT POSTAL CODE','RECIPIENT CITY','WEIGHT / PACKAGE CODE','VAT','AMOUNT'];
+      return `<div style="font-family:Arial,sans-serif;color:#111;font-size:13px;line-height:1.55"><p style="margin:0 0 12px 0">Dear FedEx Team,</p><p style="margin:0 0 12px 0">Please find the attached Challan for below shipment(s).</p><p style="margin:0 0 8px 0"><b>Challan AWB Details:</b></p><table style="border-collapse:collapse;width:100%;font-size:11px;margin-bottom:14px"><thead><tr>${heads.map(h=>`<th style="border:1px solid #555;padding:6px;background:#eee;text-align:center;font-weight:700">${h}</th>`).join('')}</tr></thead><tbody>${rows||'<tr><td colspan="10" style="border:1px solid #555;padding:6px;text-align:center">No shipment details</td></tr>'}</tbody></table><p style="margin:0 0 18px 0">Please find the attached Challan PDF for the above AWB(s) for your reference.</p><p style="margin:0"><b>Thanks &amp; Regards,</b><br>${escMail(profile.name||x.customerName||x.email||'—')}<br>${escMail(profile.address||'—')}<br>${escMail(profile.contact||'—')}</p></div>`;
     }
     function buildChallanEmailText(x){
-      const items=normalizeChallanItems(x);const profile=x.profile||getCurrentUserProfileDetails();const pcs=items.reduce((n,v)=>n+(parseInt(v.pcs,10)||1),0);const wt=items.reduce((n,v)=>n+(parseFloat(String(v.weight??'').replace(/[^0-9.]/g,''))||0),0);const amount=items.reduce((n,v)=>n+(parseFloat(String(v.amount??'').replace(/[^0-9.]/g,''))||0),0);
-      const rows=items.map((v,i)=>`${i+1}. AWB: ${v.awb||v.id||'—'} | PCS: ${v.pcs||1} | RATE: ${v.rate||'—'} | COUNTRY: ${v.country||'—'} | POSTAL: ${v.postal||'—'} | CITY: ${v.city||'—'} | WEIGHT: ${v.weight||'—'} | VAT: ${v.vat||'—'} | AMOUNT: ${v.amount||'—'}`).join('\n');
-      return `Challan Details\nName: ${profile.name||x.customerName||x.email||'—'}\nAddress: ${profile.address||'—'}\nContact No: ${profile.contact||'—'}\nChallan No: ${x.id||'—'}\nDate: ${new Date(x.date||Date.now()).toLocaleString()}\n\nSL NO | AWB Number | PCS | RATE | DESTINATION COUNTRY | RECIPIENT POSTAL CODE | RECIPIENT CITY | WEIGHT / PACKAGE CODE | VAT | AMOUNT\n${rows}\n\nTotal AWB: ${items.length}\nTotal PCS: ${pcs}\nTotal WT: ${wt.toFixed(2)}\nTotal Amount: ${amount.toFixed(2)} BDT\n\nPDF Challan is attached with this email.`;
+      const items=normalizeChallanItems(x); const profile={...getCurrentUserProfileDetails(),...(x.profile||{})};
+      const rows=items.map((v,i)=>`${i+1}. AWB: ${v.awb||v.id||'—'} | PCS: ${v.pcs||1} | RATE: ${v.rate||'—'} | COUNTRY: ${v.country||'—'} | POSTAL: ${v.postal||'—'} | CITY: ${v.city||'—'} | WEIGHT / PACKAGE CODE: ${v.weight||'—'} | VAT: ${v.vat||'—'} | AMOUNT: ${v.amount||'—'}`).join('\n');
+      return `Dear FedEx Team,\n\nPlease find the attached Challan for below shipment(s).\n\nChallan AWB Details:\n${rows}\n\nPlease find the attached Challan PDF for the above AWB(s) for your reference.\n\nThanks & Regards,\n${profile.name||x.customerName||x.email||'—'}\n${profile.address||'—'}\n${profile.contact||'—'}`;
     }
     async function sendChallanEmails(x,pdfBase64){
       const recipients=new Set(); const me=currentProfile?.email||currentUser?.email||''; if((currentProfile?.is_admin||currentProfile?.can_challan_mail!==false) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(me))recipients.add(me.toLowerCase());
       if(sb){const {data}=await sb.from('profiles').select('email,is_admin,can_challan,can_challan_mail');(data||[]).forEach(u=>{const em=String(u.email||'').toLowerCase(); if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em))return; if(u.is_admin || (u.id!==currentUser?.id && u.can_challan_mail===true))recipients.add(em);});}
       const mailEndpoint=(window.CHALLAN_EMAIL_FUNCTION_URL||'').trim(); if(!mailEndpoint||!recipients.size)return {ok:false};
-      const resp=await fetch(mailEndpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY},body:JSON.stringify({to:[...recipients],challan:{...x,emailHtml:buildChallanEmailHtml(x),emailText:buildChallanEmailText(x)},pdfBase64,attachmentBase64:pdfBase64,filename:'FedEx-Challan-'+x.id+'.pdf',attachmentFilename:'FedEx-Challan-'+x.id+'.pdf',emailSubject:'FedEx Challan '+x.id,emailHtml:buildChallanEmailHtml(x),emailText:buildChallanEmailText(x)})});
+      const resp=await fetch(mailEndpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY},body:JSON.stringify({to:[...recipients],challan:{...x,emailHtml:buildChallanEmailHtml(x),emailText:buildChallanEmailText(x)},pdfBase64,attachmentBase64:pdfBase64,filename:'FedEx-Challan-'+x.id+'.pdf',attachmentFilename:'FedEx-Challan-'+x.id+'.pdf',emailSubject:'FedEx Challan '+x.id,emailHtml:buildChallanEmailHtml(x),emailText:buildChallanEmailText(x),bodyHtml:buildChallanEmailHtml(x),bodyText:buildChallanEmailText(x),html:buildChallanEmailHtml(x),text:buildChallanEmailText(x),body:buildChallanEmailText(x),message:buildChallanEmailText(x)})});
       const data=await resp.json().catch(()=>({})); if(!resp.ok)throw new Error(data.error||'Email service failed'); return {ok:true,recipients:[...recipients]};
     }
     $c('submitChallan')?.addEventListener('click',async()=>{
@@ -1911,7 +1930,7 @@ function challanAwbAlreadyUsed(id){
         const dt=new Date(ch.date); const day=Number.isNaN(dt.getTime())?'':dt.toISOString().slice(0,10);
         if(from && day<from)return; if(to && day>to)return;
         const items=normalizeChallanItems(ch);
-        items.forEach((v,i)=>out.push({date:dt,id:ch.id||'',sl:i+1,awb:v.awb||v.id||'',pcs:v.pcs??1,rate:v.rate||'—',country:v.country||'—',postal:v.postal||'—',city:v.city||'—',weight:v.weight||'—',vat:v.vat||'—',amount:v.amount||'—',icpc:challanIcpcForItem(v),remarks:v.remarks||'',email:ch.email||'—'}));
+        items.forEach((v,i)=>out.push({date:dt,id:ch.id||'',sl:i+1,awb:v.awb||v.id||'',pcs:v.pcs??1,rate:v.rate||'—',country:v.country||'—',postal:v.postal||'—',city:v.city||'—',weight:v.weight||'—',vat:normalizeChallanVat(v.vat),amount:v.rate==='PP'?'CREDIT':formatChallanAmount(v.amount||''),icpc:challanIcpcForItem(v),remarks:v.remarks||'',email:ch.email||'—'}));
       });
       return out;
     }
@@ -1946,7 +1965,7 @@ function challanAwbAlreadyUsed(id){
     function renderChallanCreateVisual(){
       const list=$c('challanAwbListForCreate'); const all=challanAwbStore(); const selected=new Set([...document.querySelectorAll('[data-challan-create-awb]:checked')].map(x=>x.value)); if(!list)return;
       list.innerHTML=all.length?`<div style="overflow:auto;border:1px solid #dbe3ee;border-radius:9px;background:#fff"><table><thead><tr><th></th><th>AWB</th><th>PCS</th><th>RATE</th><th>COUNTRY</th><th>POSTAL</th><th>CITY</th><th>WEIGHT</th><th>VAT</th><th>AMOUNT</th></tr></thead><tbody>${all.map(x=>`<tr><td><input type="checkbox" data-challan-create-awb value="${esc(x.id)}" ${selected.has(x.id)?'checked':''}></td><td><b>${esc(x.id)}</b></td><td>${esc(x.pcs??'1')}</td><td>${esc(x.rate||'—')}</td><td>${esc(x.country||'—')}</td><td>${esc(x.postal||'—')}</td><td>${esc(x.city||'—')}</td><td>${esc(x.weight||'—')}</td><td>${esc(x.vat||'—')}</td><td>${esc(x.amount||'—')}</td></tr>`).join('')}</tbody></table></div>`:'<div style="padding:14px;color:#94a3b8;font-size:12px;border:1px dashed #cbd5e1;border-radius:9px;background:#fff">No saved AWB. First save AWB from AWB Entry.</div>';
-      const pending=all.length; if($c('challanRoutePending'))$c('challanRoutePending').textContent=pending; if($c('challanCourierPending'))$c('challanCourierPending').textContent=pending; if($c('challanAgentName'))$c('challanAgentName').innerHTML='<b>'+esc(currentProfile?.agent_name||currentProfile?.full_name||currentProfile?.name||currentProfile?.email||'—')+'</b>'; if($c('challanCourierLabel'))$c('challanCourierLabel').innerHTML='<b>Courier</b>'; if($c('challanRouteCounter'))$c('challanRouteCounter').checked=pending>0&&selected.size===pending; if($c('challanCourierSelect'))$c('challanCourierSelect').checked=pending>0&&selected.size===pending;
+      const pending=all.length; if($c('challanRoutePending'))$c('challanRoutePending').textContent=pending; if($c('challanCourierPending'))$c('challanCourierPending').textContent=pending; if($c('challanAgentName'))$c('challanAgentName').innerHTML='<b>'+esc(getCurrentUserProfileDetails().name||'—')+'</b>'; if($c('challanCourierLabel'))$c('challanCourierLabel').innerHTML='<b>Courier</b>'; if($c('challanRouteCounter'))$c('challanRouteCounter').checked=pending>0&&selected.size===pending; if($c('challanCourierSelect'))$c('challanCourierSelect').checked=pending>0&&selected.size===pending;
     }
     $c('challanSelectAll')?.addEventListener('change',e=>{
       document.querySelectorAll('[data-challan-create-awb]').forEach(x=>x.checked=e.target.checked);
