@@ -353,6 +353,7 @@ body.auth-locked > *:not(.auth-modal):not(.forgot-modal):not(.reset-modal):not(.
     <button type="button" data-admin-nav="users" class="admin-only"><span class="nav-icon">♙</span><span>Users</span></button>
     <button type="button" data-admin-nav="settings"><span class="nav-icon">⚙</span><span>Settings</span></button>
     <button type="button" data-admin-nav="challan"><span class="nav-icon">▤</span><span>Challan</span></button>
+    <button type="button" data-admin-nav="billing" id="billingNav" style="display:none"><span class="nav-icon">▣</span><span>Billing &amp; Accounts</span></button>
   </nav>
   <button type="button" class="admin-logout" id="sidebarLogout"><span>⇥</span> <span>Logout</span></button>
 </aside>
@@ -619,9 +620,27 @@ body.auth-locked > *:not(.auth-modal):not(.forgot-modal):not(.reset-modal):not(.
     <div id="challanSearchMsg" style="margin-top:8px;font-size:12px;color:#64748b"></div>
   </div>
 </section>
+<section class="card" id="billingPanel" style="display:none;margin-top:18px">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">💼 Billing &amp; Accounts</h2><button class="btn secondary" id="billingRefresh">↻ Refresh History</button></div>
+  <p style="font-size:12px;color:#64748b;margin:8px 0 14px">Search saved Challans by customer or Challan No. Admin can edit all Challans; other users need Billing View and Billing Edit permissions.</p>
+  <div class="formgrid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-bottom:12px">
+    <div class="field"><label>CUSTOMER FILTER</label><input id="billingCustomerFilter" type="text" placeholder="Customer name or email"></div>
+    <div class="field"><label>SEARCH BY CHALLAN NO</label><input id="billingChallanSearch" type="text" placeholder="e.g. CH-1791377463428"></div>
+    <div class="field" style="display:flex;align-items:end"><button type="button" class="btn primary" id="billingSearchBtn">Search Challan History</button></div>
+  </div>
+  <div id="billingMsg" style="font-size:12px;color:#64748b;margin-bottom:8px">Login and run the Billing &amp; Accounts SQL setup to load shared history.</div>
+  <div class="dash-table" style="overflow:auto"><table><thead><tr><th>Date</th><th>Challan No</th><th>Customer / Owner</th><th>AWB Count</th><th>Total Amount</th><th>Last Updated</th><th>Action</th></tr></thead><tbody id="billingRows"><tr><td colspan="7">No history loaded.</td></tr></tbody></table></div>
+  <div id="billingEditor" style="display:none;margin-top:18px;padding:14px;border:1px solid #dbe3ee;border-radius:10px;background:#f8fafc">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h3 style="margin:0" id="billingEditorTitle">Edit Challan</h3><button class="btn secondary" id="billingCancelEdit">Cancel</button></div>
+    <div style="font-size:12px;color:#64748b;margin:8px 0">Edit the shipment values below, then save. The original customer and the person making the edit will receive an updated Challan email, along with Admin.</div>
+    <div class="dash-table" style="overflow:auto"><table><thead><tr><th>AWB Number</th><th>PCS</th><th>RATE</th><th>DESTINATION COUNTRY</th><th>POSTAL CODE</th><th>CITY</th><th>WEIGHT / PACKAGE CODE</th><th>VAT</th><th>AMOUNT (BDT)</th><th>REMARKS</th></tr></thead><tbody id="billingEditRows"></tbody></table></div>
+    <div class="actions" style="margin-top:12px"><button type="button" class="btn primary" id="billingSaveEdit">Save &amp; Email Updated Challan</button></div><div id="billingEditMsg" style="font-size:12px;color:#64748b;margin-top:8px"></div>
+  </div>
+</section>
+
 <section class="card admin-section admin-only" id="usersPanel">
   <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">♙ User Access Control</h2><button class="btn secondary" id="refreshUsers">↻ Refresh Users</button></div>
-  <div class="user-table"><table><thead><tr><th>Email</th><th>Name</th><th>Address</th><th>Contact No</th><th>Role</th><th>Rate A</th><th>Rate B</th><th>Normal Rate</th><th>Dashboard</th><th>Challan</th><th>Challan Email Notification</th><th>Save</th></tr></thead><tbody id="userRows"><tr><td colspan="12">Admin only.</td></tr></tbody></table></div>
+  <div class="user-table"><table><thead><tr><th>Email</th><th>Name</th><th>Address</th><th>Contact No</th><th>Role</th><th>Rate A</th><th>Rate B</th><th>Normal Rate</th><th>Dashboard</th><th>Challan</th><th>Challan Email Notification</th><th>Billing View</th><th>Billing Edit</th><th>Save</th></tr></thead><tbody id="userRows"><tr><td colspan="12">Admin only.</td></tr></tbody></table></div>
   <div id="selectedUserAccess" style="margin-top:14px;display:none;border-top:1px solid #dbe4ef;padding-top:14px">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
       <label for="userAccessSelect" style="font-weight:700;color:#0b1f3a">Select User</label>
@@ -1120,16 +1139,16 @@ function fillSelectedUserAccess(id){
 }
 async function loadUsers(){
   if(!sb||!currentProfile?.is_admin)return;
-  const {data,error}=await sb.from('profiles').select('id,email,is_admin,full_name,name,address,contact_no,can_rate_a,can_rate_b,can_normal,can_dashboard,can_challan,can_challan_mail').order('email',{ascending:true});
+  const {data,error}=await sb.from('profiles').select('id,email,is_admin,full_name,name,address,contact_no,can_rate_a,can_rate_b,can_normal,can_dashboard,can_challan,can_challan_mail,can_billing_accounts,can_edit_billing').order('email',{ascending:true});
   if(error){$('userRows').innerHTML='<tr><td colspan="11">User access error: '+esc(error.message)+'</td></tr>';return;}
   adminUserAccessList=data||[];
   const d=u=>({can_rate_a:u.can_rate_a!==false,can_rate_b:u.can_rate_b!==false,can_normal:u.can_normal!==false,can_dashboard:u.can_dashboard!==false,can_challan:u.can_challan!==false,can_challan_mail:u.can_challan_mail===true});
-  $('userRows').innerHTML=(data||[]).map(u=>{if(u.is_admin)return `<tr><td>${esc(u.email||'')}</td><td>${esc(u.full_name||u.name||'')}</td><td>${esc(u.address||'')}</td><td>${esc(u.contact_no||'')}</td><td><b>ADMIN</b></td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>Full Admin</td></tr>`;const a=d(u);return `<tr><td>${esc(u.email||'')}</td><td>${esc(u.full_name||u.name||'')}</td><td>${esc(u.address||'')}</td><td>${esc(u.contact_no||'')}</td><td>USER</td><td><input type="checkbox" id="ra_${u.id}" ${a.can_rate_a?'checked':''}></td><td><input type="checkbox" id="rb_${u.id}" ${a.can_rate_b?'checked':''}></td><td><input type="checkbox" id="rn_${u.id}" ${a.can_normal?'checked':''}></td><td><input type="checkbox" id="rd_${u.id}" ${a.can_dashboard?'checked':''}></td><td><input type="checkbox" id="rc_${u.id}" ${a.can_challan?'checked':''}></td><td><input type="checkbox" id="rcm_${u.id}" ${a.can_challan_mail?'checked':''}></td><td><button class="btn secondary" style="padding:5px 8px" onclick="saveUserAccess('${u.id}')">Save</button></td></tr>`}).join('')||'<tr><td colspan="12">No users found.</td></tr>';
+  $('userRows').innerHTML=(data||[]).map(u=>{if(u.is_admin)return `<tr><td>${esc(u.email||'')}</td><td>${esc(u.full_name||u.name||'')}</td><td>${esc(u.address||'')}</td><td>${esc(u.contact_no||'')}</td><td><b>ADMIN</b></td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>Full Admin</td></tr>`;const a=d(u);return `<tr><td>${esc(u.email||'')}</td><td>${esc(u.full_name||u.name||'')}</td><td>${esc(u.address||'')}</td><td>${esc(u.contact_no||'')}</td><td>USER</td><td><input type="checkbox" id="ra_${u.id}" ${a.can_rate_a?'checked':''}></td><td><input type="checkbox" id="rb_${u.id}" ${a.can_rate_b?'checked':''}></td><td><input type="checkbox" id="rn_${u.id}" ${a.can_normal?'checked':''}></td><td><input type="checkbox" id="rd_${u.id}" ${a.can_dashboard?'checked':''}></td><td><input type="checkbox" id="rc_${u.id}" ${a.can_challan?'checked':''}></td><td><input type="checkbox" id="rcm_${u.id}" ${a.can_challan_mail?'checked':''}></td><td><input type="checkbox" id="bview_${u.id}" ${u.can_billing_accounts===true?'checked':''}></td><td><input type="checkbox" id="bedit_${u.id}" ${u.can_edit_billing===true?'checked':''}></td><td><button class="btn secondary" style="padding:5px 8px" onclick="saveUserAccess('${u.id}')">Save</button></td></tr>`}).join('')||'<tr><td colspan="14">No users found.</td></tr>';
   const sel=$('userAccessSelect'); if(sel){sel.innerHTML='<option value="">Select a user...</option>'+(data||[]).filter(u=>!u.is_admin).map(u=>`<option value="${esc(u.id)}">${esc((u.full_name||u.name||u.email||'User')+' — '+(u.email||''))}</option>`).join('');$('selectedUserAccess').style.display=(data||[]).some(u=>!u.is_admin)?'block':'none';$('userAccessEditor').style.display='none';$('selectedUserMsg').textContent='';}
 }
 async function saveUserAccess(id){
   if(!currentProfile?.is_admin||!sb)return;
-  const payload={full_name:document.getElementById('full_'+id)?.value||undefined,name:document.getElementById('name_'+id)?.value||undefined,can_rate_a:document.getElementById('ra_'+id)?.checked===true,can_rate_b:document.getElementById('rb_'+id)?.checked===true,can_normal:document.getElementById('rn_'+id)?.checked===true,can_dashboard:document.getElementById('rd_'+id)?.checked===true,can_challan:document.getElementById('rc_'+id)?.checked===true,can_challan_mail:document.getElementById('rcm_'+id)?.checked===true};
+  const payload={full_name:document.getElementById('full_'+id)?.value||undefined,name:document.getElementById('name_'+id)?.value||undefined,can_billing_accounts:document.getElementById('bview_'+id)?.checked===true||document.getElementById('bedit_'+id)?.checked===true,can_edit_billing:document.getElementById('bedit_'+id)?.checked===true,can_rate_a:document.getElementById('ra_'+id)?.checked===true,can_rate_b:document.getElementById('rb_'+id)?.checked===true,can_normal:document.getElementById('rn_'+id)?.checked===true,can_dashboard:document.getElementById('rd_'+id)?.checked===true,can_challan:document.getElementById('rc_'+id)?.checked===true,can_challan_mail:document.getElementById('rcm_'+id)?.checked===true};
   const u=adminUserAccessList.find(x=>String(x.id)===String(id));
   if(u){payload.full_name=u.full_name||u.name||'';payload.address=u.address||'';payload.contact_no=u.contact_no||'';}
   const {error}=await sb.from('profiles').update(payload).eq('id',id); if(error){alert('User update failed: '+error.message+'\nRun the supplied Supabase SQL migration first.');return;}
@@ -1219,10 +1238,10 @@ function initSupabase(){
     $('authUser').textContent='Login service unavailable';
   }
 }
-function accessDefaults(){return {can_rate_a:true,can_rate_b:true,can_normal:true,can_dashboard:true,can_challan:true,can_challan_mail:true,full_name:'',name:'',address:'',contact_no:''};}
+function accessDefaults(){return {can_rate_a:true,can_rate_b:true,can_normal:true,can_dashboard:true,can_challan:true,can_challan_mail:true,can_billing_accounts:false,can_edit_billing:false,full_name:'',name:'',address:'',contact_no:''};}
 function normalizeAccess(p){return Object.assign(accessDefaults(),p||{});}
 function canUse(plan){if(currentProfile?.is_admin)return true;return plan==='A'?currentProfile?.can_rate_a!==false:plan==='B'?currentProfile?.can_rate_b!==false:plan==='NORMAL'?currentProfile?.can_normal!==false:false;}
-function applyAccessUI(){const admin=!!currentProfile?.is_admin;document.querySelectorAll('.plan[data-plan]').forEach(b=>{const ok=admin||canUse(b.dataset.plan);b.style.display=ok?'inline-flex':'none';b.disabled=!ok;});const db=admin||currentProfile?.can_dashboard!==false;document.querySelector('[data-admin-nav="dashboard"]')?.style.setProperty('display',db?'flex':'none');document.querySelector('[data-admin-nav="logs"]')?.style.setProperty('display',admin?'flex':'none');$('dashboard').style.display=db?'block':'none';const challan=admin||currentProfile?.can_challan!==false;const cp=document.querySelector('#challanPanel');const cn=document.querySelector('[data-admin-nav="challan"]');if(cn)cn.style.display=challan?'flex':'none';if(cp&&!challan)cp.style.display='none';}
+function applyAccessUI(){const admin=!!currentProfile?.is_admin;document.querySelectorAll('.plan[data-plan]').forEach(b=>{const ok=admin||canUse(b.dataset.plan);b.style.display=ok?'inline-flex':'none';b.disabled=!ok;});const db=admin||currentProfile?.can_dashboard!==false;document.querySelector('[data-admin-nav="dashboard"]')?.style.setProperty('display',db?'flex':'none');document.querySelector('[data-admin-nav="logs"]')?.style.setProperty('display',admin?'flex':'none');$('dashboard').style.display=db?'block':'none';const challan=admin||currentProfile?.can_challan!==false;const cp=document.querySelector('#challanPanel');const cn=document.querySelector('[data-admin-nav="challan"]');if(cn)cn.style.display=challan?'flex':'none';if(cp&&!challan)cp.style.display='none';const bill=admin||(currentProfile?.can_billing_accounts===true||currentProfile?.can_edit_billing===true);const bn=document.querySelector('[data-admin-nav="billing"]');if(bn)bn.style.display=bill?'flex':'none';}
 async function handleSession(session){
   currentUser=session?.user||null;
   const gate=document.getElementById('accessGate');
@@ -1242,6 +1261,7 @@ async function handleSession(session){
     document.querySelectorAll('.admin-only').forEach(el=>el.classList.toggle('show',admin));
     document.querySelectorAll('[data-admin-nav="rate"],[data-admin-nav="users"]').forEach(el=>el.style.display=admin?'flex':'none');
     applyAccessUI();
+    const billingNav=document.getElementById('billingNav');if(billingNav)billingNav.style.display=(admin||(currentProfile?.can_billing_accounts===true||currentProfile?.can_edit_billing===true))?'flex':'none';
     if(admin) await loadUsers();
   }else{
     $('loginBtn').style.display='inline-block';$('logoutBtn').style.display='none';$('authUser').textContent='Not logged in';$('dashboard').classList.remove('show');$('rateUpdateBtn').style.display='none';$('adminClearData').style.display='none';currentProfile=null;
@@ -1251,7 +1271,7 @@ async function handleSession(session){
 }
 async function loadProfile(){
   if(!sb||!currentUser)return;
-  const {data,error}=await sb.from('profiles').select('id,email,is_admin,full_name,name,address,contact_no,can_rate_a,can_rate_b,can_normal,can_dashboard,can_challan,can_challan_mail').eq('id',currentUser.id).maybeSingle();
+  const {data,error}=await sb.from('profiles').select('id,email,is_admin,full_name,name,address,contact_no,can_rate_a,can_rate_b,can_normal,can_dashboard,can_challan,can_challan_mail,can_billing_accounts,can_edit_billing').eq('id',currentUser.id).maybeSingle();
   if(error){console.warn(error);return;}
   currentProfile=normalizeAccess(data||{id:currentUser.id,email:currentUser.email,is_admin:false});
 }
@@ -1437,12 +1457,16 @@ document.addEventListener('DOMContentLoaded',()=>{
     else if(key==='settings') document.querySelector('#fx')?.scrollIntoView({behavior:'smooth',block:'center'});
     else if(key==='challan'){
       if(!currentProfile?.is_admin && currentProfile?.can_challan===false){alert('Challan access is disabled for this user.');return;}
-      if(challanPanel){
-        challanPanel.style.display='block';
-        challanPanel.classList.add('show');
-        challanPanel.scrollIntoView({behavior:'smooth',block:'start'});
-      }
+      if(challanPanel){challanPanel.style.display='block';challanPanel.classList.add('show');challanPanel.scrollIntoView({behavior:'smooth',block:'start'});}
+      const bp=document.querySelector('#billingPanel');if(bp)bp.style.display='none';
     }
+    else if(key==='billing'){
+      if(!currentProfile?.is_admin && currentProfile?.can_billing_accounts!==true){alert('Billing & Accounts access is disabled for this user.');return;}
+      if(challanPanel)challanPanel.style.display='none';
+      document.querySelector('#billingPanel')?.style.setProperty('display','block');
+      document.querySelector('#billingPanel')?.scrollIntoView({behavior:'smooth',block:'start'});
+      loadBillingHistory();
+    } else { const bp=document.querySelector('#billingPanel');if(bp)bp.style.display='none'; }
   };
 
   // Challan UI: scoped only to the Challan panel; existing calculator logic is untouched.
@@ -1913,6 +1937,7 @@ function challanAwbAlreadyUsed(id){
       // can_challan_mail controls receiving other users' Challans, not the creator's own Challan.
       const me=currentProfile?.email||currentUser?.email||x?.email||'';
       if(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(me).trim()))recipients.add(String(me).trim().toLowerCase());
+      const originalOwner=String(x?.email||'').trim().toLowerCase();if(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(originalOwner))recipients.add(originalOwner);
 
       // Admins always receive Challans, even when their notification checkbox is OFF.
       // The user who created the Challan always receives their own Challan.
@@ -1997,7 +2022,7 @@ function challanAwbAlreadyUsed(id){
       const ids=items.map(v=>String(v.awb||v.id||'').trim()).filter(Boolean); if(new Set(ids).size!==ids.length){$c('challanCreateMsg').textContent='Duplicate AWB detected.';return;} if(ids.some(challanAwbInSubmittedChallan)){$c('challanCreateMsg').textContent='One or more AWB numbers already exist.';return;}
       const total=items.reduce((sum,v)=>sum+(parseFloat(String(v.amount||'').replace(/[^0-9.]/g,''))||0),0).toFixed(2)+' BDT';
       const x={id,awb:ids.join(', '),items,rate:items[0]?.rate||current.rate,country:items[0]?.country||current.country,postal:items[0]?.postal||current.postal,city:items[0]?.city||current.city,weight:items[0]?.weight||current.weight,vat:items[0]?.vat||current.vat,amount:total,date:new Date().toISOString(),email:currentProfile?.email||currentUser?.email||'Unknown',profile:getCurrentUserProfileDetails(),customerName:getCurrentUserProfileDetails().name,fx:Number($c('fx')?.value)||0,fuel:Number($c('fuel')?.value)||0};
-      const pdfBase64=makeSimplePdfBase64({...x,items:normalizeChallanItems(x)}); const a=challanStore();a.push(x);saveChallanStore(a); const used=new Set(ids); saveChallanAwbStore(challanAwbStore().filter(v=>!used.has(String(v.id||'').trim()))); challanBatchAwbs=[];renderChallanBatch();refreshChallanAwbSelect();renderChallanCreateVisual();renderChallanReport();
+      const pdfBase64=makeSimplePdfBase64({...x,items:normalizeChallanItems(x)}); const a=challanStore();a.push(x);saveChallanStore(a); try{await saveBillingChallan(x,false);}catch(syncErr){console.warn('Billing history cloud save failed:',syncErr);const bm=document.getElementById('billingMsg');if(bm)bm.textContent='Cloud history sync failed. Run the supplied Billing SQL migration; Challan is still saved in this browser.';} const used=new Set(ids); saveChallanAwbStore(challanAwbStore().filter(v=>!used.has(String(v.id||'').trim()))); challanBatchAwbs=[];renderChallanBatch();refreshChallanAwbSelect();renderChallanCreateVisual();renderChallanReport();
       $c('challanCreateMsg').textContent='Challan '+id+' created. PDF generated. Sending email...'; $c('challanCreateVisualMsg').textContent=$c('challanCreateMsg').textContent;
       try{const mailed=await sendChallanEmails(x,pdfBase64); const msg=mailed.ok?'Challan '+id+' created. PDF attached and emailed to user/admin/authorized recipients.':'Challan '+id+' created, but no email recipient was configured.'; $c('challanCreateMsg').textContent=msg;$c('challanCreateVisualMsg').textContent=msg;}catch(err){const msg='Challan '+id+' created, but email failed: '+(err?.message||'Unknown error');$c('challanCreateMsg').textContent=msg;$c('challanCreateVisualMsg').textContent=msg;}
     });
@@ -2160,6 +2185,8 @@ $c('challanCreateVisualBtn')?.addEventListener('click',async()=>{
 
     initChallanFields();refreshChallanAwbSelect();renderChallanReport();
     renderChallanCreateVisual();
+    // Expose only the existing Challan helpers needed by Billing & Accounts.
+    window.__billingHelpers={normalizeChallanItems,makeSimplePdfBase64,sendChallanEmails,challanStore,saveChallanStore};
   })();
   document.querySelectorAll('[data-admin-nav]').forEach(b=>b.addEventListener('click',()=>nav(b.dataset.adminNav)));
   document.querySelector('#sidebarLogout')?.addEventListener('click',()=>document.querySelector('#logoutBtn')?.click());
@@ -2169,6 +2196,88 @@ $c('challanCreateVisualBtn')?.addEventListener('click',async()=>{
     sync(); new MutationObserver(sync).observe(src,{childList:true,characterData:true,subtree:true});
   }
 });
+
+
+
+// ===== Billing & Accounts: shared Supabase Challan history =====
+let billingHistoryCache=[];
+let billingEditingRecord=null;
+function billingCanView(){return !!currentProfile?.is_admin||(currentProfile?.can_billing_accounts===true||currentProfile?.can_edit_billing===true);}
+function billingCanEdit(){return !!currentProfile?.is_admin||currentProfile?.can_edit_billing===true;}
+function billingDataOf(row){return row?.challan_data||row?.data||{};}
+function billingAmount(ch){const its=window.__billingHelpers.normalizeChallanItems(ch);return its.reduce((n,it)=>n+(parseFloat(String(it.amount??'').replace(/[^0-9.]/g,''))||0),0);}
+async function saveBillingChallan(ch,showMessage=true){
+  if(!sb||!currentUser)throw new Error('Please login before saving shared billing history.');
+  const payload={challan_no:String(ch.id||''),created_by:ch.createdBy||currentUser.id,created_by_email:String(ch.email||currentUser.email||''),customer_name:String(ch.customerName||ch.profile?.name||ch.email||''),challan_data:ch,updated_by_email:String(currentProfile?.email||currentUser.email||''),updated_at:new Date().toISOString()};
+  const {error}=await sb.from('billing_challans').upsert(payload,{onConflict:'challan_no'});
+  if(error)throw error;
+  if(showMessage){const m=document.getElementById('billingMsg');if(m)m.textContent='Challan '+payload.challan_no+' saved to shared Billing & Accounts history.';}
+}
+async function loadBillingHistory(){
+  const msg=document.getElementById('billingMsg'),body=document.getElementById('billingRows');
+  if(!billingCanView()){if(msg)msg.textContent='Billing & Accounts access is disabled for this user.';return;}
+  if(!sb||!currentUser){if(msg)msg.textContent='Please login to load Billing & Accounts.';return;}
+  if(body)body.innerHTML='<tr><td colspan="7">Loading history…</td></tr>';
+  const {data,error}=await sb.from('billing_challans').select('id,challan_no,created_by,created_by_email,customer_name,challan_data,created_at,updated_at,updated_by_email').order('created_at',{ascending:false}).limit(2000);
+  if(error){if(msg)msg.textContent='Cannot load shared history: '+error.message+'. Run the supplied Supabase SQL migration and reload.';if(body)body.innerHTML='<tr><td colspan="7">Billing history unavailable until SQL setup is applied.</td></tr>';return;}
+  billingHistoryCache=data||[];
+  // Best-effort import of this browser's older local Challans into the shared table.
+  if(currentProfile?.is_admin){
+    const cloudNos=new Set(billingHistoryCache.map(r=>String(r.challan_no)));
+    const legacy=window.__billingHelpers.challanStore().filter(ch=>ch?.id&&!cloudNos.has(String(ch.id)));
+    for(const ch of legacy){try{await saveBillingChallan(ch,false);}catch(e){console.warn('Legacy Challan import skipped:',e);}}
+    if(legacy.length){const again=await sb.from('billing_challans').select('id,challan_no,created_by,created_by_email,customer_name,challan_data,created_at,updated_at,updated_by_email').order('created_at',{ascending:false}).limit(2000);if(!again.error)billingHistoryCache=again.data||billingHistoryCache;}
+  }
+  if(msg)msg.textContent=`Loaded ${billingHistoryCache.length} shared Challan record(s).`;
+  renderBillingHistory();
+}
+function renderBillingHistory(){
+  const body=document.getElementById('billingRows');if(!body)return;
+  const cust=(document.getElementById('billingCustomerFilter')?.value||'').trim().toLowerCase();
+  const no=(document.getElementById('billingChallanSearch')?.value||'').trim().toLowerCase();
+  const rows=billingHistoryCache.filter(r=>{const ch=billingDataOf(r);const customer=[r.customer_name,r.created_by_email,ch.email,ch.customerName,ch.profile?.name].join(' ').toLowerCase();return (!cust||customer.includes(cust))&&(!no||String(r.challan_no||ch.id||'').toLowerCase().includes(no));});
+  body.innerHTML=rows.length?rows.map(r=>{const ch=billingDataOf(r),items=window.__billingHelpers.normalizeChallanItems(ch),amt=billingAmount(ch);const dt=r.created_at||ch.date,up=r.updated_at;const editable=billingCanEdit();return `<tr><td>${esc(dt?new Date(dt).toLocaleString():'—')}</td><td><b>${esc(r.challan_no||ch.id||'—')}</b></td><td>${esc(r.customer_name||ch.customerName||r.created_by_email||ch.email||'—')}<div style="font-size:10px;color:#64748b">${esc(r.created_by_email||ch.email||'')}</div></td><td>${items.length}</td><td>${amt.toLocaleString('en-BD',{minimumFractionDigits:2,maximumFractionDigits:2})} BDT</td><td>${esc(up?new Date(up).toLocaleString():'—')}<div style="font-size:10px;color:#64748b">${esc(r.updated_by_email||'')}</div></td><td><button type="button" class="btn ${editable?'primary':'secondary'}" style="padding:5px 9px" data-billing-edit="${esc(r.id)}" ${editable?'':'disabled'}>${editable?'View / Edit':'View'}</button></td></tr>`;}).join(''):'<tr><td colspan="7">No matching Challan history found.</td></tr>';
+  body.querySelectorAll('[data-billing-edit]').forEach(btn=>btn.addEventListener('click',()=>openBillingEditor(btn.dataset.billingEdit)));
+}
+function openBillingEditor(recordId){
+  const r=billingHistoryCache.find(x=>String(x.id)===String(recordId));if(!r)return;
+  billingEditingRecord=r;const ch=JSON.parse(JSON.stringify(billingDataOf(r)));const items=window.__billingHelpers.normalizeChallanItems(ch);
+  const title=document.getElementById('billingEditorTitle');if(title)title.textContent=(billingCanEdit()?'Edit Challan ':'View Challan ')+(r.challan_no||ch.id||'');
+  const body=document.getElementById('billingEditRows');if(!body)return;
+  const disabled=billingCanEdit()?'':'disabled';
+  body.innerHTML=items.map((it,i)=>`<tr data-billing-item="${i}"><td><input data-f="awb" value="${esc(it.awb||it.id||'')}" ${disabled} style="min-width:115px;width:100%"></td><td><input data-f="pcs" value="${esc(it.pcs??1)}" ${disabled} style="width:55px"></td><td><input data-f="rate" value="${esc(it.rate||'')}" ${disabled} style="width:75px"></td><td><input data-f="country" value="${esc(it.country||'')}" ${disabled} style="min-width:120px;width:100%"></td><td><input data-f="postal" value="${esc(it.postal||'')}" ${disabled} style="min-width:85px;width:100%"></td><td><input data-f="city" value="${esc(it.city||'')}" ${disabled} style="min-width:100px;width:100%"></td><td><input data-f="weight" value="${esc(it.weight||'')}" ${disabled} style="min-width:95px;width:100%"></td><td><select data-f="vat" ${disabled}><option value="yes" ${String(it.vat).toLowerCase()==='yes'?'selected':''}>Yes</option><option value="no" ${String(it.vat).toLowerCase()!=='yes'?'selected':''}>No</option></select></td><td><input data-f="amount" value="${esc(String(it.amount??'').replace(/[^0-9.]/g,''))}" ${disabled} style="min-width:110px;width:100%"></td><td><input data-f="remarks" value="${esc(it.remarks||'')}" ${disabled} style="min-width:100px;width:100%"></td></tr>`).join('');
+  const save=document.getElementById('billingSaveEdit');if(save)save.style.display=billingCanEdit()?'inline-flex':'none';
+  const msg=document.getElementById('billingEditMsg');if(msg)msg.textContent=billingCanEdit()?'Make changes and save to update the shared Challan and email the updated PDF.':'You have view-only access.';
+  document.getElementById('billingEditor').style.display='block';document.getElementById('billingEditor').scrollIntoView({behavior:'smooth',block:'start'});
+}
+async function saveBillingEdit(){
+  const msg=document.getElementById('billingEditMsg');
+  if(!billingCanEdit()){if(msg)msg.textContent='Edit access is disabled for this user.';return;}
+  if(!billingEditingRecord||!sb){if(msg)msg.textContent='No Challan selected or database unavailable.';return;}
+  const save=document.getElementById('billingSaveEdit');if(save){save.disabled=true;save.textContent='Saving…';}
+  try{
+    const old=billingDataOf(billingEditingRecord);const updated=JSON.parse(JSON.stringify(old));
+    const trs=[...document.querySelectorAll('#billingEditRows tr[data-billing-item]')];
+    updated.items=trs.map(tr=>{const v={};tr.querySelectorAll('[data-f]').forEach(el=>v[el.dataset.f]=el.value.trim());v.id=v.awb;v.pcs=Math.max(1,parseInt(v.pcs,10)||1);v.amount=String(v.amount||'0').replace(/[^0-9.]/g,'');return v;});
+    if(!updated.items.length)throw new Error('Challan must contain at least one AWB.');
+    updated.awb=updated.items.map(i=>i.awb||i.id).join(', ');updated.amount=billingAmount(updated).toFixed(2)+' BDT';updated.date=old.date||billingEditingRecord.created_at;updated.updatedAt=new Date().toISOString();updated.updatedByEmail=currentProfile?.email||currentUser?.email||'';updated.id=billingEditingRecord.challan_no||old.id;updated.email=billingEditingRecord.created_by_email||old.email||'';updated.customerName=billingEditingRecord.customer_name||old.customerName||updated.email;
+    const payload={challan_data:updated,customer_name:String(updated.customerName||updated.email||''),updated_by_email:String(currentProfile?.email||currentUser?.email||''),updated_at:new Date().toISOString()};
+    const {error}=await sb.from('billing_challans').update(payload).eq('id',billingEditingRecord.id);if(error)throw error;
+    const local=window.__billingHelpers.challanStore();const li=local.findIndex(x=>String(x.id)===String(updated.id));if(li>=0){local[li]=updated;window.__billingHelpers.saveChallanStore(local);}
+    const pdf=window.__billingHelpers.makeSimplePdfBase64({...updated,items:window.__billingHelpers.normalizeChallanItems(updated)});
+    let mailText='Updated Challan saved. Email delivery could not be confirmed.';
+    try{const sent=await window.__billingHelpers.sendChallanEmails(updated,pdf);mailText=sent.ok?'Updated PDF emailed to Admin, original Challan owner, and the editor.':'Updated Challan saved, but no email recipient was configured.';}catch(mailErr){mailText='Updated Challan saved, but email failed: '+(mailErr?.message||'Unknown error');}
+    if(msg)msg.textContent='✓ '+mailText;
+    await loadBillingHistory();
+  }catch(err){if(msg)msg.textContent='Save failed: '+(err?.message||err);}
+  finally{if(save){save.disabled=false;save.textContent='Save & Email Updated Challan';}}
+}
+document.getElementById('billingRefresh')?.addEventListener('click',loadBillingHistory);
+document.getElementById('billingSearchBtn')?.addEventListener('click',renderBillingHistory);
+document.getElementById('billingCustomerFilter')?.addEventListener('input',renderBillingHistory);
+document.getElementById('billingChallanSearch')?.addEventListener('input',renderBillingHistory);
+document.getElementById('billingCancelEdit')?.addEventListener('click',()=>{document.getElementById('billingEditor').style.display='none';billingEditingRecord=null;});
+document.getElementById('billingSaveEdit')?.addEventListener('click',saveBillingEdit);
 
 </script>
 </body></html>
