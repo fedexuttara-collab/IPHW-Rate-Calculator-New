@@ -621,7 +621,7 @@ body.auth-locked > *:not(.auth-modal):not(.forgot-modal):not(.reset-modal):not(.
   </div>
 </section>
 <section class="card" id="billingPanel" style="display:none;margin-top:18px">
-  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">💼 Billing &amp; Accounts</h2><button class="btn secondary" id="billingRefresh">↻ Refresh History</button></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">💼 Billing &amp; Accounts</h2><button type="button" class="btn secondary" id="billingRefresh" onclick="loadBillingHistory()">↻ Refresh History</button></div>
   <p style="font-size:12px;color:#64748b;margin:8px 0 14px">Search saved Challans by customer or Challan No. Admin can edit all Challans; other users need Billing View and Billing Edit permissions.</p>
   <div class="formgrid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-bottom:12px">
     <div class="field"><label>CUSTOMER FILTER</label><input id="billingCustomerFilter" type="text" placeholder="Customer name or email"></div>
@@ -1263,6 +1263,11 @@ async function handleSession(session){
     applyAccessUI();
     const billingNav=document.getElementById('billingNav');if(billingNav)billingNav.style.display=(admin||(currentProfile?.can_billing_accounts===true||currentProfile?.can_edit_billing===true))?'flex':'none';
     if(admin) await loadUsers();
+    // Automatically load shared Billing history once the authenticated profile is ready.
+    if(admin || currentProfile?.can_billing_accounts===true || currentProfile?.can_edit_billing===true){
+      const billingPanel=document.getElementById('billingPanel');
+      if(billingPanel && billingPanel.style.display!=='none') await loadBillingHistory();
+    }
   }else{
     $('loginBtn').style.display='inline-block';$('logoutBtn').style.display='none';$('authUser').textContent='Not logged in';$('dashboard').classList.remove('show');$('rateUpdateBtn').style.display='none';$('adminClearData').style.display='none';currentProfile=null;
     document.body.classList.add('auth-locked'); if(gate)gate.style.display='flex';
@@ -2185,8 +2190,6 @@ $c('challanCreateVisualBtn')?.addEventListener('click',async()=>{
 
     initChallanFields();refreshChallanAwbSelect();renderChallanReport();
     renderChallanCreateVisual();
-    // Expose only the existing Challan helpers needed by Billing & Accounts.
-    window.__billingHelpers={normalizeChallanItems,makeSimplePdfBase64,sendChallanEmails,challanStore,saveChallanStore};
   })();
   document.querySelectorAll('[data-admin-nav]').forEach(b=>b.addEventListener('click',()=>nav(b.dataset.adminNav)));
   document.querySelector('#sidebarLogout')?.addEventListener('click',()=>document.querySelector('#logoutBtn')?.click());
@@ -2205,7 +2208,7 @@ let billingEditingRecord=null;
 function billingCanView(){return !!currentProfile?.is_admin||(currentProfile?.can_billing_accounts===true||currentProfile?.can_edit_billing===true);}
 function billingCanEdit(){return !!currentProfile?.is_admin||currentProfile?.can_edit_billing===true;}
 function billingDataOf(row){return row?.challan_data||row?.data||{};}
-function billingAmount(ch){const its=window.__billingHelpers.normalizeChallanItems(ch);return its.reduce((n,it)=>n+(parseFloat(String(it.amount??'').replace(/[^0-9.]/g,''))||0),0);}
+function billingAmount(ch){const its=normalizeChallanItems(ch);return its.reduce((n,it)=>n+(parseFloat(String(it.amount??'').replace(/[^0-9.]/g,''))||0),0);}
 async function saveBillingChallan(ch,showMessage=true){
   if(!sb||!currentUser)throw new Error('Please login before saving shared billing history.');
   const payload={challan_no:String(ch.id||''),created_by:ch.createdBy||currentUser.id,created_by_email:String(ch.email||currentUser.email||''),customer_name:String(ch.customerName||ch.profile?.name||ch.email||''),challan_data:ch,updated_by_email:String(currentProfile?.email||currentUser.email||''),updated_at:new Date().toISOString()};
@@ -2214,40 +2217,69 @@ async function saveBillingChallan(ch,showMessage=true){
   if(showMessage){const m=document.getElementById('billingMsg');if(m)m.textContent='Challan '+payload.challan_no+' saved to shared Billing & Accounts history.';}
 }
 async function loadBillingHistory(){
-  const msg=document.getElementById('billingMsg'),body=document.getElementById('billingRows');
-  if(!billingCanView()){if(msg)msg.textContent='Billing & Accounts access is disabled for this user.';return;}
-  if(!sb||!currentUser){if(msg)msg.textContent='Please login to load Billing & Accounts.';return;}
-  if(body)body.innerHTML='<tr><td colspan="7">Loading history…</td></tr>';
-  const {data,error}=await sb.from('billing_challans').select('id,challan_no,created_by,created_by_email,customer_name,challan_data,created_at,updated_at,updated_by_email').order('created_at',{ascending:false}).limit(2000);
-  if(error){if(msg)msg.textContent='Cannot load shared history: '+error.message+'. Run the supplied Supabase SQL migration and reload.';if(body)body.innerHTML='<tr><td colspan="7">Billing history unavailable until SQL setup is applied.</td></tr>';return;}
-  billingHistoryCache=data||[];
-  // Best-effort import of this browser's older local Challans into the shared table.
-  if(currentProfile?.is_admin){
-    const cloudNos=new Set(billingHistoryCache.map(r=>String(r.challan_no)));
-    const legacy=window.__billingHelpers.challanStore().filter(ch=>ch?.id&&!cloudNos.has(String(ch.id)));
-    for(const ch of legacy){try{await saveBillingChallan(ch,false);}catch(e){console.warn('Legacy Challan import skipped:',e);}}
-    if(legacy.length){const again=await sb.from('billing_challans').select('id,challan_no,created_by,created_by_email,customer_name,challan_data,created_at,updated_at,updated_by_email').order('created_at',{ascending:false}).limit(2000);if(!again.error)billingHistoryCache=again.data||billingHistoryCache;}
-  }
-  if(msg)msg.textContent=`Loaded ${billingHistoryCache.length} shared Challan record(s).`;
-  renderBillingHistory();
+  const msg=document.getElementById('billingMsg'),body=document.getElementById('billingRows'),btn=document.getElementById('billingRefresh');
+  if(msg)msg.textContent='Checking login and connecting to shared Challan history…';
+  if(btn){btn.disabled=true;btn.textContent='Loading…';}
+  try{
+    if(!billingCanView()){if(msg)msg.textContent='Billing & Accounts access is disabled for this user.';if(body)body.innerHTML='<tr><td colspan="7">Billing access is not enabled for this account.</td></tr>';return;}
+    if(!sb||!currentUser){if(msg)msg.textContent='Login session or Supabase connection is missing. Please sign out and log in again.';if(body)body.innerHTML='<tr><td colspan="7">Login session or database connection unavailable.</td></tr>';return;}
+    if(body)body.innerHTML='<tr><td colspan="7">Loading history…</td></tr>';
+    const {data,error}=await sb.from('billing_challans').select('id,challan_no,created_by,created_by_email,customer_name,challan_data,created_at,updated_at,updated_by_email').order('created_at',{ascending:false}).limit(2000);
+    if(error){if(msg)msg.textContent='Billing history query failed: '+error.message;if(body)body.innerHTML='<tr><td colspan="7">Could not read shared Challan history. Check the error message above.</td></tr>';return;}
+    billingHistoryCache=data||[];
+    // Best-effort import of this browser's older local Challans into the shared table.
+    if(currentProfile?.is_admin){
+      const cloudNos=new Set(billingHistoryCache.map(r=>String(r.challan_no)));
+      const legacy=challanStore().filter(ch=>ch?.id&&!cloudNos.has(String(ch.id)));
+      for(const ch of legacy){try{await saveBillingChallan(ch,false);}catch(e){console.warn('Legacy Challan import skipped:',e);}}
+      if(legacy.length){const again=await sb.from('billing_challans').select('id,challan_no,created_by,created_by_email,customer_name,challan_data,created_at,updated_at,updated_by_email').order('created_at',{ascending:false}).limit(2000);if(!again.error)billingHistoryCache=again.data||billingHistoryCache;}
+    }
+    if(msg)msg.textContent=`Loaded ${billingHistoryCache.length} shared Challan record(s).`;
+    renderBillingHistory();
+  }catch(err){
+    console.error('Billing history load failed:',err);
+    if(msg)msg.textContent='Billing history load error: '+(err?.message||String(err));
+    if(body)body.innerHTML='<tr><td colspan="7">Loading failed. Read the error message above and try Refresh History again.</td></tr>';
+  }finally{if(btn){btn.disabled=false;btn.textContent='↻ Refresh History';}}
 }
 function renderBillingHistory(){
   const body=document.getElementById('billingRows');if(!body)return;
   const cust=(document.getElementById('billingCustomerFilter')?.value||'').trim().toLowerCase();
   const no=(document.getElementById('billingChallanSearch')?.value||'').trim().toLowerCase();
   const rows=billingHistoryCache.filter(r=>{const ch=billingDataOf(r);const customer=[r.customer_name,r.created_by_email,ch.email,ch.customerName,ch.profile?.name].join(' ').toLowerCase();return (!cust||customer.includes(cust))&&(!no||String(r.challan_no||ch.id||'').toLowerCase().includes(no));});
-  body.innerHTML=rows.length?rows.map(r=>{const ch=billingDataOf(r),items=window.__billingHelpers.normalizeChallanItems(ch),amt=billingAmount(ch);const dt=r.created_at||ch.date,up=r.updated_at;const editable=billingCanEdit();return `<tr><td>${esc(dt?new Date(dt).toLocaleString():'—')}</td><td><b>${esc(r.challan_no||ch.id||'—')}</b></td><td>${esc(r.customer_name||ch.customerName||r.created_by_email||ch.email||'—')}<div style="font-size:10px;color:#64748b">${esc(r.created_by_email||ch.email||'')}</div></td><td>${items.length}</td><td>${amt.toLocaleString('en-BD',{minimumFractionDigits:2,maximumFractionDigits:2})} BDT</td><td>${esc(up?new Date(up).toLocaleString():'—')}<div style="font-size:10px;color:#64748b">${esc(r.updated_by_email||'')}</div></td><td><button type="button" class="btn ${editable?'primary':'secondary'}" style="padding:5px 9px" data-billing-edit="${esc(r.id)}" ${editable?'':'disabled'}>${editable?'View / Edit':'View'}</button></td></tr>`;}).join(''):'<tr><td colspan="7">No matching Challan history found.</td></tr>';
+  body.innerHTML=rows.length?rows.map(r=>{const ch=billingDataOf(r),items=normalizeChallanItems(ch),amt=billingAmount(ch);const dt=r.created_at||ch.date,up=r.updated_at;const editable=billingCanEdit();return `<tr><td>${esc(dt?new Date(dt).toLocaleString():'—')}</td><td><b>${esc(r.challan_no||ch.id||'—')}</b></td><td>${esc(r.customer_name||ch.customerName||r.created_by_email||ch.email||'—')}<div style="font-size:10px;color:#64748b">${esc(r.created_by_email||ch.email||'')}</div></td><td>${items.length}</td><td>${amt.toLocaleString('en-BD',{minimumFractionDigits:2,maximumFractionDigits:2})} BDT</td><td>${esc(up?new Date(up).toLocaleString():'—')}<div style="font-size:10px;color:#64748b">${esc(r.updated_by_email||'')}</div></td><td><button type="button" class="btn ${editable?'primary':'secondary'}" style="padding:5px 9px" data-billing-edit="${esc(r.id)}" ${editable?'':'disabled'}>${editable?'View / Edit':'View'}</button></td></tr>`;}).join(''):'<tr><td colspan="7">No matching Challan history found.</td></tr>';
   body.querySelectorAll('[data-billing-edit]').forEach(btn=>btn.addEventListener('click',()=>openBillingEditor(btn.dataset.billingEdit)));
+}
+function recalculateBillingEditRow(tr){
+  if(!tr||!billingCanEdit())return;
+  const read=f=>tr.querySelector(`[data-f="${f}"]`)?.value?.trim()||'';
+  const rate=read('rate')||'Normal';
+  const formIds=['challanCreateRate','challanCreateCountry','challanCreatePostal','challanCreateCity','challanCreateWeight','challanCreateVat','challanCreateAmount'];
+  const saved={};formIds.forEach(id=>{const el=document.getElementById(id);saved[id]=el?el.value:undefined;});
+  try{
+    const values={challanCreateRate:rate,challanCreateCountry:read('country'),challanCreatePostal:read('postal'),challanCreateCity:read('city'),challanCreateWeight:read('weight'),challanCreateVat:(read('vat').toLowerCase()==='yes'?'yes':'no')};
+    Object.entries(values).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.value=v;});
+    if(typeof fillWeightSelect==='function')fillWeightSelect('challanCreateWeight',rate,values.challanCreateWeight);
+    const amount=typeof calculateChallanAmount==='function'?calculateChallanAmount('challanCreate'):'';
+    const amountEl=tr.querySelector('[data-f="amount"]');
+    if(amountEl&&amount)amountEl.value=String(amount).replace(/[^0-9.]/g,'');
+    if(amountEl&&!amount&&rate!=='PP')amountEl.value='';
+    if(amountEl&&rate==='PP')amountEl.value='CREDIT';
+  }catch(e){console.warn('Billing edit auto-recalculation failed:',e);}
+  finally{const savedRate=saved.challanCreateRate;const savedWeight=saved.challanCreateWeight;if(savedRate!==undefined&&document.getElementById('challanCreateRate'))document.getElementById('challanCreateRate').value=savedRate;if(typeof fillWeightSelect==='function'&&savedRate!==undefined)fillWeightSelect('challanCreateWeight',savedRate,savedWeight);formIds.forEach(id=>{const el=document.getElementById(id);if(el&&saved[id]!==undefined&&id!=='challanCreateRate'&&id!=='challanCreateWeight')el.value=saved[id];});if(document.getElementById('challanCreateWeight')&&savedWeight!==undefined)document.getElementById('challanCreateWeight').value=savedWeight;}
 }
 function openBillingEditor(recordId){
   const r=billingHistoryCache.find(x=>String(x.id)===String(recordId));if(!r)return;
-  billingEditingRecord=r;const ch=JSON.parse(JSON.stringify(billingDataOf(r)));const items=window.__billingHelpers.normalizeChallanItems(ch);
+  billingEditingRecord=r;const ch=JSON.parse(JSON.stringify(billingDataOf(r)));const items=normalizeChallanItems(ch);
   const title=document.getElementById('billingEditorTitle');if(title)title.textContent=(billingCanEdit()?'Edit Challan ':'View Challan ')+(r.challan_no||ch.id||'');
   const body=document.getElementById('billingEditRows');if(!body)return;
   const disabled=billingCanEdit()?'':'disabled';
   body.innerHTML=items.map((it,i)=>`<tr data-billing-item="${i}"><td><input data-f="awb" value="${esc(it.awb||it.id||'')}" ${disabled} style="min-width:115px;width:100%"></td><td><input data-f="pcs" value="${esc(it.pcs??1)}" ${disabled} style="width:55px"></td><td><input data-f="rate" value="${esc(it.rate||'')}" ${disabled} style="width:75px"></td><td><input data-f="country" value="${esc(it.country||'')}" ${disabled} style="min-width:120px;width:100%"></td><td><input data-f="postal" value="${esc(it.postal||'')}" ${disabled} style="min-width:85px;width:100%"></td><td><input data-f="city" value="${esc(it.city||'')}" ${disabled} style="min-width:100px;width:100%"></td><td><input data-f="weight" value="${esc(it.weight||'')}" ${disabled} style="min-width:95px;width:100%"></td><td><select data-f="vat" ${disabled}><option value="yes" ${String(it.vat).toLowerCase()==='yes'?'selected':''}>Yes</option><option value="no" ${String(it.vat).toLowerCase()!=='yes'?'selected':''}>No</option></select></td><td><input data-f="amount" value="${esc(String(it.amount??'').replace(/[^0-9.]/g,''))}" ${disabled} style="min-width:110px;width:100%"></td><td><input data-f="remarks" value="${esc(it.remarks||'')}" ${disabled} style="min-width:100px;width:100%"></td></tr>`).join('');
+  body.querySelectorAll('tr[data-billing-item]').forEach(tr=>{
+    ['rate','weight','vat','country','postal','city'].forEach(f=>tr.querySelector(`[data-f="${f}"]`)?.addEventListener(f==='vat'||f==='rate'?'change':'input',()=>recalculateBillingEditRow(tr)));
+  });
   const save=document.getElementById('billingSaveEdit');if(save)save.style.display=billingCanEdit()?'inline-flex':'none';
-  const msg=document.getElementById('billingEditMsg');if(msg)msg.textContent=billingCanEdit()?'Make changes and save to update the shared Challan and email the updated PDF.':'You have view-only access.';
+  const msg=document.getElementById('billingEditMsg');if(msg)msg.textContent=billingCanEdit()?'Rate, weight, VAT and destination changes automatically recalculate the amount. Save updates the shared Challan and emails the updated PDF.':'You have view-only access.';
   document.getElementById('billingEditor').style.display='block';document.getElementById('billingEditor').scrollIntoView({behavior:'smooth',block:'start'});
 }
 async function saveBillingEdit(){
@@ -2258,15 +2290,17 @@ async function saveBillingEdit(){
   try{
     const old=billingDataOf(billingEditingRecord);const updated=JSON.parse(JSON.stringify(old));
     const trs=[...document.querySelectorAll('#billingEditRows tr[data-billing-item]')];
-    updated.items=trs.map(tr=>{const v={};tr.querySelectorAll('[data-f]').forEach(el=>v[el.dataset.f]=el.value.trim());v.id=v.awb;v.pcs=Math.max(1,parseInt(v.pcs,10)||1);v.amount=String(v.amount||'0').replace(/[^0-9.]/g,'');return v;});
+    updated.items=trs.map(tr=>{const v={};tr.querySelectorAll('[data-f]').forEach(el=>v[el.dataset.f]=el.value.trim());v.id=v.awb;v.pcs=Math.max(1,parseInt(v.pcs,10)||1);v.amount=String(v.rate||'').toUpperCase()==='PP'?'CREDIT':String(v.amount||'0').replace(/[^0-9.]/g,'');return v;});
     if(!updated.items.length)throw new Error('Challan must contain at least one AWB.');
-    updated.awb=updated.items.map(i=>i.awb||i.id).join(', ');updated.amount=billingAmount(updated).toFixed(2)+' BDT';updated.date=old.date||billingEditingRecord.created_at;updated.updatedAt=new Date().toISOString();updated.updatedByEmail=currentProfile?.email||currentUser?.email||'';updated.id=billingEditingRecord.challan_no||old.id;updated.email=billingEditingRecord.created_by_email||old.email||'';updated.customerName=billingEditingRecord.customer_name||old.customerName||updated.email;
+    updated.awb=updated.items.map(i=>i.awb||i.id).join(', ');updated.amount=billingAmount(updated).toFixed(2)+' BDT';
+    const first=updated.items[0]||{};updated.rate=first.rate||updated.rate;updated.country=first.country||updated.country;updated.postal=first.postal??updated.postal;updated.city=first.city??updated.city;updated.weight=first.weight||updated.weight;updated.vat=first.vat||updated.vat;updated.pcs=updated.items.reduce((sum,i)=>sum+(Number(i.pcs)||1),0);
+    updated.date=old.date||billingEditingRecord.created_at;updated.updatedAt=new Date().toISOString();updated.updatedByEmail=currentProfile?.email||currentUser?.email||'';updated.id=billingEditingRecord.challan_no||old.id;updated.email=billingEditingRecord.created_by_email||old.email||'';updated.customerName=billingEditingRecord.customer_name||old.customerName||updated.email;
     const payload={challan_data:updated,customer_name:String(updated.customerName||updated.email||''),updated_by_email:String(currentProfile?.email||currentUser?.email||''),updated_at:new Date().toISOString()};
     const {error}=await sb.from('billing_challans').update(payload).eq('id',billingEditingRecord.id);if(error)throw error;
-    const local=window.__billingHelpers.challanStore();const li=local.findIndex(x=>String(x.id)===String(updated.id));if(li>=0){local[li]=updated;window.__billingHelpers.saveChallanStore(local);}
-    const pdf=window.__billingHelpers.makeSimplePdfBase64({...updated,items:window.__billingHelpers.normalizeChallanItems(updated)});
+    const local=challanStore();const li=local.findIndex(x=>String(x.id)===String(updated.id));if(li>=0){local[li]=updated;saveChallanStore(local);}
+    const pdf=makeSimplePdfBase64({...updated,items:normalizeChallanItems(updated)});
     let mailText='Updated Challan saved. Email delivery could not be confirmed.';
-    try{const sent=await window.__billingHelpers.sendChallanEmails(updated,pdf);mailText=sent.ok?'Updated PDF emailed to Admin, original Challan owner, and the editor.':'Updated Challan saved, but no email recipient was configured.';}catch(mailErr){mailText='Updated Challan saved, but email failed: '+(mailErr?.message||'Unknown error');}
+    try{const sent=await sendChallanEmails(updated,pdf);mailText=sent.ok?'Updated PDF emailed to Admin, original Challan owner, and the editor.':'Updated Challan saved, but no email recipient was configured.';}catch(mailErr){mailText='Updated Challan saved, but email failed: '+(mailErr?.message||'Unknown error');}
     if(msg)msg.textContent='✓ '+mailText;
     await loadBillingHistory();
   }catch(err){if(msg)msg.textContent='Save failed: '+(err?.message||err);}
