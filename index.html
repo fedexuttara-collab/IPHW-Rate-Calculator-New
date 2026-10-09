@@ -1815,9 +1815,13 @@ function challanAwbAlreadyUsed(id){
       const totalWt=items.reduce((n,v)=>{const z=String(v.weight??'').replace(/[^0-9.]/g,'');return n+(parseFloat(z)||0);},0);
       const totalAmount=items.reduce((n,v)=>n+(parseFloat(String(v.amount??'').replace(/[^0-9.]/g,''))||0),0);
       const headers=['SL NO','AWB Number','PCS','RATE','DESTINATION COUNTRY','RECIPIENT POSTAL CODE','RECIPIENT CITY','WEIGHT / PACKAGE CODE','VAT','AMOUNT','USED ICPC','REMARKS'];
-      const rows=items.map((v,i)=>[
-        String(i+1),String(v.awb||v.id||'—'),String(v.pcs??1),String(v.rate||'—'),String(v.country||'—'),String(v.postal||'—'),String(v.city||'—'),String(v.weight||'—'),String(v.vat||'—'),String(v.amount||'—'),challanIcpcForItem(v),String(v.remarks||'')
-      ]);
+      const rows=items.map((v,i)=>{
+        const awb=String(v.awb||v.id||'—').replace(/\s+/g,'').replace(/[^0-9]/g,'');
+        const vatValue=String(v.vat||'NO').trim().toLowerCase()==='yes'?'Yes':'No';
+        return [
+          String(i+1),awb||'—',String(v.pcs??1),String(v.rate||'—'),String(v.country||'—'),String(v.postal||'—'),String(v.city||'—'),String(v.weight||'—'),vatValue,String(v.amount||'—'),challanIcpcForItem(v),String(v.remarks||'')
+        ];
+      });
       const pageW=595,pageH=842,left=20,right=20,tableW=555;
       const cols=[22,58,24,30,52,55,48,65,27,55,70,49];
       const headerH=48,rowH=32,topY=655,rowsPerPage=18;
@@ -1859,7 +1863,7 @@ function challanAwbAlreadyUsed(id){
         for(let i=start;i<end;i++){
           if((i-start)%2===1)c+='0.97 0.97 0.97 rg\n'+rect(left,y-rowH,tableW,rowH,true)+'0.12 0.12 0.12 rg\n';
           c+=rect(left,y-rowH,tableW,rowH,false);xx=left;
-          for(let j=0;j<cols.length;j++){const valueSize=(j===8?13.5:6.8); c+=cellText(rows[i][j],xx,y-(j===8?15:19),cols[j],valueSize,true);c+=line(xx,y,xx,y-rowH);xx+=cols[j];}
+          for(let j=0;j<cols.length;j++){const valueSize=6.8; c+=cellText(rows[i][j],xx,y-19,cols[j],valueSize,true);c+=line(xx,y,xx,y-rowH);xx+=cols[j];}
           c+=line(left+tableW,y,left+tableW,y-rowH);y-=rowH;
         }
         c+=line(left,y,left+tableW,y);
