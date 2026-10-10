@@ -354,6 +354,7 @@ body.auth-locked > *:not(.auth-modal):not(.forgot-modal):not(.reset-modal):not(.
     <button type="button" data-admin-nav="settings"><span class="nav-icon">⚙</span><span>Settings</span></button>
     <button type="button" data-admin-nav="challan"><span class="nav-icon">▤</span><span>Challan</span></button>
     <button type="button" data-admin-nav="billing" id="billingNav" style="display:none"><span class="nav-icon">▣</span><span>Billing &amp; Accounts</span></button>
+    <button type="button" data-admin-nav="moneyreceipt" id="moneyReceiptNav"><span class="nav-icon">৳</span><span>Money Receipt</span></button>
   </nav>
   <button type="button" class="admin-logout" id="sidebarLogout"><span>⇥</span> <span>Logout</span></button>
 </aside>
@@ -619,6 +620,23 @@ body.auth-locked > *:not(.auth-modal):not(.forgot-modal):not(.reset-modal):not(.
     <div class="actions" style="margin-top:12px"><button type="button" class="btn primary" id="searchChallan">Search / Challan Report</button></div>
     <div id="challanSearchMsg" style="margin-top:8px;font-size:12px;color:#64748b"></div>
   </div>
+</section>
+<section class="card" id="moneyReceiptPanel" style="display:none;margin-top:18px">
+  <h2 style="margin:0 0 6px">Money Receipt</h2>
+  <p style="margin:0 0 14px;color:#64748b;font-size:13px">Select an AWB from a saved Challan. Each AWB can receive only one Money Receipt.</p>
+  <div class="formgrid" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px">
+    <div class="field"><label>SELECT CHALLAN</label><select id="mrChallanSelect"><option value="">Loading saved Challans…</option></select></div>
+    <div class="field"><label>SELECT AWB NUMBER</label><select id="mrAwbSelect" disabled><option value="">Select Challan first</option></select></div>
+    <div class="field"><label>MR MODE</label><select id="mrMode"><option value="PP CASH">PP CASH</option><option value="IPHW CASH">IPHW CASH</option></select></div>
+    <div class="field"><label>AMOUNT (BDT)</label><input id="mrAmount" readonly placeholder="From selected Challan"></div>
+  </div>
+  <h3 style="margin:18px 0 8px">Selected Challan — AWB List</h3>
+  <div style="font-size:12px;color:#64748b;margin-bottom:8px">Edit a row and press Save to use the corrected values for this Money Receipt. The original Challan will not be changed.</div>
+  <div style="overflow:auto"><table style="width:100%;border-collapse:collapse;min-width:1150px"><thead><tr><th>AWB Number</th><th>PCS</th><th>RATE</th><th>DESTINATION COUNTRY</th><th>POSTAL CODE</th><th>CITY</th><th>WEIGHT / PACKAGE CODE</th><th>VAT</th><th>AMOUNT (BDT)</th><th>REMARKS</th><th>SAVE / SELECT AWB</th></tr></thead><tbody id="mrAwbRows"><tr><td colspan="11">Select a Challan to view AWBs.</td></tr></tbody></table></div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"><button class="btn primary" id="mrIssueBtn" type="button">Issue Receipt for Selected AWBs (PDF &amp; Email)</button><button class="btn secondary" id="mrRefreshBtn" type="button">Refresh Challans / AWBs</button></div>
+  <div id="mrStatus" style="margin:12px 0;color:#334155;font-size:13px"></div>
+  <h3 style="margin:18px 0 8px">Issued Money Receipts</h3>
+  <div style="overflow:auto"><table style="width:100%;border-collapse:collapse;min-width:650px"><thead><tr><th>Receipt No.</th><th>AWB</th><th>Challan</th><th>Mode</th><th>Amount (BDT)</th><th>Issued By</th><th>Date</th><th>History / PDF</th></tr></thead><tbody id="mrRows"><tr><td colspan="8">Loading…</td></tr></tbody></table></div>
 </section>
 <section class="card" id="billingPanel" style="display:none;margin-top:18px">
   <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">💼 Billing &amp; Accounts</h2><button type="button" class="btn secondary" id="billingRefresh" onclick="loadBillingHistory()">↻ Refresh History</button></div>
@@ -1200,6 +1218,8 @@ const SUPABASE_ANON_KEY = 'sb_publishable_JyK4HRE-g9K8RIw4sJtXWA_dHtdNasB';
 let sb = null;
 let currentUser = null;
 let currentProfile = null;
+try{Object.defineProperty(window,'sb',{configurable:true,get:()=>sb,set:v=>{sb=v;}});Object.defineProperty(window,'currentUser',{configurable:true,get:()=>currentUser,set:v=>{currentUser=v;}});}catch(e){window.sb=sb;window.currentUser=currentUser;}
+try{Object.defineProperty(window,'currentProfile',{configurable:true,get:()=>currentProfile,set:v=>{currentProfile=v;}});}catch(e){window.currentProfile=currentProfile;}
 let lastCalculation = null;
 
 window.openAuthModal=function(){
@@ -1603,6 +1623,13 @@ document.addEventListener('DOMContentLoaded',()=>{
       }catch(e){return '';}
       finally{restoreMain(snap);calculate();}
     }
+    // Expose the same calculator used by Challan entry so Billing & Accounts
+    // can recalculate edited rows outside this initializer's function scope.
+    window.calculateChallanAmount = calculateChallanAmount;
+    window.challanRateOptions = rateOptions;
+    window.challanWeightOptions = weightOptions;
+    window.challanCountryList = countryList;
+    window.challanCityList = cityList;
     function updateChallanAmount(prefix){
       const amount=calculateChallanAmount(prefix);
       const out=$c(prefix+'Amount'); if(out)out.value=amount||'';
@@ -1820,10 +1847,6 @@ function challanAwbAlreadyUsed(id){
     }
     // Billing & Accounts runs outside this initializer; expose the shared helper explicitly.
     window.normalizeChallanItems = normalizeChallanItems;
-    window.billingRateOptions = rateOptions;
-    window.billingWeightOptions = weightOptions;
-    window.billingCountryList = countryList;
-    window.billingCityList = cityList;
     function challanIcpcForItem(item){
       const country=canonicalCountry(item?.country||'');
       const zone=String(DATA.zones?.[country]||'').match(/[A-L]/)?.[0]||'';
@@ -1880,7 +1903,7 @@ function challanAwbAlreadyUsed(id){
       const contents=[];
       for(let pno=0;pno<pageCount;pno++){
         let c='0.12 0.12 0.12 rg\n0.12 0.12 0.12 RG\n';
-        c+=text(left,810,'CHALLAN DETAILS',18,'F2');
+        c+=text(left,810,String(x.documentTitle||'CHALLAN DETAILS'),18,'F2');
         c+=text(left,786,'Name: '+customerName,10.5,'F2');
         c+=text(left,772,'Address: '+(profile.address||'—'),9.5,'F2');
         c+=text(300,772,'Contact No: '+(profile.contact||'—'),9.5,'F2');
@@ -2026,6 +2049,10 @@ function challanAwbAlreadyUsed(id){
 
       return {ok:true,recipients:[...recipients],response:data};
     }
+    // Expose the existing PDF/email helpers for the separate Money Receipt module.
+    window.makeSimplePdfBase64 = makeSimplePdfBase64;
+    window.sendChallanEmails = sendChallanEmails;
+    window.getCurrentUserProfileDetails = getCurrentUserProfileDetails;
     $c('submitChallan')?.addEventListener('click',async()=>{
       if(!currentProfile?.is_admin && currentProfile?.can_challan===false){$c('challanCreateMsg').textContent='Challan access is disabled for this user.';return;}
       const id='CH-'+Date.now(); const current={awb:$c('challanAwbSelect').value,rate:$c('challanCreateRate').value,country:$c('challanCreateCountry').value.trim(),postal:$c('challanCreatePostal').value.trim(),city:$c('challanCreateCity').value.trim(),weight:$c('challanCreateWeight').value,vat:$c('challanCreateVat').value,amount:$c('challanCreateAmount').value||''};
@@ -2196,18 +2223,6 @@ $c('challanCreateVisualBtn')?.addEventListener('click',async()=>{
 
     initChallanFields();refreshChallanAwbSelect();renderChallanReport();
     renderChallanCreateVisual();
-    // Expose the existing Challan helpers for the Billing & Accounts module outside this IIFE.
-    window.challanStore = challanStore;
-    window.saveChallanStore = saveChallanStore;
-    window.fillWeightSelect = fillWeightSelect;
-    window.calculateChallanAmount = calculateChallanAmount;
-    window.makeSimplePdfBase64 = makeSimplePdfBase64;
-    window.sendChallanEmails = sendChallanEmails;
-    window.normalizeChallanItems = normalizeChallanItems;
-    window.billingRateOptions = rateOptions;
-    window.billingWeightOptions = weightOptions;
-    window.billingCountryList = countryList;
-    window.billingCityList = cityList;
   })();
   document.querySelectorAll('[data-admin-nav]').forEach(b=>b.addEventListener('click',()=>nav(b.dataset.adminNav)));
   document.querySelector('#sidebarLogout')?.addEventListener('click',()=>document.querySelector('#logoutBtn')?.click());
@@ -2277,14 +2292,14 @@ function recalculateBillingEditRow(tr){
   try{
     const values={challanCreateRate:rate,challanCreateCountry:read('country'),challanCreatePostal:read('postal'),challanCreateCity:read('city'),challanCreateWeight:read('weight'),challanCreateVat:(read('vat').toLowerCase()==='yes'?'yes':'no')};
     Object.entries(values).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.value=v;});
-    if(typeof window.fillWeightSelect==='function')window.fillWeightSelect('challanCreateWeight',rate,values.challanCreateWeight);
+    if(typeof fillWeightSelect==='function')fillWeightSelect('challanCreateWeight',rate,values.challanCreateWeight);
     const amount=typeof window.calculateChallanAmount==='function'?window.calculateChallanAmount('challanCreate'):'';
     const amountEl=tr.querySelector('[data-f="amount"]');
     if(amountEl&&amount)amountEl.value=String(amount).replace(/[^0-9.]/g,'');
     if(amountEl&&!amount&&rate!=='PP')amountEl.value='';
     if(amountEl&&rate==='PP')amountEl.value='CREDIT';
   }catch(e){console.warn('Billing edit auto-recalculation failed:',e);}
-  finally{const savedRate=saved.challanCreateRate;const savedWeight=saved.challanCreateWeight;if(savedRate!==undefined&&document.getElementById('challanCreateRate'))document.getElementById('challanCreateRate').value=savedRate;if(typeof window.fillWeightSelect==='function'&&savedRate!==undefined)window.fillWeightSelect('challanCreateWeight',savedRate,savedWeight);formIds.forEach(id=>{const el=document.getElementById(id);if(el&&saved[id]!==undefined&&id!=='challanCreateRate'&&id!=='challanCreateWeight')el.value=saved[id];});if(document.getElementById('challanCreateWeight')&&savedWeight!==undefined)document.getElementById('challanCreateWeight').value=savedWeight;}
+  finally{const savedRate=saved.challanCreateRate;const savedWeight=saved.challanCreateWeight;if(savedRate!==undefined&&document.getElementById('challanCreateRate'))document.getElementById('challanCreateRate').value=savedRate;if(typeof fillWeightSelect==='function'&&savedRate!==undefined)fillWeightSelect('challanCreateWeight',savedRate,savedWeight);formIds.forEach(id=>{const el=document.getElementById(id);if(el&&saved[id]!==undefined&&id!=='challanCreateRate'&&id!=='challanCreateWeight')el.value=saved[id];});if(document.getElementById('challanCreateWeight')&&savedWeight!==undefined)document.getElementById('challanCreateWeight').value=savedWeight;}
 }
 function openBillingEditor(recordId){
   const r=billingHistoryCache.find(x=>String(x.id)===String(recordId));if(!r)return;
@@ -2292,17 +2307,34 @@ function openBillingEditor(recordId){
   const title=document.getElementById('billingEditorTitle');if(title)title.textContent=(billingCanEdit()?'Edit Challan ':'View Challan ')+(r.challan_no||ch.id||'');
   const body=document.getElementById('billingEditRows');if(!body)return;
   const disabled=billingCanEdit()?'':'disabled';
-  body.innerHTML=items.map((it,i)=>{const ro=typeof window.billingRateOptions==='function'?window.billingRateOptions():[['A','Rate A'],['B','Rate B'],['Normal','Normal Rate'],['PP','PP']];const rateVal=String(it.rate||'Normal');return `<tr data-billing-item="${i}"><td><input data-f="awb" value="${esc(it.awb||it.id||'')}" ${disabled} style="min-width:115px;width:100%"></td><td><input data-f="pcs" type="number" min="1" value="${esc(it.pcs??1)}" ${disabled} style="width:55px"></td><td><select data-f="rate" ${disabled} style="min-width:95px;width:100%">${ro.map(o=>`<option value="${esc(o[0])}" ${String(o[0]).toLowerCase()===rateVal.toLowerCase()?'selected':''}>${esc(o[1])}</option>`).join('')}</select></td><td><div style="position:relative;min-width:145px"><input data-f="country" value="${esc(it.country||'')}" autocomplete="off" ${disabled} style="min-width:135px;width:100%"><div data-suggest="country" class="suggest"></div></div></td><td><input data-f="postal" value="${esc(it.postal||'')}" ${disabled} style="min-width:85px;width:100%"></td><td><div style="position:relative;min-width:120px"><input data-f="city" value="${esc(it.city||'')}" ${disabled} style="min-width:110px;width:100%"></div></td><td><input data-f="weight" value="${esc(it.weight||'')}" ${disabled} style="min-width:110px;width:100%"></td><td><select data-f="vat" ${disabled}><option value="yes" ${String(it.vat).toLowerCase()==='yes'?'selected':''}>Yes</option><option value="no" ${String(it.vat).toLowerCase()!=='yes'?'selected':''}>No</option></select></td><td><input data-f="amount" value="${esc(String(it.amount??'').replace(/[^0-9.]/g,''))}" ${disabled} style="min-width:110px;width:100%"></td><td><input data-f="remarks" value="${esc(it.remarks||'')}" ${disabled} style="min-width:100px;width:100%"></td></tr>`;}).join('');
+  const rates=typeof window.challanRateOptions==='function'?window.challanRateOptions():[['A','Rate A'],['B','Rate B'],['Normal','Normal Rate'],['PP','PP']];
+  const rateOptionsHtml=(selected)=>rates.map(([v,t])=>`<option value="${esc(v)}" ${String(selected||'Normal')===v?'selected':''}>${esc(t)}</option>`).join('');
+  body.innerHTML=items.map((it,i)=>{
+    const rate=String(it.rate||'Normal');
+    const countryId=`billingCountryList${i}`,cityId=`billingCityList${i}`,weightId=`billingWeightList${i}`;
+    const countryOptions=(typeof window.challanCountryList==='function'?window.challanCountryList(''):[]).map(c=>`<option value="${esc(c)}"></option>`).join('');
+    const cityOptions=(typeof window.challanCityList==='function'?window.challanCityList(it.country||'', ''):[]).map(c=>`<option value="${esc(c)}"></option>`).join('');
+    const weights=rate==='Normal'&&typeof window.challanWeightOptions==='function'?window.challanWeightOptions('Normal'):[];
+    const weightOptions=weights.map(w=>`<option value="${esc(w)}"></option>`).join('');
+    return `<tr data-billing-item="${i}"><td><input data-f="awb" value="${esc(it.awb||it.id||'')}" ${disabled} style="min-width:115px;width:100%"></td><td><input data-f="pcs" type="number" min="1" value="${esc(it.pcs??1)}" ${disabled} style="width:65px"></td><td><select data-f="rate" ${disabled} style="min-width:105px;width:100%">${rateOptionsHtml(rate)}</select></td><td><input data-f="country" list="${countryId}" value="${esc(it.country||'')}" ${disabled} style="min-width:140px;width:100%"><datalist id="${countryId}">${countryOptions}</datalist></td><td><input data-f="postal" value="${esc(it.postal||'')}" ${disabled} style="min-width:90px;width:100%"></td><td><input data-f="city" list="${cityId}" value="${esc(it.city||'')}" ${disabled} style="min-width:110px;width:100%"><datalist id="${cityId}">${cityOptions}</datalist></td><td><input data-f="weight" list="${weightId}" value="${esc(it.weight||'')}" ${disabled} style="min-width:115px;width:100%"><datalist id="${weightId}">${weightOptions}</datalist></td><td><select data-f="vat" ${disabled}><option value="yes" ${String(it.vat).toLowerCase()==='yes'||String(it.vat).toLowerCase()==='true'?'selected':''}>Yes</option><option value="no" ${!(String(it.vat).toLowerCase()==='yes'||String(it.vat).toLowerCase()==='true')?'selected':''}>No</option></select></td><td><input data-f="amount" value="${esc(String(it.amount??'').replace(/[^0-9.]/g,''))}" ${disabled} style="min-width:120px;width:100%" placeholder="Auto calculated" ${rate==='PP'?'':'readonly'}></td><td><input data-f="remarks" value="${esc(it.remarks||'')}" ${disabled} style="min-width:110px;width:100%"></td></tr>`;
+  }).join('');
   body.querySelectorAll('tr[data-billing-item]').forEach(tr=>{
-    const rate=tr.querySelector('[data-f="rate"]');
-    const refreshWeights=()=>{if(String(rate?.value)==='PP'){const a=tr.querySelector('[data-f="amount"]');if(a)a.value='CREDIT';}};
-    refreshWeights();
-    ['rate','weight','vat','country','postal','city'].forEach(f=>tr.querySelector(`[data-f="${f}"]`)?.addEventListener(f==='vat'||f==='rate'?'change':'input',()=>{if(f==='rate')refreshWeights();recalculateBillingEditRow(tr);}));
-    const input=tr.querySelector('[data-f="country"]'),box=tr.querySelector('[data-suggest="country"]');
-    if(input&&box){const placeBox=()=>{const r=input.getBoundingClientRect();box.style.position='fixed';box.style.left=r.left+'px';box.style.top=r.bottom+'px';box.style.width=r.width+'px';box.style.right='auto';box.style.zIndex='2147483000';box.style.maxHeight='220px';box.style.overflowY='auto';};const draw=()=>{const vals=typeof window.billingCountryList==='function'?window.billingCountryList(input.value):[];box.innerHTML=vals.slice(0,40).map(v=>`<button type="button" data-v="${esc(v)}">${esc(v)}</button>`).join('');placeBox();box.style.display=vals.length?'block':'none';box.querySelectorAll('button').forEach(b=>b.addEventListener('mousedown',e=>{e.preventDefault();input.value=b.dataset.v;box.style.display='none';recalculateBillingEditRow(tr);}));};input.addEventListener('input',draw);input.addEventListener('focus',draw);input.addEventListener('scroll',placeBox,true);window.addEventListener('resize',placeBox);window.addEventListener('scroll',placeBox,true);input.addEventListener('blur',()=>setTimeout(()=>{box.style.display='none';},180));}
+    const rateEl=tr.querySelector('[data-f="rate"]'),weightEl=tr.querySelector('[data-f="weight"]'),countryEl=tr.querySelector('[data-f="country"]'),cityEl=tr.querySelector('[data-f="city"]'),vatEl=tr.querySelector('[data-f="vat"]'),amountEl=tr.querySelector('[data-f="amount"]');
+    const refreshSuggestions=()=>{
+      const idx=tr.dataset.billingItem;
+      const cityDl=tr.querySelector(`#billingCityList${idx}`),weightDl=tr.querySelector(`#billingWeightList${idx}`);
+      if(cityDl&&typeof window.challanCityList==='function')cityDl.innerHTML=window.challanCityList(countryEl.value,cityEl.value).map(v=>`<option value="${esc(v)}"></option>`).join('');
+      if(weightDl&&typeof window.challanWeightOptions==='function')weightDl.innerHTML=(rateEl.value==='Normal'?window.challanWeightOptions('Normal'):[]).map(v=>`<option value="${esc(v)}"></option>`).join('');
+      if(rateEl.value==='PP'){amountEl.value='CREDIT';amountEl.removeAttribute('readonly');}
+      else {amountEl.setAttribute('readonly','readonly');}
+    };
+    const recalc=()=>{refreshSuggestions();recalculateBillingEditRow(tr);};
+    ['rate','weight','vat','country','postal','city'].forEach(f=>tr.querySelector(`[data-f="${f}"]`)?.addEventListener(f==='vat'||f==='rate'?'change':'input',recalc));
+    refreshSuggestions();
+    if(rateEl.value!=='PP')recalculateBillingEditRow(tr);else amountEl.value='CREDIT';
   });
   const save=document.getElementById('billingSaveEdit');if(save)save.style.display=billingCanEdit()?'inline-flex':'none';
-  const msg=document.getElementById('billingEditMsg');if(msg)msg.textContent=billingCanEdit()?'Rate, weight, VAT and destination changes automatically recalculate the amount. Save updates the shared Challan and emails the updated PDF.':'You have view-only access.';
+  const msg=document.getElementById('billingEditMsg');if(msg)msg.textContent=billingCanEdit()?'Rate, weight/package, VAT and destination changes automatically recalculate Amount (BDT). Rate A, Rate B, Normal Rate and PP are available according to your access.':'You have view-only access.';
   document.getElementById('billingEditor').style.display='block';document.getElementById('billingEditor').scrollIntoView({behavior:'smooth',block:'start'});
 }
 async function saveBillingEdit(){
@@ -2320,10 +2352,10 @@ async function saveBillingEdit(){
     updated.date=old.date||billingEditingRecord.created_at;updated.updatedAt=new Date().toISOString();updated.updatedByEmail=currentProfile?.email||currentUser?.email||'';updated.id=billingEditingRecord.challan_no||old.id;updated.email=billingEditingRecord.created_by_email||old.email||'';updated.customerName=billingEditingRecord.customer_name||old.customerName||updated.email;
     const payload={challan_data:updated,customer_name:String(updated.customerName||updated.email||''),updated_by_email:String(currentProfile?.email||currentUser?.email||''),updated_at:new Date().toISOString()};
     const {error}=await sb.from('billing_challans').update(payload).eq('id',billingEditingRecord.id);if(error)throw error;
-    const local=typeof window.challanStore==='function'?window.challanStore():[];const li=local.findIndex(x=>String(x.id)===String(updated.id));if(li>=0){local[li]=updated;if(typeof window.saveChallanStore==='function')window.saveChallanStore(local);}
-    const pdf=typeof window.makeSimplePdfBase64==='function'?window.makeSimplePdfBase64({...updated,items:window.normalizeChallanItems(updated)}):'';
+    const local=challanStore();const li=local.findIndex(x=>String(x.id)===String(updated.id));if(li>=0){local[li]=updated;saveChallanStore(local);}
+    const pdf=makeSimplePdfBase64({...updated,items:window.normalizeChallanItems(updated)});
     let mailText='Updated Challan saved. Email delivery could not be confirmed.';
-    try{const sent=typeof window.sendChallanEmails==='function'?await window.sendChallanEmails(updated,pdf):{ok:false};mailText=sent.ok?'Updated PDF emailed to Admin, original Challan owner, and the editor.':'Updated Challan saved, but no email recipient was configured.';}catch(mailErr){mailText='Updated Challan saved, but email failed: '+(mailErr?.message||'Unknown error');}
+    try{const sent=await sendChallanEmails(updated,pdf);mailText=sent.ok?'Updated PDF emailed to Admin, original Challan owner, and the editor.':'Updated Challan saved, but no email recipient was configured.';}catch(mailErr){mailText='Updated Challan saved, but email failed: '+(mailErr?.message||'Unknown error');}
     if(msg)msg.textContent='✓ '+mailText;
     await loadBillingHistory();
   }catch(err){if(msg)msg.textContent='Save failed: '+(err?.message||err);}
@@ -2336,5 +2368,98 @@ document.getElementById('billingChallanSearch')?.addEventListener('input',render
 document.getElementById('billingCancelEdit')?.addEventListener('click',()=>{document.getElementById('billingEditor').style.display='none';billingEditingRecord=null;});
 document.getElementById('billingSaveEdit')?.addEventListener('click',saveBillingEdit);
 
+</script>
+
+<script>
+/* Money Receipt: Challan-first selector, AWB table with receipt-only edit/save, and persistent PDF history. */
+(function(){
+ const $mr=id=>document.getElementById(id); let mrChoices=[],mrAllChoices=[],mrCurrentChallan='';
+ const escMR=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ function amountMR(v){const n=parseFloat(String(v??'').replace(/[^0-9.]/g,''));return Number.isFinite(n)?n:0;}
+ function challanOf(x){return String(x.challan||'');}
+ function renderAwbList(){
+   const body=$mr('mrAwbRows'),challan=$mr('mrChallanSelect')?.value||'';
+   if(!challan){body.innerHTML='<tr><td colspan="11">Select a Challan to view AWBs.</td></tr>';return;}
+   const rows=mrAllChoices.filter(x=>challanOf(x)===challan);
+   body.innerHTML=rows.length?rows.map((x)=>{const idx=mrChoices.findIndex(c=>c.key===x.key);const isUsed=x.receiptNo;const disabled=isUsed?'disabled':'';return `<tr data-mr-key="${escMR(x.key)}"><td>${escMR(x.awb)}</td><td><input data-f="pcs" value="${escMR(x.item.pcs||1)}" style="width:55px" ${disabled}></td><td><input data-f="rate" value="${escMR(x.item.rate||'')}" style="width:90px" ${disabled}></td><td><input data-f="country" value="${escMR(x.item.country||'')}" style="width:120px" ${disabled}></td><td><input data-f="postal" value="${escMR(x.item.postal||'')}" style="width:95px" ${disabled}></td><td><input data-f="city" value="${escMR(x.item.city||'')}" style="width:100px" ${disabled}></td><td><input data-f="weight" value="${escMR(x.item.weight||'')}" style="width:110px" ${disabled}></td><td><select data-f="vat" ${disabled}><option value="yes" ${String(x.item.vat).toLowerCase()==='yes'?'selected':''}>Yes</option><option value="no" ${String(x.item.vat).toLowerCase()!=='yes'?'selected':''}>No</option></select></td><td><input data-f="amount" value="${amountMR(x.item.amount).toFixed(2)}" style="width:110px" ${disabled}></td><td><input data-f="remarks" value="${escMR(x.item.remarks||'')}" style="width:130px" ${disabled}></td><td>${isUsed?'<span>Issued</span>':'<button type="button" class="btn secondary mr-row-save" data-mr-key="'+escMR(x.key)+'">Save</button> <label style="display:inline-flex;align-items:center;gap:4px;white-space:nowrap"><input type="checkbox" class="mr-row-check" data-mr-key="'+escMR(x.key)+'" aria-label="Select AWB '+escMR(x.awb)+'"> Select AWB</label>'}</td></tr>`;}).join(''):'<tr><td colspan="11">No AWBs found for this Challan.</td></tr>';
+ }
+ async function refreshMR(){
+   const sel=$mr('mrAwbSelect'),challanSel=$mr('mrChallanSelect'),status=$mr('mrStatus');if(!sel)return;
+   if(!window.sb){sel.innerHTML='<option value="">Database unavailable</option>';return;}
+   status.textContent='Loading saved Challans and AWBs…';
+   try{
+     const {data,error}=await window.sb.from('billing_challans').select('id,challan_no,created_by_email,customer_name,challan_data,created_at').order('created_at',{ascending:false}).limit(2000);if(error)throw error;
+     const choices=[];(data||[]).forEach(r=>{const ch=typeof billingDataOf==='function'?billingDataOf(r):(r.challan_data||{});const items=window.normalizeChallanItems?window.normalizeChallanItems(ch):(ch.items||[]);items.forEach((it,j)=>{const awb=String(it.awb||it.id||'').trim();if(!awb)return;choices.push({key:JSON.stringify({id:r.id,awb}),awb,challan:r.challan_no||ch.id||'',ch, item:{...it},owner:r.created_by_email||ch.email||'',customer:r.customer_name||ch.customerName||'',receiptNo:null});});});
+     const usedResult=await window.sb.from('money_receipts').select('awb_number,receipt_no');if(usedResult.error)throw new Error('Money Receipt table setup required: '+usedResult.error.message);
+     const used=new Map();(usedResult.data||[]).forEach(x=>String(x.awb_number||'').split(',').map(a=>a.trim()).filter(Boolean).forEach(a=>used.set(a,x.receipt_no)));mrAllChoices=choices.map(x=>({...x,receiptNo:used.get(x.awb)||null}));mrChoices=mrAllChoices.filter(x=>!x.receiptNo);
+     const current=challanSel.value;const challans=[...new Set(mrAllChoices.map(challanOf).filter(Boolean))];challanSel.innerHTML='<option value="">Select Challan</option>'+challans.map(c=>`<option value="${escMR(c)}">${escMR(c)}</option>`).join('');if(challans.includes(current))challanSel.value=current;else challanSel.value='';
+     sel.disabled=!challanSel.value;fillAwbSelect();renderAwbList();
+     const {data:receipts,error:re}=await window.sb.from('money_receipts').select('receipt_no,awb_number,challan_no,mode,amount_bdt,created_by_email,created_at,receipt_data').order('created_at',{ascending:false}).limit(500);if(re)throw re;
+     $mr('mrRows').innerHTML?(null):null;
+     $mr('mrRows').innerHTML=(receipts||[]).length?(receipts||[]).map((r,i)=>`<tr><td>${escMR(r.receipt_no)}</td><td>${escMR(r.awb_number)}</td><td>${escMR(r.challan_no)}</td><td>${escMR(r.mode)}</td><td>${amountMR(r.amount_bdt).toLocaleString('en-BD',{minimumFractionDigits:2,maximumFractionDigits:2})}</td><td>${escMR(r.created_by_email)}</td><td>${r.created_at?new Date(r.created_at).toLocaleString():'—'}</td><td><button type="button" class="btn secondary mr-pdf-btn" data-mr-index="${i}">View / Download PDF</button></td></tr>`).join(''):'<tr><td colspan="8">No Money Receipts issued yet.</td></tr>';window.__mrHistoryRows=receipts||[];
+     status.textContent=`${challans.length} Challan(s) loaded. ${mrChoices.length} AWB(s) available; issued AWBs are marked in the list.`;
+   }catch(e){status.textContent='Money Receipt load failed: '+(e.message||e);$mr('mrRows').innerHTML='<tr><td colspan="8">'+escMR(e.message||e)+'</td></tr>';sel.innerHTML='<option value="">Could not load AWBs</option>';}
+ }
+ function fillAwbSelect(){const sel=$mr('mrAwbSelect'),c=$mr('mrChallanSelect')?.value||'';const rows=mrChoices.filter(x=>challanOf(x)===c);sel.innerHTML='<option value="">Select AWB Number</option>'+rows.map(x=>`<option value="${escMR(x.key)}">${escMR(x.awb)} — ${amountMR(x.item.amount).toLocaleString('en-BD',{minimumFractionDigits:2,maximumFractionDigits:2})} BDT</option>`).join('');sel.disabled=!c;}
+ function selectedMR(){const key=$mr('mrAwbSelect')?.value;return key?mrChoices.find(x=>x.key===key)||null:null;}
+ $mr('mrChallanSelect')?.addEventListener('change',()=>{fillAwbSelect();renderAwbList();$mr('mrAmount').value='';});
+ $mr('mrAwbRows')?.addEventListener('click',ev=>{const save=ev.target.closest('.mr-row-save');if(!save)return;const key=save.dataset.mrKey;const x=mrAllChoices.find(c=>c.key===key);if(!x)return;const tr=save.closest('tr');tr.querySelectorAll('[data-f]').forEach(inp=>{const f=inp.dataset.f;let v=inp.value;if(f==='pcs')v=Math.max(1,parseInt(v,10)||1);if(f==='amount')v=amountMR(v).toFixed(2);x.item[f]=v;});const av=mrChoices.find(c=>c.key===key);if(av)av.item={...x.item};save.textContent='Saved';$mr('mrStatus').textContent='Row values saved for this Money Receipt session only; original Challan is unchanged.';fillAwbSelect();});
+ $mr('mrAwbRows')?.addEventListener('change',ev=>{const cb=ev.target.closest('.mr-row-check');if(!cb)return;const checked=Array.from($mr('mrAwbRows').querySelectorAll('.mr-row-check:checked'));$mr('mrStatus').textContent=checked.length+' AWB(s) selected for Money Receipt.';});
+ $mr('mrRows')?.addEventListener('click',async ev=>{const btn=ev.target.closest('.mr-pdf-btn');if(!btn)return;const r=(window.__mrHistoryRows||[])[Number(btn.dataset.mrIndex)];if(!r)return;try{if(typeof window.makeSimplePdfBase64!=='function')throw new Error('PDF generator unavailable. Please refresh the page.');const d=r.receipt_data||{};const savedItems=Array.isArray(d.items)?d.items:null;const items=savedItems?savedItems.map(it=>({awb:it.awb,id:it.awb,pcs:it.pcs||1,rate:r.mode||'—',country:it.country||'',postal:it.postal||'',city:it.city||'',weight:it.weight||'',vat:it.vat||'no',amount:amountMR(it.amount).toFixed(2),remarks:(it.remarks||'')+' MR MODE: '+(r.mode||'')})):[{awb:r.awb_number,id:r.awb_number,pcs:d.pcs||1,rate:r.mode||'—',country:d.country||'',postal:d.postal||'',city:d.city||'',weight:d.weight||'',vat:d.vat||'no',amount:amountMR(r.amount_bdt).toFixed(2),remarks:'MR MODE: '+(r.mode||'')}];const doc={id:r.receipt_no,documentTitle:'MONEY RECEIPT',date:r.created_at,email:d.challan_owner_email||r.created_by_email||'',customerName:d.customer_name||d.challan_owner_email||r.created_by_email||'',profile:typeof window.getCurrentUserProfileDetails==='function'?window.getCurrentUserProfileDetails():{},fx:0,fuel:0,items};const b64=window.makeSimplePdfBase64(doc);if(!b64)throw new Error('Could not generate PDF for this receipt.');const a=document.createElement('a');a.href='data:application/pdf;base64,'+b64;a.download=(String(r.receipt_no||'Money-Receipt').replace(/[^a-zA-Z0-9_-]/g,'_'))+'.pdf';document.body.appendChild(a);a.click();a.remove();}catch(e){$mr('mrStatus').textContent='PDF failed: '+(e.message||e);}});
+ $mr('mrAwbSelect')?.addEventListener('change',()=>{const x=selectedMR();$mr('mrAmount').value=x?amountMR(x.item.amount).toFixed(2):'';});$mr('mrRefreshBtn')?.addEventListener('click',refreshMR);
+ $mr('mrIssueBtn')?.addEventListener('click',async()=>{const status=$mr('mrStatus'),btn=$mr('mrIssueBtn');const keys=Array.from($mr('mrAwbRows').querySelectorAll('.mr-row-check:checked')).map(cb=>cb.dataset.mrKey);const selected=keys.map(k=>mrChoices.find(x=>x.key===k)).filter(Boolean);if(!selected.length){status.textContent='Please tick one or more available AWBs in the list.';return;}if(!window.currentUser||!window.sb){status.textContent='Please login first.';return;}const mode=$mr('mrMode').value,userEmail=window.currentProfile?.email||window.currentUser.email||'';btn.disabled=true;status.textContent='Creating one Money Receipt for '+selected.length+' selected AWB(s)…';try{const receiptNo='MR-'+Date.now()+'-'+Math.random().toString(36).slice(2,7).toUpperCase();const createdAt=new Date().toISOString();const items=selected.map(x=>({awb:x.awb,amount:amountMR(x.item.amount),pcs:x.item.pcs||1,rate:x.item.rate||'',country:x.item.country||'',postal:x.item.postal||'',city:x.item.city||'',weight:x.item.weight||'',vat:x.item.vat||'no',remarks:x.item.remarks||'',customer_name:x.customer,challan_owner_email:x.owner}));const total=items.reduce((sum,it)=>sum+it.amount,0);const first=selected[0];const mrDoc={id:receiptNo,documentTitle:'MONEY RECEIPT',date:createdAt,email:first.owner||userEmail,customerName:first.customer||first.owner,profile:typeof window.getCurrentUserProfileDetails==='function'?window.getCurrentUserProfileDetails():{},fx:0,fuel:0,items:items.map(it=>({awb:it.awb,id:it.awb,pcs:it.pcs,rate:mode,country:it.country,postal:it.postal,city:it.city,weight:it.weight,vat:it.vat,amount:it.amount.toFixed(2),remarks:(it.remarks||'')+' MR MODE: '+mode}))};const pdf=typeof window.makeSimplePdfBase64==='function'?window.makeSimplePdfBase64(mrDoc):null;if(!pdf)throw new Error('PDF generator is unavailable.');const payload={receipt_no:receiptNo,awb_number:items.map(it=>it.awb).join(', '),challan_no:String(first.challan),mode,amount_bdt:total,created_by:window.currentUser.id,created_by_email:userEmail,receipt_data:{items,customer_name:first.customer,challan_owner_email:first.owner,selected_awb_count:items.length},created_at:createdAt};const {error}=await window.sb.from('money_receipts').insert(payload);if(error){if(error.code==='23505')throw new Error('One or more AWBs already have a Money Receipt. Refresh the list and try again.');throw error;}let mailMsg='';try{await window.sendChallanEmails(mrDoc,pdf);}catch(mailErr){mailMsg=' Receipt saved, but email failed: '+(mailErr.message||mailErr);}await refreshMR();status.textContent='One Money Receipt '+receiptNo+' issued for '+items.length+' AWB(s). Total: '+total.toLocaleString('en-BD',{minimumFractionDigits:2,maximumFractionDigits:2})+' BDT.'+mailMsg;}catch(e){status.textContent='Issue failed: '+(e.message||e);}finally{btn.disabled=false;}});
+ window.loadMoneyReceipts=refreshMR;
+})();
+</script>
+
+<script>
+/* Sidebar page switching only: preserve existing calculator, rates, billing and auth logic. */
+(function(){
+  function all(sel){return Array.from(document.querySelectorAll(sel));}
+  function setMany(sel,display){all(sel).forEach(el=>el.style.display=display);}
+  function openSection(key){
+    const mainSections=['.top','.onlinebar','.grid','#dashboard','#challanPanel','#billingPanel','#moneyReceiptPanel','#usersPanel','.footer'];
+    mainSections.forEach(sel=>setMany(sel,'none'));
+    all('.rate-modal').forEach(el=>el.classList.remove('show'));
+    all('.admin-nav button').forEach(b=>b.classList.toggle('active',b.dataset.adminNav===key));
+    const admin=!!window.currentProfile?.is_admin;
+    if(key==='dashboard'){
+      if(!admin && window.currentProfile?.can_dashboard===false){alert('Dashboard access is disabled for this user.');return;}
+      setMany('#dashboard','block');
+    }else if(key==='calculator'){
+      setMany('.top','block');setMany('.onlinebar','block');setMany('.grid','grid');
+      all('.grid > section').forEach(el=>{el.style.display='';});
+    }else if(key==='rate'){
+      if(!admin){alert('Admin access required for Rate Update.');return;}
+      const modal=document.querySelector('.rate-modal');if(modal)modal.classList.add('show');
+    }else if(key==='logs'){
+      if(!admin){alert('Admin access required for Calculation Logs.');return;}
+      setMany('#dashboard','block');
+    }else if(key==='users'){
+      if(!admin){alert('Admin access required.');return;}
+      setMany('#usersPanel','block');if(typeof window.loadUsers==='function')window.loadUsers();
+    }else if(key==='settings'){
+      setMany('.top','block');setMany('.onlinebar','none');setMany('.grid','grid');
+      all('.grid > section').forEach(el=>el.style.display='none');
+      const fx=document.getElementById('fx');
+      if(fx){let parent=fx;while(parent.parentElement&&!parent.classList.contains('card'))parent=parent.parentElement;parent.style.display='block';parent.scrollIntoView({block:'start'});}
+    }else if(key==='challan'){
+      if(!admin && window.currentProfile?.can_challan===false){alert('Challan access is disabled for this user.');return;}
+      setMany('#challanPanel','block');
+    }else if(key==='billing'){
+      if(!admin && window.currentProfile?.can_billing_accounts!==true && window.currentProfile?.can_edit_billing!==true){alert('Billing & Accounts access is disabled for this user.');return;}
+      setMany('#billingPanel','block');if(typeof window.loadBillingHistory==='function')window.loadBillingHistory();
+    }else if(key==='moneyreceipt'){
+      if(!window.currentUser){alert('Please login first.');return;}
+      setMany('#moneyReceiptPanel','block');if(typeof window.loadMoneyReceipts==='function')window.loadMoneyReceipts();
+    }
+  }
+  document.addEventListener('click',function(e){
+    const b=e.target.closest&&e.target.closest('[data-admin-nav]');if(!b)return;
+    e.preventDefault();e.stopImmediatePropagation();openSection(b.dataset.adminNav);
+  },true);
+  document.addEventListener('DOMContentLoaded',function(){openSection('dashboard');});
+  window.openFedExAdminSection=openSection;
+})();
 </script>
 </body></html>
