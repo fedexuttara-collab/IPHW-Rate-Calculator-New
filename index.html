@@ -1651,6 +1651,9 @@ document.addEventListener('DOMContentLoaded',()=>{
     function saveChallanAwbStore(a){localStorage.setItem('iphw_challan_awbs',JSON.stringify(a));}
     function challanStore(){try{return JSON.parse(localStorage.getItem('iphw_challans')||'[]')}catch(e){return []}}
     function saveChallanStore(a){localStorage.setItem('iphw_challans',JSON.stringify(a));}
+    // Expose the existing local Challan store for Billing & Accounts edit handler.
+    window.challanStore = challanStore;
+    window.saveChallanStore = saveChallanStore;
     function getChallanAmountByVat(vatYes, withVat, withoutVat){
   return vatYes ? (withVat ?? '') : (withoutVat ?? '');
 }
@@ -2352,7 +2355,7 @@ async function saveBillingEdit(){
     updated.date=old.date||billingEditingRecord.created_at;updated.updatedAt=new Date().toISOString();updated.updatedByEmail=currentProfile?.email||currentUser?.email||'';updated.id=billingEditingRecord.challan_no||old.id;updated.email=billingEditingRecord.created_by_email||old.email||'';updated.customerName=billingEditingRecord.customer_name||old.customerName||updated.email;
     const payload={challan_data:updated,customer_name:String(updated.customerName||updated.email||''),updated_by_email:String(currentProfile?.email||currentUser?.email||''),updated_at:new Date().toISOString()};
     const {error}=await sb.from('billing_challans').update(payload).eq('id',billingEditingRecord.id);if(error)throw error;
-    const local=challanStore();const li=local.findIndex(x=>String(x.id)===String(updated.id));if(li>=0){local[li]=updated;saveChallanStore(local);}
+    const local=typeof window.challanStore==='function'?window.challanStore():[];const li=local.findIndex(x=>String(x.id)===String(updated.id));if(li>=0){local[li]=updated;if(typeof window.saveChallanStore==='function')window.saveChallanStore(local);}
     const pdf=makeSimplePdfBase64({...updated,items:window.normalizeChallanItems(updated)});
     let mailText='Updated Challan saved. Email delivery could not be confirmed.';
     try{const sent=await sendChallanEmails(updated,pdf);mailText=sent.ok?'Updated PDF emailed to Admin, original Challan owner, and the editor.':'Updated Challan saved, but no email recipient was configured.';}catch(mailErr){mailText='Updated Challan saved, but email failed: '+(mailErr?.message||'Unknown error');}
