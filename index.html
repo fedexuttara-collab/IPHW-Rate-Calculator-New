@@ -452,6 +452,7 @@ body.auth-locked > *:not(.auth-modal):not(.forgot-modal):not(.reset-modal):not(.
     <div class="auto-row normal-only"><span>Base + Demand (BDT)</span><strong id="normalBaseDemandBdt">—</strong><em>BDT</em></div>
     <div class="auto-row normal-only"><span>Fuel Surcharge (BDT)</span><strong id="normalFuelBdt">—</strong><em>BDT</em></div>
     <div class="auto-row normal-only"><span>Customs Fee (BDT)</span><strong id="normalCustomBdt">—</strong><em>BDT</em></div>
+    <div class="auto-row rate-ab-only" id="rateAbGovtFeeRow" style="display:none"><span>Govt. Fee (BDT)</span><strong id="rateAbGovtFeeBdt">6.00</strong><em>BDT</em></div>
     <div class="auto-row"><span>ODA Charge (BDT)</span><strong id="odaBdt">—</strong><em>BDT</em></div>
     <div class="auto-row"><span>Subtotal / Without VAT</span><strong id="subtotal">—</strong><em>BDT</em></div>
     <div class="auto-row"><span>VAT Amount</span><strong id="vatAmount">—</strong><em>BDT</em></div>
@@ -865,6 +866,7 @@ function syncPlanInputs(){
   $('demandUsdRow').style.display=normal?'none':'none';
   document.querySelectorAll('.normal-only').forEach(el=>el.style.display=normal?'':'none');
   $('govtFeeWrap').style.display=normal?'':'none';
+  document.querySelectorAll('.rate-ab-only').forEach(el=>el.style.display=normal?'none':'');
   const perKgCell=$('perKgCell');
   if(perKgCell) perKgCell.style.display=normal?'none':'block';
   $('demandBdtRow').style.display=normal?'none':'none';
@@ -986,11 +988,13 @@ function calculate(){
   }else if(base==null){
     ['totalOda','subtotal','vatAmount','grandNoVat','grandVat','fuelBdt'].forEach(id=>$(id).textContent='—');
   }else if(currentPlan!=='NORMAL'){
-    // Rate A / Rate B: Base Tariff + Total ODA Charge only.
+    // Rate A / Rate B: Base Tariff + Total ODA Charge + Govt. Fee (BDT).
     // ODA Fuel Surcharge is calculated on the ODA charge and included in Total ODA.
     const totalOdaBdt=odaBdt+odaFuelBdt;
-    const subtotal=base+totalOdaBdt;
+    const govtFee=Number($('govtFee').value)||0;
+    const subtotal=base+totalOdaBdt+govtFee;
     const vatAmount=subtotal*vat/100;
+    const govtFeeDisplay=$('rateAbGovtFeeBdt'); if(govtFeeDisplay)govtFeeDisplay.textContent=money(govtFee);
     $('fuelBdt').textContent=money(odaFuelBdt);
     $('totalOda').textContent=money(totalOdaBdt);
     $('subtotal').textContent=money(subtotal);
