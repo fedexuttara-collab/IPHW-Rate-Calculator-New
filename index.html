@@ -433,6 +433,7 @@ body.auth-locked > *:not(.auth-modal):not(.forgot-modal):not(.reset-modal):not(.
     <div><label>ODA Base (USD)<input id="odaBase" type="number" step="0.01" value="25"></label></div>
     <div id="govtFeeWrap"><label>Govt. Fee (BDT)<input id="govtFee" type="number" step="0.01" value="6"></label></div>
   </div>
+  <div class="actions"><button class="btn secondary" id="saveSharedCalcSettings" type="button">Save Shared Fuel & Exchange Rate</button><span id="sharedCalcSettingsMsg" role="status" style="font-size:12px;align-self:center"></span></div>
   <div class="actions"><button class="btn primary" id="calculate">Calculate Rate</button><button class="btn secondary" id="reset">Clear</button></div>
   <div id="warning" class="warn"></div>
 </section>
@@ -1305,6 +1306,7 @@ async function handleSession(session){
     await loadProfile();
     if(!currentProfile){ currentProfile=normalizeAccess({id:currentUser.id,email:currentUser.email,is_admin:false}); }
     await loadSharedRates();
+    await loadSharedCalcSettings();
     await loadDashboard();
     $('dashboard').classList.add('show');
     document.body.classList.remove('auth-locked'); if(gate)gate.style.display='none';
@@ -1343,6 +1345,39 @@ async function loadSharedRates(){
   const d=data.rate_data;
   if(Array.isArray(d.A)&&Array.isArray(d.B)){DATA.ratesA=d.A;DATA.ratesB=d.B;localStorage.setItem('iphw_rates_v1',JSON.stringify({A:d.A,B:d.B}));renderRates($('rateSearch').value);calculate();}
 }
+// Shared calculator settings live in Supabase so every signed-in user sees the same values.
+async function loadSharedCalcSettings(){
+  if(!sb)return;
+  const msg=document.getElementById('sharedCalcSettingsMsg');
+  const {data,error}=await sb.from('calculator_settings').select('id,fx,fuel').eq('id',1).maybeSingle();
+  if(error){console.warn('Shared calculator settings could not be loaded:',error.message);if(msg)msg.textContent='Shared settings table needs setup in Supabase.';return;}
+  if(data){
+    if(data.fx!==null&&data.fx!==undefined)$('fx').value=Number(data.fx).toFixed(2);
+    if(data.fuel!==null&&data.fuel!==undefined)$('fuel').value=Number(data.fuel).toFixed(2);
+    calculate();
+    if(msg)msg.textContent='Shared values loaded.';
+  }
+}
+async function saveSharedCalcSettings(){
+  const btn=document.getElementById('saveSharedCalcSettings');
+  const msg=document.getElementById('sharedCalcSettingsMsg');
+  if(!sb||!currentUser){if(msg)msg.textContent='Save করতে আগে login করুন.';return;}
+  const fx=Number($('fx').value), fuel=Number($('fuel').value);
+  if(!Number.isFinite(fx)||fx<=0||!Number.isFinite(fuel)||fuel<0){if(msg)msg.textContent='Exchange Rate positive এবং Fuel Surcharge 0 বা তার বেশি দিন.';return;}
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  if(msg)msg.textContent='Saving shared values…';
+  try{
+    const {error}=await sb.from('calculator_settings').upsert({id:1,fx,fuel,updated_by:currentUser.id,updated_at:new Date().toISOString()},{onConflict:'id'});
+    if(error)throw error;
+    if(msg)msg.textContent='✓ Saved. এখন থেকে সব user এই Fuel & Exchange Rate দেখবেন.';
+    calculate();
+  }catch(e){
+    console.error('Shared calculator settings save failed:',e);
+    if(msg)msg.textContent='Save failed: '+(e.message||e)+' — Supabase SQL/RLS setup check করুন.';
+  }finally{if(btn){btn.disabled=false;btn.textContent='Save Shared Fuel & Exchange Rate';}}
+}
+document.getElementById('saveSharedCalcSettings')?.addEventListener('click',saveSharedCalcSettings);
+
 async function loadDashboard(){
   if(!sb||!currentUser)return;
   let q=sb.from('calculations').select('id,user_id,created_at,email,service,country,postal,city,weight,oda_charge_bdt,oda_fuel_surcharge_bdt,grand_total_with_vat,vat,grand_total');
@@ -2534,6 +2569,7 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
       setMany('#billingPanel','block');if(typeof window.loadBillingHistory==='function')window.loadBillingHistory();
     }else if(key==='moneyreceipt'){
       if(!window.currentUser){alert('Please login first.');return;}
+      if(!admin && window.currentProfile?.can_money_receipt!==true){alert('Money Receipt access has not been granted by Admin.');return;}
       setMany('#moneyReceiptPanel','block');if(typeof window.loadMoneyReceipts==='function')window.loadMoneyReceipts();
     }
   }
@@ -2546,14 +2582,4 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
 })();
 </script>
 
-// Keep Money Receipt navigation and section protected by profile permission.
-function enforceMoneyReceiptAccess(){
- const nav=document.getElementById('moneyReceiptNav');
- if(nav) nav.style.display=canUseMoneyReceipt()?'':'none';
- const panel=document.getElementById('moneyReceiptPanel')||document.getElementById('moneyReceiptSection');
- if(panel&&!canUseMoneyReceipt()) panel.style.display='none';
-}
- document.getElementById('moneyReceiptNav')?.addEventListener('click',function(e){if(!canUseMoneyReceipt()){e.preventDefault();e.stopImmediatePropagation();alert('Money Receipt access has not been granted by Admin.');return false;}} ,true);
- document.addEventListener('click',function(){setTimeout(enforceMoneyReceiptAccess,0);});
- setInterval(enforceMoneyReceiptAccess,1500);
 </body></html>
