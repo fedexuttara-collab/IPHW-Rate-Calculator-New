@@ -879,12 +879,21 @@ function syncPlanInputs(){
   }
 }
 function updateIcpcUsed(){
-  const zone=String($('zone')?.textContent||'').trim().toUpperCase();
-  const normalCode=currentPlan==='NORMAL'?String($('normalPackage')?.value||''):'';
-  const weight=currentPlan==='NORMAL'?Number(normalCode.replace(/[EP]$/i,'')):Number($('weight')?.value||0);
+  // Normal Rate always uses the fixed ICPC code.
   let icpc='799699109';
-  if(zone==='B' && Number.isFinite(weight) && weight>0 && weight<=40) icpc='806659533';
-  else if(zone==='G' && Number.isFinite(weight) && weight>=41) icpc='629048715';
+
+  // Rate A and Rate B retain the existing Zone + Weight rules.
+  if(currentPlan==='A' || currentPlan==='B'){
+    const zone=String($('zone')?.textContent||'').trim().toUpperCase();
+    const weight=Number($('weight')?.value||0);
+
+    if(zone==='B' && Number.isFinite(weight) && weight>0 && weight<=40){
+      icpc='806659533';
+    }else if(zone==='G' && Number.isFinite(weight) && weight>=41){
+      icpc='629048715';
+    }
+  }
+
   const el=$('icpcUsed');
   if(el) el.textContent=icpc;
   return icpc;
