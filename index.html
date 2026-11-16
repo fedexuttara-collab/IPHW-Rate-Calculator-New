@@ -3257,7 +3257,7 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
     // Build indexes once; never rescan full worksheets for each AWB.
     const challanIndex=makeAwbIndex(challanRecords,CHALLAN_AWB_KEYS);
     const fedexIndex=makeAwbIndex(rowRecords,FEDEX_AWB_KEYS);
-    const counts=new Map(),selected=new Set();let pickupTimeDataAvailable=false;
+    const counts=new Map(),selected=new Set();let pickupTimeDataAvailable=false,matchedRows=0;
     for(const ch of challanRecords){
       const awb=awbKey(get(ch,...CHALLAN_AWB_KEYS));if(!awb)continue;
       counts.set(awb,(counts.get(awb)||0)+1);
@@ -3268,7 +3268,7 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
       const fm=!from||(date&&date>=from),tm=!to||(date&&date<=to);
       const ftm=!fromTime||(from?(date>from||(date===from&&pickup.hasTime&&pickup.time>=fromTime)):(pickup.hasTime&&pickup.time>=fromTime));
       const ttm=!toTime||(to?(date<to||(date===to&&pickup.hasTime&&pickup.time<=toTime)):(pickup.hasTime&&pickup.time<=toTime));
-      if(cm&&wm&&fm&&tm&&ftm&&ttm)selected.add(awb);
+      if(cm&&wm&&fm&&tm&&ftm&&ttm){matchedRows++;selected.add(awb);}
     }
     filteredAuditRows=[];let i=0;
     const awbList=[...selected];
@@ -3280,7 +3280,12 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
       $('auditReportSummary').textContent='Report তৈরি হচ্ছে… '+end+' / '+awbList.length+' AWB';
       if(end<awbList.length)await new Promise(resolve=>setTimeout(resolve,0));
     }
-    const groups=groupedAuditRows(filteredAuditRows);
+    console.log('CPZ Audit Diagnostic:',{
+  TotalChallanRows:challanRecords.length,
+  MatchedRows:matchedRows,
+  UniqueAWB:selected.size,
+  DuplicateRows:matchedRows-selected.size
+});
     const ok=filteredAuditRows.filter(r=>r.status==='OK').length,check=filteredAuditRows.filter(r=>r.status==='CHECK').length,nf=filteredAuditRows.filter(r=>r.status==='NOT FOUND').length;
     const odaYes=filteredAuditRows.filter(r=>r.odaStatus==='YES').length;
     const odaNo=filteredAuditRows.filter(r=>r.odaStatus!=='YES').length;
