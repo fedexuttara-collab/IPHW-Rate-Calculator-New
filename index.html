@@ -697,13 +697,16 @@ body.auth-locked > *:not(.auth-modal):not(.forgot-modal):not(.reset-modal):not(.
           <div><label for="auditCourierFilter">Courier Name</label><select id="auditCourierFilter" style="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:7px"><option value="">All Courier Names</option></select></div>
           <div><label for="auditWscFilter">WSC</label><select id="auditWscFilter" style="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:7px"><option value="">All WSC</option></select></div>
           <div><label for="auditDateFrom">Pickup Date From</label><input id="auditDateFrom" type="date" style="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:7px"></div>
+          <div><label for="auditTimeFrom">Pickup Time From</label><input id="auditTimeFrom" type="time" step="60" style="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:7px"></div>
           <div><label for="auditDateTo">Pickup Date To</label><input id="auditDateTo" type="date" style="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:7px"></div>
+          <div><label for="auditTimeTo">Pickup Time To</label><input id="auditTimeTo" type="time" step="60" style="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:7px"></div>
         </div>
         <div class="actions" style="margin-top:11px;gap:8px;flex-wrap:wrap">
           <button type="button" class="btn primary" id="auditGenerateReportBtn">Generate Audit Report</button>
           <button type="button" class="btn secondary" id="auditReportPdfBtn" disabled>📄 Download PDF</button>
           <button type="button" class="btn secondary" id="auditReportExcelBtn" disabled>⬇ Download Excel</button>
           <button type="button" class="btn secondary" id="auditReportResetBtn">Reset Filters</button>
+          <button type="button" class="btn secondary" id="auditFullResetBtn">↺ Reset Audit</button>
         </div>
         <div id="auditReportSummary" style="font-size:12px;color:#475569;margin-top:10px">Excel Workbook upload করে filter select করে Generate Audit Report চাপুন।</div>
         <div id="auditReportResults" style="overflow:auto;margin-top:10px"></div>
@@ -2854,9 +2857,16 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
   const $=id=>document.getElementById(id);
   let mode='tracking', workbook=null, rowRecords=[], challanRecords=[], auditRecords=[], results=[], filteredAuditRows=[], auditSettings={divisor:5000,step:0.5,dimTolerance:0.25,weightTolerance:0,packageMap:[]}; const modeResults={tracking:[],audit:[]};
   const norm=v=>String(v??'').replace(/\u00a0/g,' ').trim().toLowerCase().replace(/\s+/g,' ');
+  // Excel headers vary between database-style underscores and human-readable spaces.
+  // Match the same header irrespective of spaces, punctuation or underscores.
+  const keyNorm=v=>norm(v).replace(/[^a-z0-9]/g,'');
   const awbKey=v=>String(v??'').replace(/\.0$/,'').replace(/\D/g,'');
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const get=(obj,...names)=>{if(!obj)return '';for(const n of names){const key=Object.keys(obj).find(k=>norm(k)===norm(n));if(key!==undefined && obj[key]!=='' && obj[key]!==null && obj[key]!==undefined)return obj[key];}return '';};
+  const get=(obj,...names)=>{if(!obj)return '';const keys=Object.keys(obj);for(const n of names){const wanted=keyNorm(n),key=keys.find(k=>keyNorm(k)===wanted);if(key!==undefined && obj[key]!=='' && obj[key]!==null && obj[key]!==undefined)return obj[key];}return '';};
+  const CHALLAN_AWB_KEYS=['awb','AWB No','AWB Number','AWB#','Tracking Number','Tracking Number (AWB)','Tracking No','Air Waybill','Waybill Number'];
+  const FEDEX_AWB_KEYS=['Tracking Number','AWBLS','AWB','AWB No','AWB Number','Tracking No'];
+  const PICKUP_DATE_KEYS=['pickup_date','Pickup Date','Pickup Date Local','Pickup Date & Time','Pickup DateTime'];
+  const PICKUP_TIME_KEYS=['pickup_time','Pickup Time','Pickup Time (HH:MM)','Pickup Time Local'];
   const display=v=>v===undefined||v===null||v===''?'—':String(v);
   function awbGroup(r){const p=norm([r.challanPkg,r.serviceType].filter(Boolean).join(' '));if(/\benvelope\b|\benv\b/.test(p))return 'ENVELOPE';if(/\bpak\b|\bpack\b/.test(p))return 'PAK';return 'OTHERS';}
   function groupedAuditRows(rows){const order=['PAK','ENVELOPE','OTHERS'];return order.map(name=>({name,rows:rows.filter(r=>awbGroup(r)===name)})).filter(g=>g.rows.length);}
@@ -3063,9 +3073,34 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
   function dateValue(v){
     if(v instanceof Date && !isNaN(v))return new Date(v.getFullYear(),v.getMonth(),v.getDate());
     if(typeof v==='number' && v>20000 && v<80000){const d=new Date(Date.UTC(1899,11,30)+v*86400000);return new Date(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate());}
-    const d=new Date(String(v??'').trim());return isNaN(d)?null:new Date(d.getFullYear(),d.getMonth(),d.getDate());
+    const raw=String(v??'').trim();if(!raw)return null;
+    // Parse ISO dates and common Bangladesh Excel dates (dd/mm/yyyy) explicitly.
+    let m=raw.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+    if(m){const d=new Date(Number(m[1]),Number(m[2])-1,Number(m[3]));return d.getFullYear()===Number(m[1])&&d.getMonth()===Number(m[2])-1&&d.getDate()===Number(m[3])?d:null;}
+    m=raw.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})(?:\s|$)/);
+    if(m){let a=Number(m[1]),b=Number(m[2]),y=Number(m[3]);if(y<100)y+=y<50?2000:1900;let day,month;if(a>12){day=a;month=b;}else if(b>12){month=a;day=b;}else{day=a;month=b;}const d=new Date(y,month-1,day);return d.getFullYear()===y&&d.getMonth()===month-1&&d.getDate()===day?d:null;}
+    const d=new Date(raw);return isNaN(d)?null:new Date(d.getFullYear(),d.getMonth(),d.getDate());
   }
   function dateISO(v){const d=dateValue(v);if(!d)return '';return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+  function clockValue(v){
+    const pad=n=>String(n).padStart(2,'0');
+    if(v instanceof Date && !isNaN(v))return {time:pad(v.getHours())+':'+pad(v.getMinutes()),hasTime:true};
+    if(typeof v==='number'&&v>20000&&v<80000){const fraction=((v%1)+1)%1;if(fraction>0.000001){let mins=Math.round(fraction*1440);if(mins>=1440)mins=0;return {time:pad(Math.floor(mins/60))+':'+pad(mins%60),hasTime:true};}}
+    if(typeof v==='number'&&v>=0&&v<1){let mins=Math.round(v*1440);if(mins>=1440)mins=0;return {time:pad(Math.floor(mins/60))+':'+pad(mins%60),hasTime:true};}
+    const raw=String(v??'').trim();if(!raw)return {time:'',hasTime:false};
+    const numeric=Number(raw);if(Number.isFinite(numeric)&&numeric>=0&&numeric<1&&/[.]/.test(raw)){let mins=Math.round(numeric*1440);if(mins>=1440)mins=0;return {time:pad(Math.floor(mins/60))+':'+pad(mins%60),hasTime:true};}
+    const m=raw.match(/(?:^|T|\s)(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)?(?:$|\s)/i);
+    if(!m)return {time:'',hasTime:false};
+    let h=Number(m[1]);if(m[3]){if(m[3].toUpperCase()==='PM'&&h<12)h+=12;if(m[3].toUpperCase()==='AM'&&h===12)h=0;}
+    if(h>23||Number(m[2])>59)return {time:'',hasTime:false};
+    return {time:pad(h)+':'+m[2],hasTime:true};
+  }
+  function pickupDateTimeParts(v,separateTime){
+    const date=dateISO(v),embedded=clockValue(v),separate=clockValue(separateTime);
+    const chosen=separate.hasTime?separate:embedded;
+    return {date,time:chosen.time,hasTime:chosen.hasTime,formatted:date+(chosen.hasTime?' '+chosen.time:'')};
+  }
+  function challanPickupDateTime(ch){return pickupDateTimeParts(get(ch,...PICKUP_DATE_KEYS),get(ch,...PICKUP_TIME_KEYS));}
   function splitFormulaNums(v){return String(v??'').split(/\n|\/|,/).map(x=>String(x).trim()).filter(Boolean).map(Number).filter(Number.isFinite);}
   function calcDimValues(dimText){
     return String(dimText??'').split(/\n/).map(line=>{
@@ -3077,8 +3112,8 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
     }).filter(v=>v!==null);
   }
   function formulaAuditRow(awb,duplicateCount,challanIndex,fedexIndex){
-    const ch=challanIndex?challanIndex.get(awb)||null:findByAwb(challanRecords,['awb','AWB','Tracking Number'],awb);
-    const row=fedexIndex?fedexIndex.get(awb)||null:findByAwb(rowRecords,['Tracking Number','AWBLS','AWB'],awb);
+    const ch=challanIndex?challanIndex.get(awb)||null:findByAwb(challanRecords,CHALLAN_AWB_KEYS,awb);
+    const row=fedexIndex?fedexIndex.get(awb)||null:findByAwb(rowRecords,FEDEX_AWB_KEYS,awb);
     const pcsNum=Math.max(1,Number(get(ch,'pcs'))||1), challanWtNum=Number(get(ch,'wt'))||0;
     const dimRaw=get(ch,'dim'), dimInvalid=dimRaw!==''&&!Number.isFinite(Number(dimRaw)), challanDim=dimRaw===''?0:Number(dimRaw);
     const dimensions=get(row,'REX 82 Length Width  Height All','REX 82 Length Width Height All');
@@ -3177,8 +3212,9 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
     else if(countryCheck.startsWith('CHECK'))checkNotes.push('Country: '+countryCheck.replace(/^CHECK:\s*/,''));
     const missingRexData=ch&&row&&((!dimNotRequired&&!calculatedDims.length&&!rexDimCandidates.length)||!splitFormulaNums(get(row,'REX 83 Corr Pkg Wgt All')).length);
     const remarks=(missingChallan||missingFedex||missingRexData||status==='CHECK')?'Please Check':'Checked Done';
+    const pickupInfo=challanPickupDateTime(ch);
     return {awb,ch,row,status,issues:issues.join(', '),remarks,sl:0,packageGroup:'',
-      pickupDate:get(ch,'pickup_date'),pickupISO:dateISO(get(ch,'pickup_date')),courierName:get(ch,'courier_name'),wsc:get(ch,'wsc'),courierCode:get(ch,'courier_code'),
+      pickupDate:get(ch,...PICKUP_DATE_KEYS),pickupISO:pickupInfo.date,pickupTime:pickupInfo.time,pickupDateTime:pickupInfo.formatted,courierName:get(ch,'courier_name','Courier Name'),wsc:get(ch,'wsc'),courierCode:get(ch,'courier_code'),
       challanNo:get(ch,'challan_no'),ref:get(ch,'ref'),route:get(ch,'route'),lot:get(ch,'lot'),vehicleNo:get(ch,'vehicle_no'),departTime:get(ch,'depart_time'),
       shipperType:get(ch,'shipper_type'),shipType:get(ch,'ship_type'),customer:get(ch,'Customer Name','customer_name','Customer','CustomerName'),salesCode:get(ch,'sales_code'),
       pcs:get(ch,'pcs'),challanWt:get(ch,'wt'),challanDimWt:dimRaw,chargeableWt, paymentType:get(ch,'pay_mode'),challanIcpc,
@@ -3205,7 +3241,7 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
       'Recip Cntry':r.recipientCountry,'Recip City':r.recipientCity,'Recip Postal':r.recipientPostal,
       'ODA':r.odaStatus,'ODA Match Type':r.odaMatchType,
       'AUTO REMARKS — REMARKS (what matched / what to check)':r.remarks,
-      'Pickup Date':r.pickupISO||r.pickupDate,'Courier Name':r.courierName,'WSC':r.wsc,
+      'Pickup Date':r.pickupISO||r.pickupDate,'Pickup Time':r.pickupTime||'','Pickup Date & Time':r.pickupDateTime||r.pickupISO||r.pickupDate,'Courier Name':r.courierName,'WSC':r.wsc,
       'Challan No':r.challanNo,'Customer Name':r.customer,'Payment Type':r.paymentType,
       'Courier Code':r.courierCode,'Reference':r.ref,'Route':r.route,'Lot':r.lot,'Vehicle No':r.vehicleNo,'Departure Time':r.departTime,
       'Shipper Company':r.shipperCompany,'Shipper Address':r.shipperAddress,
@@ -3216,20 +3252,23 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
   }
   async function generateAuditReport(){
     if(!workbook){$('auditReportSummary').textContent='আগে Excel Workbook upload করুন।';return;}
-    const courier=$('auditCourierFilter').value,wsc=$('auditWscFilter').value,from=$('auditDateFrom').value,to=$('auditDateTo').value;
+    const courier=$('auditCourierFilter').value,wsc=$('auditWscFilter').value,from=$('auditDateFrom').value,to=$('auditDateTo').value,fromTime=$('auditTimeFrom').value,toTime=$('auditTimeTo').value;
     const normFilter=v=>norm(String(v??'').replace(/\u00a0/g,' ').replace(/\s+/g,' ').trim());
     // Build indexes once; never rescan full worksheets for each AWB.
-    const challanIndex=makeAwbIndex(challanRecords,['awb','AWB','Tracking Number']);
-    const fedexIndex=makeAwbIndex(rowRecords,['Tracking Number','AWBLS','AWB']);
-    const counts=new Map(),selected=new Set();
+    const challanIndex=makeAwbIndex(challanRecords,CHALLAN_AWB_KEYS);
+    const fedexIndex=makeAwbIndex(rowRecords,FEDEX_AWB_KEYS);
+    const counts=new Map(),selected=new Set();let pickupTimeDataAvailable=false;
     for(const ch of challanRecords){
-      const awb=awbKey(get(ch,'awb','AWB','Tracking Number'));if(!awb)continue;
+      const awb=awbKey(get(ch,...CHALLAN_AWB_KEYS));if(!awb)continue;
       counts.set(awb,(counts.get(awb)||0)+1);
       const cm=!courier||normFilter(get(ch,'courier_name'))===normFilter(courier);
       const wm=!wsc||normFilter(get(ch,'wsc'))===normFilter(wsc);
-      const date=dateISO(get(ch,'pickup_date'));
+      const pickup=challanPickupDateTime(ch),date=pickup.date;
+      if(pickup.hasTime)pickupTimeDataAvailable=true;
       const fm=!from||(date&&date>=from),tm=!to||(date&&date<=to);
-      if(cm&&wm&&fm&&tm)selected.add(awb);
+      const ftm=!fromTime||(from?(date>from||(date===from&&pickup.hasTime&&pickup.time>=fromTime)):(pickup.hasTime&&pickup.time>=fromTime));
+      const ttm=!toTime||(to?(date<to||(date===to&&pickup.hasTime&&pickup.time<=toTime)):(pickup.hasTime&&pickup.time<=toTime));
+      if(cm&&wm&&fm&&tm&&ftm&&ttm)selected.add(awb);
     }
     filteredAuditRows=[];let i=0;
     const awbList=[...selected];
@@ -3245,14 +3284,26 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
     const ok=filteredAuditRows.filter(r=>r.status==='OK').length,check=filteredAuditRows.filter(r=>r.status==='CHECK').length,nf=filteredAuditRows.filter(r=>r.status==='NOT FOUND').length;
     const odaYes=filteredAuditRows.filter(r=>r.odaStatus==='YES').length;
     const odaNo=filteredAuditRows.filter(r=>r.odaStatus!=='YES').length;
-    $('auditReportSummary').textContent='Filtered AWB: '+filteredAuditRows.length+' | Pak: '+filteredAuditRows.filter(r=>r.packageGroup==='PAK').length+' | Envelope: '+filteredAuditRows.filter(r=>r.packageGroup==='ENVELOPE').length+' | Others: '+filteredAuditRows.filter(r=>r.packageGroup==='OTHERS').length+' | OK: '+ok+' | CHECK: '+check+' | NOT FOUND: '+nf+' | ODA YES: '+odaYes+' | ODA NO: '+odaNo+' | Courier: '+(courier||'All')+' | WSC: '+(wsc||'All')+' | Pickup Date: '+(from||'Start')+' to '+(to||'End');
+    const dateRows=challanRecords.filter(ch=>challanPickupDateTime(ch).date).length;
+    const timeRows=challanRecords.filter(ch=>challanPickupDateTime(ch).hasTime).length;
+    const awbRows=challanRecords.filter(ch=>awbKey(get(ch,...CHALLAN_AWB_KEYS))).length;
+    $('auditReportSummary').textContent='Filtered AWB: '+filteredAuditRows.length+' | Pak: '+filteredAuditRows.filter(r=>r.packageGroup==='PAK').length+' | Envelope: '+filteredAuditRows.filter(r=>r.packageGroup==='ENVELOPE').length+' | Others: '+filteredAuditRows.filter(r=>r.packageGroup==='OTHERS').length+' | OK: '+ok+' | CHECK: '+check+' | NOT FOUND: '+nf+' | ODA YES: '+odaYes+' | ODA NO: '+odaNo+' | Courier: '+(courier||'All')+' | WSC: '+(wsc||'All')+' | Pickup Date: '+(from||'Start')+' to '+(to||'End')+' | Pickup Time: '+(fromTime||'Start')+' to '+(toTime||'End')+(((fromTime||toTime)&&!pickupTimeDataAvailable)?' | NOTE: Excel Challan Data sheet-এ Pickup Time value পাওয়া যায়নি.':'')+(!awbRows?' | CHECK: Challan Data sheet-এ supported AWB column পাওয়া যায়নি.':(!filteredAuditRows.length?' | CHECK: Challan Data '+challanRecords.length+' rows; AWB '+awbRows+'; Date '+dateRows+'; Time '+timeRows+'. Date/time filter বা column value মিলিয়ে দেখুন.':''));
     $('auditReportPdfBtn').disabled=!filteredAuditRows.length;$('auditReportExcelBtn').disabled=!filteredAuditRows.length;
     const tableHead='<table class="audit-history" style="min-width:2200px"><colgroup><col style="width:48px"><col style="width:135px"><col style="width:170px"><col style="width:58px"><col style="width:92px"><col style="width:118px"><col style="width:90px"><col style="width:105px"><col style="width:145px"><col style="width:145px"><col style="width:105px"><col style="width:145px"><col style="width:145px"><col style="width:100px"><col style="width:105px"><col style="width:115px"><col style="width:100px"><col style="width:105px"><col style="width:105px"><col style="width:180px"></colgroup><thead><tr><th rowspan="2">SL</th><th rowspan="2">Tracking Number (AWB)</th><th colspan="2">CHALLAN</th><th colspan="2">CHALLAN / FEDEX SYSTEM</th><th colspan="2">CHALLAN</th><th colspan="2">FEDEX SYSTEM</th><th colspan="3">ACCOUNT DETAILS</th><th colspan="2">SERVICE / PACKAGE</th><th colspan="4">DESTINATION / RECIPIENT</th><th rowspan="2">AUTO REMARKS</th></tr><tr><th>Pcs Qty</th><th>Customer Name</th><th>Challan WT</th><th>REX 83 Corr Pkg Wgt All</th><th>Challan Dim Wt</th><th>Chargeable WT</th><th>REX 82 Length × Width × Height All</th><th>Dim Wt Calc from L×W×H</th><th>Challan ICPC</th><th>REV Shipper Acct Earliest</th><th>Shipper Account</th><th>Challan Pkg</th><th>Service Type</th><th>Challan Dest</th><th>Recip Cntry</th><th>Recip City</th><th>Recip Postal</th><th>ODA</th></tr></thead>';
     const groupHtml=groups.map(g=>{const body=g.rows.map(r=>'<tr style="'+(rowHasError(r)?'background:#fee2e2;color:#991b1b;':'')+'"><td>'+r.sl+'</td><td><b>'+esc(r.awb)+'</b></td><td>'+esc(display(r.pcs))+'</td><td>'+esc(display(r.customer))+'</td><td>'+esc(display(r.challanWt))+'</td><td>'+esc(display(r.rexWeight))+'</td><td>'+esc(display(r.challanDimWt))+'</td><td>'+esc(display(r.chargeableWt))+'</td><td>'+esc(display(r.rexDimensions))+'</td><td>'+esc(display(r.calculatedDimWeight))+'</td><td>'+esc(display(r.challanIcpc))+'</td><td>'+esc(display(r.revAccount))+'</td><td>'+esc(display(r.shipperAccount))+'</td><td>'+esc(display(r.challanPkg))+'</td><td>'+esc(display(r.serviceType))+'</td><td>'+esc(display(r.challanCountry))+'</td><td>'+esc(display(r.recipientCountry))+'</td><td>'+esc(display(r.recipientCity))+'</td><td>'+esc(display(r.recipientPostal))+'</td><td><b style="color:'+(r.odaStatus==='YES'?'#087f5b':'#c92a2a')+'">ODA '+esc(r.odaStatus||'NO')+'</b>'+(r.odaMatchType?'<div style="font-size:10px">'+esc(r.odaMatchType)+'</div>':'')+'</td><td><b>'+esc(r.status)+'</b> — '+esc(r.remarks||'—')+' '+esc(r.issues||'')+'</td></tr>').join('');return '<section style="margin:12px 0"><h3 style="margin:12px 0 6px;padding:9px;background:#dbeafe;color:#173b70;border:1px solid #93c5fd;border-radius:7px">'+g.name+' AWB — '+g.rows.length+' Shipments</h3><div style="overflow:auto;border:1px solid #dbe3ee;border-radius:9px;background:#fff">'+tableHead+'<tbody>'+body+'</tbody></table></div></section>';}).join('');
     $('auditReportResults').innerHTML=filteredAuditRows.length?groupHtml:'<div style="padding:14px;text-align:center;color:#64748b">এই filter-এ কোনো AWB পাওয়া যায়নি।</div>';
   }
   $('auditGenerateReportBtn')?.addEventListener('click',generateAuditReport);
-  $('auditReportResetBtn')?.addEventListener('click',()=>{$('auditCourierFilter').value='';$('auditWscFilter').value='';$('auditDateFrom').value='';$('auditDateTo').value='';generateAuditReport();});
+  $('auditReportResetBtn')?.addEventListener('click',()=>{$('auditCourierFilter').value='';$('auditWscFilter').value='';$('auditDateFrom').value='';$('auditTimeFrom').value='';$('auditDateTo').value='';$('auditTimeTo').value='';generateAuditReport();});
+  $('auditFullResetBtn')?.addEventListener('click',()=>{
+    $('auditCourierFilter').value='';$('auditWscFilter').value='';
+    $('auditDateFrom').value='';$('auditTimeFrom').value='';
+    $('auditDateTo').value='';$('auditTimeTo').value='';
+    filteredAuditRows=[];
+    $('auditReportResults').innerHTML='';
+    $('auditReportSummary').textContent='Audit reset করা হয়েছে। নতুন filter select করে Generate Audit Report চাপুন।';
+    $('auditReportPdfBtn').disabled=true;$('auditReportExcelBtn').disabled=true;
+  });
   $('auditReportExcelBtn')?.addEventListener('click',async()=>{
     if(!filteredAuditRows.length)return;
     if(!window.ExcelJS){alert('Excel formatting library is still loading. Please try again.');return;}
@@ -3278,11 +3329,11 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
   });
   $('auditReportPdfBtn')?.addEventListener('click',()=>{
     if(!filteredAuditRows.length)return;
-    const courier=$('auditCourierFilter').value||'All Courier Names',wsc=$('auditWscFilter').value||'All WSC',from=$('auditDateFrom').value||'Start',to=$('auditDateTo').value||'End';
+    const courier=$('auditCourierFilter').value||'All Courier Names',wsc=$('auditWscFilter').value||'All WSC',from=$('auditDateFrom').value||'Start',to=$('auditDateTo').value||'End',fromTime=$('auditTimeFrom').value||'Start',toTime=$('auditTimeTo').value||'End';
     const groups=groupedAuditRows(filteredAuditRows);
     const headers=['SL','Tracking Number (AWB)','Pcs','Customer Name','Challan WT','REX 83 Weight','Challan Dim WT','Chargeable WT','REX 82 Dimensions','Calculated Dim WT','Challan ICPC','REV Account','Shipper Account','Challan Pkg','Service Type','Challan Country','Recipient Country','Recipient City','Recipient Postal','ODA','Audit Status / Remarks'];
     const sections=groups.map(g=>{const rows=g.rows.map((r,i)=>{const vals=[r.sl,r.awb,display(r.pcs),display(r.customer),display(r.challanWt),display(r.rexWeight),display(r.challanDimWt),display(r.chargeableWt),display(r.rexDimensions),display(r.calculatedDimWeight),display(r.challanIcpc),display(r.revAccount),display(r.shipperAccount),display(r.challanPkg),display(r.serviceType),display(r.challanCountry),display(r.recipientCountry),display(r.recipientCity),display(r.recipientPostal),'ODA '+display(r.odaStatus||'NO'),r.status+' — '+(r.remarks||'')+' '+(r.issues||'')];return '<tr class="'+(rowHasError(r)?'error':'ok')+'">'+vals.map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>';}).join('');return '<h2>'+g.name+' AWB — '+g.rows.length+' Shipments</h2><table><thead><tr>'+headers.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+rows+'</tbody></table>';}).join('');
-    const html='<!doctype html><html><head><meta charset="utf-8"><title>FedEx Challan + FedEx System Audit Report</title><style>@page{size:A3 landscape;margin:7mm}*{box-sizing:border-box}body{font:8px Arial,sans-serif;color:#172033;margin:0}h1{font-size:17px;margin:0 0 5px;color:#173b70}h2{font-size:13px;margin:14px 0 5px;padding:7px;background:#dbeafe;color:#173b70;border:1px solid #93c5fd;break-after:avoid}.meta{padding:7px 9px;background:#f1f5fb;border:1px solid #d5dfed;margin-bottom:8px}table{width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:12px}th,td{border:1px solid #64748b;padding:4px 3px;text-align:center;vertical-align:middle;overflow-wrap:anywhere;font-size:7px;font-weight:700}th{background:#e8effa;color:#183b69;font-weight:900}thead{display:table-header-group}tr{break-inside:avoid}.error td{background:#fee2e2!important;color:#991b1b!important;font-weight:900}.ok td{background:#f0fdf4}.legend{margin:7px 0;font-weight:bold}.foot{margin-top:8px;color:#64748b;font-size:7px}</style></head><body><h1>FedEx Challan &amp; FedEx System — AWB Audit Report</h1><div class="meta"><b>Courier:</b> '+esc(courier)+' | <b>WSC:</b> '+esc(wsc)+' | <b>Pickup Date:</b> '+esc(from)+' to '+esc(to)+'<br><b>Total AWB:</b> '+filteredAuditRows.length+' | <b>OK:</b> '+filteredAuditRows.filter(r=>r.status==='OK').length+' | <b>CHECK:</b> '+filteredAuditRows.filter(r=>r.status==='CHECK').length+' | <b>NOT FOUND:</b> '+filteredAuditRows.filter(r=>r.status==='NOT FOUND').length+' | <b>ODA YES:</b> '+filteredAuditRows.filter(r=>r.odaStatus==='YES').length+' | <b>ODA NO:</b> '+filteredAuditRows.filter(r=>r.odaStatus!=='YES').length+'<div class="legend">Red = Error / Mismatch / Missing Data &nbsp;&nbsp; Green = OK</div></div>'+sections+'<div class="foot">Generated: '+esc(new Date().toLocaleString())+'</div></body></html>';
+    const html='<!doctype html><html><head><meta charset="utf-8"><title>FedEx Challan + FedEx System Audit Report</title><style>@page{size:A3 landscape;margin:7mm}*{box-sizing:border-box}body{font:8px Arial,sans-serif;color:#172033;margin:0}h1{font-size:17px;margin:0 0 5px;color:#173b70}h2{font-size:13px;margin:14px 0 5px;padding:7px;background:#dbeafe;color:#173b70;border:1px solid #93c5fd;break-after:avoid}.meta{padding:7px 9px;background:#f1f5fb;border:1px solid #d5dfed;margin-bottom:8px}table{width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:12px}th,td{border:1px solid #64748b;padding:4px 3px;text-align:center;vertical-align:middle;overflow-wrap:anywhere;font-size:7px;font-weight:700}th{background:#e8effa;color:#183b69;font-weight:900}thead{display:table-header-group}tr{break-inside:avoid}.error td{background:#fee2e2!important;color:#991b1b!important;font-weight:900}.ok td{background:#f0fdf4}.legend{margin:7px 0;font-weight:bold}.foot{margin-top:8px;color:#64748b;font-size:7px}</style></head><body><h1>FedEx Challan &amp; FedEx System — AWB Audit Report</h1><div class="meta"><b>Courier:</b> '+esc(courier)+' | <b>WSC:</b> '+esc(wsc)+' | <b>Pickup Date:</b> '+esc(from)+' to '+esc(to)+' | <b>Pickup Time:</b> '+esc(fromTime)+' to '+esc(toTime)+'<br><b>Total AWB:</b> '+filteredAuditRows.length+' | <b>OK:</b> '+filteredAuditRows.filter(r=>r.status==='OK').length+' | <b>CHECK:</b> '+filteredAuditRows.filter(r=>r.status==='CHECK').length+' | <b>NOT FOUND:</b> '+filteredAuditRows.filter(r=>r.status==='NOT FOUND').length+' | <b>ODA YES:</b> '+filteredAuditRows.filter(r=>r.odaStatus==='YES').length+' | <b>ODA NO:</b> '+filteredAuditRows.filter(r=>r.odaStatus!=='YES').length+'<div class="legend">Red = Error / Mismatch / Missing Data &nbsp;&nbsp; Green = OK</div></div>'+sections+'<div class="foot">Generated: '+esc(new Date().toLocaleString())+'</div></body></html>';
     const w=window.open('','_blank');if(!w){$('auditReportSummary').textContent+=' | Popup blocked — allow popups to save PDF.';return;}w.document.open();w.document.write(html);w.document.close();w.onload=()=>{w.focus();w.print();};
   });
   function renderResults(){const host=$('excelLookupResults'),latest=$('excelLatestResult');if(!host||!latest)return;const count=results.length;$('excelDownloadBtn').disabled=count===0;$('excelPdfBtn').disabled=count===0;$('excelResultCount').textContent=count+' AWB saved';
@@ -3292,7 +3343,7 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
     host.querySelectorAll('[data-result-index]').forEach(btn=>btn.addEventListener('click',()=>{const r=results[Number(btn.dataset.resultIndex)];if(!r)return;latest.innerHTML='<div class="audit-latest"><div style="font-size:10px;color:#2563eb;font-weight:900">SELECTED RESULT · SL '+(Number(btn.dataset.resultIndex)+1)+'</div>'+resultCard(r,'AWB Details')+'</div>';latest.scrollIntoView({behavior:'smooth',block:'start'});}));
   }
   function lookup(){if(!workbook){$('excelLookupStatus').textContent='আগে Full Audit Excel Workbook upload করুন।';return;}const awb=awbKey($('excelLookupAwb').value);if(!awb){$('excelLookupStatus').textContent='সঠিক AWB Number লিখুন।';$('excelLookupAwb').focus();return;}
-    const row=findByAwb(rowRecords,['Tracking Number','AWBLS','AWB'],awb),ch=findByAwb(challanRecords,['awb','AWB','Tracking Number'],awb),audit=findByAwb(auditRecords,['Tracking Number (AWB)','Tracking Number','awb'],awb);
+    const row=findByAwb(rowRecords,FEDEX_AWB_KEYS,awb),ch=findByAwb(challanRecords,CHALLAN_AWB_KEYS,awb),audit=findByAwb(auditRecords,['Tracking Number (AWB)','Tracking Number','awb'],awb);
     if(mode==='tracking'&&!row&&!ch){$('excelLookupStatus').textContent='AWB '+awb+' ROW DATA বা Challan Data-তে পাওয়া যায়নি।';return;}
     if(mode==='audit'&&!audit){$('excelLookupStatus').textContent='AWB '+awb+' AUDIT FILE sheet-এ পাওয়া যায়নি।';return;}
     results.push({awb,row,ch,audit,checkedAt:new Date().toLocaleString()});renderResults();$('excelLookupStatus').textContent='AWB '+awb+' result loaded. পরের AWB লিখুন।';$('excelLookupAwb').value='';$('excelLookupAwb').focus();
