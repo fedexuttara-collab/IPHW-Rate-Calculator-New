@@ -2855,7 +2855,7 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
 /* Excel Tracking + Audit module. Uses the uploaded workbook sheets; isolated from calculator features. */
 (function(){
   const $=id=>document.getElementById(id);
-  let mode='tracking', workbook=null, rowRecords=[], challanRecords=[], auditRecords=[], results=[], filteredAuditRows=[], auditSettings={divisor:5000,step:0.5,dimTolerance:0.25,weightTolerance:0,packageMap:[]}; const modeResults={tracking:[],audit:[]};
+  let mode='tracking', workbook=null, rowRecords=[], challanRecords=[], auditRecords=[], results=[], filteredAuditRows=[], auditCurrentPage=1; const AUDIT_PAGE_SIZE=200; let auditSettings={divisor:5000,step:0.5,dimTolerance:0.25,weightTolerance:0,packageMap:[]}; const modeResults={tracking:[],audit:[]};
   const norm=v=>String(v??'').replace(/\u00a0/g,' ').trim().toLowerCase().replace(/\s+/g,' ');
   // Excel headers vary between database-style underscores and human-readable spaces.
   // Match the same header irrespective of spaces, punctuation or underscores.
@@ -3078,7 +3078,15 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
     let m=raw.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
     if(m){const d=new Date(Number(m[1]),Number(m[2])-1,Number(m[3]));return d.getFullYear()===Number(m[1])&&d.getMonth()===Number(m[2])-1&&d.getDate()===Number(m[3])?d:null;}
     m=raw.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})(?:\s|$)/);
-    if(m){let a=Number(m[1]),b=Number(m[2]),y=Number(m[3]);if(y<100)y+=y<50?2000:1900;let day,month;if(a>12){day=a;month=b;}else if(b>12){month=a;day=b;}else{day=a;month=b;}const d=new Date(y,month-1,day);return d.getFullYear()===y&&d.getMonth()===month-1&&d.getDate()===day?d:null;}
+    if(m){let a=Number(m[1]),b=Number(m[2]),y=Number(m[3]);if(y<100)y+=y<50?2000:1900;let day,month;
+      // The uploaded Challan Data workbook stores pickup_date as Excel m/d/yy h:mm.
+      // When a time is present, preserve that month/day order for ambiguous dates
+      // such as 11/1/26; otherwise November dates were incorrectly read as January.
+      if(/\s+\d{1,2}:\d{2}/.test(raw)&&a<=12&&b<=31){month=a;day=b;}
+      else if(a>12){day=a;month=b;}
+      else if(b>12){month=a;day=b;}
+      else{day=a;month=b;}
+      const d=new Date(y,month-1,day);return d.getFullYear()===y&&d.getMonth()===month-1&&d.getDate()===day?d:null;}
     const d=new Date(raw);return isNaN(d)?null:new Date(d.getFullYear(),d.getMonth(),d.getDate());
   }
   function dateISO(v){const d=dateValue(v);if(!d)return '';return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
@@ -3250,17 +3258,43 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
       'ICPC Check':r.icpcCheck,'Package Check':r.pkgCheck,'Country Check':r.countryCheck,'Audit Status':r.status,'Issues':r.issues
     }));
   }
+  // Render only one page in the browser; exports still use the complete filteredAuditRows array.
+  // This prevents very large workbooks (50,000+ AWBs) from creating hundreds of thousands of DOM cells.
+  function renderAuditReportPage(){
+    const host=$('auditReportResults');
+    if(!host)return;
+    const total=filteredAuditRows.length;
+    if(!total){
+      host.innerHTML='<div style="padding:14px;text-align:center;color:#64748b">এই filter-এ কোনো AWB পাওয়া যায়নি।</div>';
+      return;
+    }
+    const pageCount=Math.max(1,Math.ceil(total/AUDIT_PAGE_SIZE));
+    auditCurrentPage=Math.min(Math.max(1,auditCurrentPage),pageCount);
+    const start=(auditCurrentPage-1)*AUDIT_PAGE_SIZE;
+    const pageRows=filteredAuditRows.slice(start,start+AUDIT_PAGE_SIZE);
+    const groups=groupedAuditRows(pageRows);
+    const tableHead='<table class="audit-history" style="min-width:2200px"><colgroup><col style="width:48px"><col style="width:135px"><col style="width:170px"><col style="width:58px"><col style="width:92px"><col style="width:118px"><col style="width:90px"><col style="width:105px"><col style="width:145px"><col style="width:145px"><col style="width:105px"><col style="width:145px"><col style="width:145px"><col style="width:100px"><col style="width:105px"><col style="width:115px"><col style="width:100px"><col style="width:105px"><col style="width:105px"><col style="width:105px"><col style="width:180px"></colgroup><thead><tr><th rowspan="2">SL</th><th rowspan="2">Tracking Number (AWB)</th><th colspan="2">CHALLAN</th><th colspan="2">CHALLAN / FEDEX SYSTEM</th><th colspan="2">CHALLAN</th><th colspan="2">FEDEX SYSTEM</th><th colspan="3">ACCOUNT DETAILS</th><th colspan="2">SERVICE / PACKAGE</th><th colspan="5">DESTINATION / RECIPIENT</th><th rowspan="2">AUTO REMARKS</th></tr><tr><th>Pcs Qty</th><th>Customer Name</th><th>Challan WT</th><th>REX 83 Corr Pkg Wgt All</th><th>Challan Dim Wt</th><th>Chargeable WT</th><th>REX 82 Length × Width × Height All</th><th>Dim Wt Calc from L×W×H</th><th>Challan ICPC</th><th>REV Shipper Acct Earliest</th><th>Shipper Account</th><th>Challan Pkg</th><th>Service Type</th><th>Challan Dest</th><th>Recip Cntry</th><th>Recip City</th><th>Recip Postal</th><th>ODA</th></tr></thead>';
+    const groupHtml=groups.map(g=>{
+      const body=g.rows.map(r=>'<tr style="'+(rowHasError(r)?'background:#fee2e2;color:#991b1b;':'')+'"><td>'+r.sl+'</td><td><b>'+esc(r.awb)+'</b></td><td>'+esc(display(r.pcs))+'</td><td>'+esc(display(r.customer))+'</td><td>'+esc(display(r.challanWt))+'</td><td>'+esc(display(r.rexWeight))+'</td><td>'+esc(display(r.challanDimWt))+'</td><td>'+esc(display(r.chargeableWt))+'</td><td>'+esc(display(r.rexDimensions))+'</td><td>'+esc(display(r.calculatedDimWeight))+'</td><td>'+esc(display(r.challanIcpc))+'</td><td>'+esc(display(r.revAccount))+'</td><td>'+esc(display(r.shipperAccount))+'</td><td>'+esc(display(r.challanPkg))+'</td><td>'+esc(display(r.serviceType))+'</td><td>'+esc(display(r.challanCountry))+'</td><td>'+esc(display(r.recipientCountry))+'</td><td>'+esc(display(r.recipientCity))+'</td><td>'+esc(display(r.recipientPostal))+'</td><td><b style="color:'+(r.odaStatus==='YES'?'#087f5b':'#c92a2a')+'">ODA '+esc(r.odaStatus||'NO')+'</b>'+(r.odaMatchType?'<div style="font-size:10px">'+esc(r.odaMatchType)+'</div>':'')+'</td><td><b>'+esc(r.status)+'</b> — '+esc(r.remarks||'—')+' '+esc(r.issues||'')+'</td></tr>').join('');
+      return '<section style="margin:12px 0"><h3 style="margin:12px 0 6px;padding:9px;background:#dbeafe;color:#173b70;border:1px solid #93c5fd;border-radius:7px">'+g.name+' AWB — '+g.rows.length+' Shipments (এই পৃষ্ঠা)</h3><div style="overflow:auto;border:1px solid #dbe3ee;border-radius:9px;background:#fff">'+tableHead+'<tbody>'+body+'</tbody></table></div></section>';
+    }).join('');
+    const pager='<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;margin:8px 0;background:#fff;border:1px solid #dbe3ee;border-radius:9px"><b style="font-size:12px;color:#173b70">Showing '+(start+1)+'–'+Math.min(start+pageRows.length,total)+' of '+total.toLocaleString()+' AWB · Page '+auditCurrentPage+' / '+pageCount+' · '+AUDIT_PAGE_SIZE+' per page</b><div style="display:flex;gap:7px"><button type="button" class="btn secondary" data-audit-page="prev" '+(auditCurrentPage===1?'disabled':'')+'>← Previous</button><button type="button" class="btn primary" data-audit-page="next" '+(auditCurrentPage===pageCount?'disabled':'')+'>Next →</button></div></div>';
+    host.innerHTML=pager+groupHtml+pager;
+    host.querySelectorAll('[data-audit-page]').forEach(btn=>btn.addEventListener('click',()=>{
+      auditCurrentPage+=btn.dataset.auditPage==='next'?1:-1;
+      renderAuditReportPage();
+      host.scrollIntoView({behavior:'smooth',block:'start'});
+    }));
+  }
   async function generateAuditReport(){
     if(!workbook){$('auditReportSummary').textContent='আগে Excel Workbook upload করুন।';return;}
     const courier=$('auditCourierFilter').value,wsc=$('auditWscFilter').value,from=$('auditDateFrom').value,to=$('auditDateTo').value,fromTime=$('auditTimeFrom').value,toTime=$('auditTimeTo').value;
     const normFilter=v=>norm(String(v??'').replace(/\u00a0/g,' ').replace(/\s+/g,' ').trim());
     // Build indexes once; never rescan full worksheets for each AWB.
-    const challanIndex=makeAwbIndex(challanRecords,CHALLAN_AWB_KEYS);
     const fedexIndex=makeAwbIndex(rowRecords,FEDEX_AWB_KEYS);
-    const counts=new Map(),selected=new Set();let pickupTimeDataAvailable=false,matchedRows=0;
+    const counts=new Map(),selected=new Set(),filteredChallanRecords=[];let pickupTimeDataAvailable=false;
     for(const ch of challanRecords){
       const awb=awbKey(get(ch,...CHALLAN_AWB_KEYS));if(!awb)continue;
-      counts.set(awb,(counts.get(awb)||0)+1);
       const cm=!courier||normFilter(get(ch,'courier_name'))===normFilter(courier);
       const wm=!wsc||normFilter(get(ch,'wsc'))===normFilter(wsc);
       const pickup=challanPickupDateTime(ch),date=pickup.date;
@@ -3268,8 +3302,15 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
       const fm=!from||(date&&date>=from),tm=!to||(date&&date<=to);
       const ftm=!fromTime||(from?(date>from||(date===from&&pickup.hasTime&&pickup.time>=fromTime)):(pickup.hasTime&&pickup.time>=fromTime));
       const ttm=!toTime||(to?(date<to||(date===to&&pickup.hasTime&&pickup.time<=toTime)):(pickup.hasTime&&pickup.time<=toTime));
-      if(cm&&wm&&fm&&tm&&ftm&&ttm){matchedRows++;selected.add(awb);}
+      if(cm&&wm&&fm&&tm&&ftm&&ttm){
+        filteredChallanRecords.push(ch);
+        counts.set(awb,(counts.get(awb)||0)+1);
+        selected.add(awb);
+      }
     }
+    // Match each AWB against the same filtered Challan row set used by the filters.
+    // This avoids showing another courier/date's row when duplicate AWBs exist.
+    const challanIndex=makeAwbIndex(filteredChallanRecords,CHALLAN_AWB_KEYS);
     filteredAuditRows=[];let i=0;
     const awbList=[...selected];
     $('auditReportSummary').textContent='Report তৈরি হচ্ছে… 0 / '+awbList.length+' AWB';
@@ -3280,12 +3321,7 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
       $('auditReportSummary').textContent='Report তৈরি হচ্ছে… '+end+' / '+awbList.length+' AWB';
       if(end<awbList.length)await new Promise(resolve=>setTimeout(resolve,0));
     }
-    console.log('CPZ Audit Diagnostic:',{
-  TotalChallanRows:challanRecords.length,
-  MatchedRows:matchedRows,
-  UniqueAWB:selected.size,
-  DuplicateRows:matchedRows-selected.size
-});
+    const groups=groupedAuditRows(filteredAuditRows);
     const ok=filteredAuditRows.filter(r=>r.status==='OK').length,check=filteredAuditRows.filter(r=>r.status==='CHECK').length,nf=filteredAuditRows.filter(r=>r.status==='NOT FOUND').length;
     const odaYes=filteredAuditRows.filter(r=>r.odaStatus==='YES').length;
     const odaNo=filteredAuditRows.filter(r=>r.odaStatus!=='YES').length;
@@ -3294,9 +3330,8 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
     const awbRows=challanRecords.filter(ch=>awbKey(get(ch,...CHALLAN_AWB_KEYS))).length;
     $('auditReportSummary').textContent='Filtered AWB: '+filteredAuditRows.length+' | Pak: '+filteredAuditRows.filter(r=>r.packageGroup==='PAK').length+' | Envelope: '+filteredAuditRows.filter(r=>r.packageGroup==='ENVELOPE').length+' | Others: '+filteredAuditRows.filter(r=>r.packageGroup==='OTHERS').length+' | OK: '+ok+' | CHECK: '+check+' | NOT FOUND: '+nf+' | ODA YES: '+odaYes+' | ODA NO: '+odaNo+' | Courier: '+(courier||'All')+' | WSC: '+(wsc||'All')+' | Pickup Date: '+(from||'Start')+' to '+(to||'End')+' | Pickup Time: '+(fromTime||'Start')+' to '+(toTime||'End')+(((fromTime||toTime)&&!pickupTimeDataAvailable)?' | NOTE: Excel Challan Data sheet-এ Pickup Time value পাওয়া যায়নি.':'')+(!awbRows?' | CHECK: Challan Data sheet-এ supported AWB column পাওয়া যায়নি.':(!filteredAuditRows.length?' | CHECK: Challan Data '+challanRecords.length+' rows; AWB '+awbRows+'; Date '+dateRows+'; Time '+timeRows+'. Date/time filter বা column value মিলিয়ে দেখুন.':''));
     $('auditReportPdfBtn').disabled=!filteredAuditRows.length;$('auditReportExcelBtn').disabled=!filteredAuditRows.length;
-    const tableHead='<table class="audit-history" style="min-width:2200px"><colgroup><col style="width:48px"><col style="width:135px"><col style="width:170px"><col style="width:58px"><col style="width:92px"><col style="width:118px"><col style="width:90px"><col style="width:105px"><col style="width:145px"><col style="width:145px"><col style="width:105px"><col style="width:145px"><col style="width:145px"><col style="width:100px"><col style="width:105px"><col style="width:115px"><col style="width:100px"><col style="width:105px"><col style="width:105px"><col style="width:180px"></colgroup><thead><tr><th rowspan="2">SL</th><th rowspan="2">Tracking Number (AWB)</th><th colspan="2">CHALLAN</th><th colspan="2">CHALLAN / FEDEX SYSTEM</th><th colspan="2">CHALLAN</th><th colspan="2">FEDEX SYSTEM</th><th colspan="3">ACCOUNT DETAILS</th><th colspan="2">SERVICE / PACKAGE</th><th colspan="4">DESTINATION / RECIPIENT</th><th rowspan="2">AUTO REMARKS</th></tr><tr><th>Pcs Qty</th><th>Customer Name</th><th>Challan WT</th><th>REX 83 Corr Pkg Wgt All</th><th>Challan Dim Wt</th><th>Chargeable WT</th><th>REX 82 Length × Width × Height All</th><th>Dim Wt Calc from L×W×H</th><th>Challan ICPC</th><th>REV Shipper Acct Earliest</th><th>Shipper Account</th><th>Challan Pkg</th><th>Service Type</th><th>Challan Dest</th><th>Recip Cntry</th><th>Recip City</th><th>Recip Postal</th><th>ODA</th></tr></thead>';
-    const groupHtml=groups.map(g=>{const body=g.rows.map(r=>'<tr style="'+(rowHasError(r)?'background:#fee2e2;color:#991b1b;':'')+'"><td>'+r.sl+'</td><td><b>'+esc(r.awb)+'</b></td><td>'+esc(display(r.pcs))+'</td><td>'+esc(display(r.customer))+'</td><td>'+esc(display(r.challanWt))+'</td><td>'+esc(display(r.rexWeight))+'</td><td>'+esc(display(r.challanDimWt))+'</td><td>'+esc(display(r.chargeableWt))+'</td><td>'+esc(display(r.rexDimensions))+'</td><td>'+esc(display(r.calculatedDimWeight))+'</td><td>'+esc(display(r.challanIcpc))+'</td><td>'+esc(display(r.revAccount))+'</td><td>'+esc(display(r.shipperAccount))+'</td><td>'+esc(display(r.challanPkg))+'</td><td>'+esc(display(r.serviceType))+'</td><td>'+esc(display(r.challanCountry))+'</td><td>'+esc(display(r.recipientCountry))+'</td><td>'+esc(display(r.recipientCity))+'</td><td>'+esc(display(r.recipientPostal))+'</td><td><b style="color:'+(r.odaStatus==='YES'?'#087f5b':'#c92a2a')+'">ODA '+esc(r.odaStatus||'NO')+'</b>'+(r.odaMatchType?'<div style="font-size:10px">'+esc(r.odaMatchType)+'</div>':'')+'</td><td><b>'+esc(r.status)+'</b> — '+esc(r.remarks||'—')+' '+esc(r.issues||'')+'</td></tr>').join('');return '<section style="margin:12px 0"><h3 style="margin:12px 0 6px;padding:9px;background:#dbeafe;color:#173b70;border:1px solid #93c5fd;border-radius:7px">'+g.name+' AWB — '+g.rows.length+' Shipments</h3><div style="overflow:auto;border:1px solid #dbe3ee;border-radius:9px;background:#fff">'+tableHead+'<tbody>'+body+'</tbody></table></div></section>';}).join('');
-    $('auditReportResults').innerHTML=filteredAuditRows.length?groupHtml:'<div style="padding:14px;text-align:center;color:#64748b">এই filter-এ কোনো AWB পাওয়া যায়নি।</div>';
+    auditCurrentPage=1;
+    renderAuditReportPage();
   }
   $('auditGenerateReportBtn')?.addEventListener('click',generateAuditReport);
   $('auditReportResetBtn')?.addEventListener('click',()=>{$('auditCourierFilter').value='';$('auditWscFilter').value='';$('auditDateFrom').value='';$('auditTimeFrom').value='';$('auditDateTo').value='';$('auditTimeTo').value='';generateAuditReport();});
@@ -3304,7 +3339,7 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
     $('auditCourierFilter').value='';$('auditWscFilter').value='';
     $('auditDateFrom').value='';$('auditTimeFrom').value='';
     $('auditDateTo').value='';$('auditTimeTo').value='';
-    filteredAuditRows=[];
+    filteredAuditRows=[];auditCurrentPage=1;
     $('auditReportResults').innerHTML='';
     $('auditReportSummary').textContent='Audit reset করা হয়েছে। নতুন filter select করে Generate Audit Report চাপুন।';
     $('auditReportPdfBtn').disabled=true;$('auditReportExcelBtn').disabled=true;
@@ -3312,7 +3347,9 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
   $('auditReportExcelBtn')?.addEventListener('click',async()=>{
     if(!filteredAuditRows.length)return;
     if(!window.ExcelJS){alert('Excel formatting library is still loading. Please try again.');return;}
-    const headers=Object.keys(auditReportExportRows()[0]||{});
+    const exportRows=auditReportExportRows();
+    const headers=Object.keys(exportRows[0]||{});
+    const exportByAwb=new Map(exportRows.map(obj=>[String(obj['Tracking Number (AWB)']),obj]));
     const groups=groupedAuditRows(filteredAuditRows);
     const wb=new ExcelJS.Workbook();wb.creator='FedEx Rate Calculator';wb.created=new Date();
     for(const group of groups){
@@ -3320,8 +3357,10 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
       ws.addRow(['FEDEX AUDIT REPORT — '+group.name+' AWB']);ws.mergeCells(1,1,1,headers.length);
       ws.getRow(1).font={bold:true,size:14,color:{argb:'FFFFFFFF'}};ws.getRow(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF173B70'}};
       ws.addRow(headers);const hr=ws.getRow(2);hr.font={bold:true,color:{argb:'FFFFFFFF'}};hr.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF2563EB'}};hr.alignment={vertical:'middle',horizontal:'center',wrapText:true};
-      const data=group.rows.map(r=>{const obj=auditReportExportRows().find(x=>x['Tracking Number (AWB)']===r.awb)||{};return headers.map(h=>obj[h]??'');});
-      data.forEach((values)=>{const row=ws.addRow(values);const awb=String(values[headers.indexOf('Tracking Number (AWB)')]||'');const rec=group.rows.find(r=>r.awb===awb);row.alignment={vertical:'middle',wrapText:true};if(rec&&rowHasError(rec)){row.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFE2E2'}};row.font={color:{argb:'FF991B1B'},bold:true};} });
+      const groupByAwb=new Map(group.rows.map(r=>[String(r.awb),r]));
+      const awbColumnIndex=headers.indexOf('Tracking Number (AWB)');
+      const data=group.rows.map(r=>{const obj=exportByAwb.get(String(r.awb))||{};return headers.map(h=>obj[h]??'');});
+      data.forEach(values=>{const row=ws.addRow(values);const awb=String(values[awbColumnIndex]||'');const rec=groupByAwb.get(awb);row.alignment={vertical:'middle',wrapText:true};if(rec&&rowHasError(rec)){row.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFE2E2'}};row.font={color:{argb:'FF991B1B'},bold:true};}});
       ws.columns=headers.map(h=>({header:h,key:h,width:/REMARKS|Issues/i.test(h)?42:Math.min(30,Math.max(14,h.length+2))}));
       ws.autoFilter={from:{row:2,column:1},to:{row:2+group.rows.length,column:headers.length}};
       ws.eachRow((row,n)=>{if(n>2)row.eachCell(cell=>{if(cell.value!==null&&cell.value!==undefined)cell.border={bottom:{style:'thin',color:{argb:'FFD1D5DB'}}};});});
