@@ -645,6 +645,11 @@ body.auth-locked > *:not(.auth-modal):not(.forgot-modal):not(.reset-modal):not(.
     <button class="tab" data-tab="odaPanel">ODA Search</button>
   </div>
   <div id="ratePanel" class="panel active">
+    <div style="padding:10px;margin-bottom:10px;border:1px solid #dbe3ee;border-radius:9px;background:#f8fafc">
+      <div style="font-weight:900;color:#12365f;font-size:12px;margin-bottom:7px">COUNTRY-BASED RATE CHART / ZONE</div>
+      <div class="toolbar" style="margin-bottom:7px"><select id="rateCountrySelect" class="search" style="background:#fff"><option value="">Select destination country</option></select></div>
+      <div class="tablewrap" style="max-height:220px"><table><thead id="countryRateHead"><tr><th>Country</th><th>Zone</th><th>Weight / Package</th><th>Rate</th></tr></thead><tbody id="countryRateBody"><tr><td colspan="4">Select a country to view its zone-wise rate chart.</td></tr></tbody></table></div>
+    </div>
     <div class="toolbar"><input id="rateSearch" class="search" placeholder="Search weight range"></div>
     <div class="tablewrap"><table><thead id="rateHead"></thead><tbody id="rateBody"></tbody></table></div>
   </div>
@@ -1268,6 +1273,24 @@ function renderRates(q=''){
     $('rateBody').innerHTML=rows.filter(r=>norm(r[0]).includes(norm(q))).map(r=>'<tr>'+r.map(v=>`<td>${esc(v)}</td>`).join('')+'</tr>').join('');
   }
 }
+function renderCountryRateChart(){
+  const select=$('rateCountrySelect'),body=$('countryRateBody');if(!select||!body)return;
+  if(!select.options.length||select.options.length===1){
+    select.innerHTML='<option value="">Select destination country</option>'+Object.keys(DATA.zones).sort((a,b)=>a.localeCompare(b)).map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');
+  }
+  const country=canonicalCountry(select.value||$('country')?.value||'');
+  if(!country||!DATA.zones[country]){body.innerHTML='<tr><td colspan="4">Select a country to view its zone-wise rate chart.</td></tr>';return;}
+  const zone=DATA.zones[country],zoneKey=String(zone).match(/[A-L]/)?.[0]||'',idx=DATA.rateHeaders.indexOf(zone);
+  let rows=[];
+  if(currentPlan==='NORMAL'){
+    const zi='ABCDEFGHIJKL'.indexOf(zoneKey);
+    rows=DATA.normalRates.map(r=>[r[0],zi>=0?r[zi+1]:'']);
+  }else{
+    const source=currentPlan==='A'?DATA.ratesA:DATA.ratesB;
+    rows=source.map(r=>[r[0],idx>=0?r[idx]:'']);
+  }
+  body.innerHTML=rows.map(r=>'<tr><td>'+esc(country)+'</td><td><b>'+esc(zone)+'</b></td><td>'+esc(r[0])+'</td><td>'+esc(r[1]??'—')+(currentPlan==='NORMAL'?' USD':' BDT')+'</td></tr>').join('');
+}
 function renderZones(q=''){
   const list=Object.entries(DATA.zones).filter(([c])=>norm(c).includes(norm(q))).slice(0,500);
   $('zoneBody').innerHTML=list.map(([c,z])=>`<tr><td>${esc(c)}</td><td>${esc(z)}</td></tr>`).join('');
@@ -1318,7 +1341,7 @@ function showCitySuggest(){
   }));
 }
 document.querySelectorAll('.service').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.service').forEach(x=>x.classList.remove('active'));b.classList.add('active');}));
-document.querySelectorAll('.plan').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.plan').forEach(x=>x.classList.remove('active'));b.classList.add('active');currentPlan=b.dataset.plan;renderRates($('rateSearch').value);calculate();}));
+document.querySelectorAll('.plan').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.plan').forEach(x=>x.classList.remove('active'));b.classList.add('active');currentPlan=b.dataset.plan;renderRates($('rateSearch').value);renderCountryRateChart();calculate();}));
 ['weight','postal','fx','vat','fuel','odaBase','govtFee'].forEach(id=>$(id).addEventListener('input',calculate));
 $('city').addEventListener('input',()=>{
   calculate();
@@ -1349,6 +1372,7 @@ $('reset').addEventListener('click',()=>{
   renderRates();
 });
 $('rateSearch').addEventListener('input',e=>renderRates(e.target.value));
+$('rateCountrySelect')?.addEventListener('change',renderCountryRateChart);
 $('zoneSearch').addEventListener('input',e=>renderZones(e.target.value));
 $('odaSearch').addEventListener('input',e=>renderODA(e.target.value));
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');$(b.dataset.tab).classList.add('active');}));
@@ -1432,7 +1456,7 @@ $('importRates').addEventListener('change',e=>{
       if(!Array.isArray(d.A)||!Array.isArray(d.B))throw new Error('Invalid backup');
       DATA.ratesA=d.A;DATA.ratesB=d.B;
       localStorage.setItem('iphw_rates_v1',JSON.stringify({A:DATA.ratesA,B:DATA.ratesB}));
-      renderRateEditor();renderRates($('rateSearch').value);calculate();
+      renderRateEditor();renderRates($('rateSearch').value);renderCountryRateChart();calculate();
       $('rateMsg').textContent='✓ Backup imported and saved.';
     }catch(err){$('rateMsg').textContent='✕ Invalid backup file.';}
     e.target.value='';
@@ -1494,7 +1518,7 @@ function importRatesExcel(file){
     const wb=XLSX.read(e.target.result,{type:'array'});
     function parseSheet(name){const ws=wb.Sheets[name];if(!ws)return null;const aoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});if(aoa.length<2)throw new Error(name+' sheet is empty');return aoa.slice(1).filter(r=>String(r[0]).trim()).map(r=>r.map((v,i)=>i===0?String(v).trim():Number(v)||0));}
     const A=parseSheet('Rate A')||parseSheet('A'); const B=parseSheet('Rate B')||parseSheet('B'); if(!A||!B)throw new Error('Excel must contain Rate A and Rate B sheets');
-    DATA.ratesA=A;DATA.ratesB=B;renderRateEditor();renderRates($('rateSearch').value);calculate();
+    DATA.ratesA=A;DATA.ratesB=B;renderRateEditor();renderRates($('rateSearch').value);renderCountryRateChart();calculate();
     $('rateMsg').textContent='✓ Excel imported. Click Save Rates to publish to all users.';
   }catch(err){$('rateMsg').textContent='✕ Excel import failed: '+err.message;} finally{document.getElementById('importRatesExcel').value='';}}; reader.readAsArrayBuffer(file);
 }
@@ -1602,7 +1626,7 @@ async function loadSharedRates(){
   const {data,error}=await sb.from('rates').select('rate_data').order('updated_at',{ascending:false}).limit(1).maybeSingle();
   if(error||!data?.rate_data)return;
   const d=data.rate_data;
-  if(Array.isArray(d.A)&&Array.isArray(d.B)){DATA.ratesA=d.A;DATA.ratesB=d.B;localStorage.setItem('iphw_rates_v1',JSON.stringify({A:d.A,B:d.B}));renderRates($('rateSearch').value);calculate();}
+  if(Array.isArray(d.A)&&Array.isArray(d.B)){DATA.ratesA=d.A;DATA.ratesB=d.B;localStorage.setItem('iphw_rates_v1',JSON.stringify({A:d.A,B:d.B}));renderRates($('rateSearch').value);renderCountryRateChart();calculate();}
 }
 // Shared calculator settings live in Supabase so every signed-in user sees the same values.
 async function loadSharedCalcSettings(){
@@ -1785,7 +1809,7 @@ $('calculate').addEventListener('click',async()=>{if(!currentProfile?.is_admin &
 const originalRateOpen=$('rateUpdateBtn').onclick;
 initSupabase();
 
-renderRates();renderZones();renderODA();calculate();
+renderRates();renderCountryRateChart();renderZones();renderODA();calculate();
 
 // FedEx admin shell navigation: visual/navigation only; calculation functions remain untouched.
 document.addEventListener('DOMContentLoaded',()=>{
@@ -2901,7 +2925,24 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
      auditSettings.icpcRules=settingsGrid.slice(9,20).map(r=>({zone:String(r[4]||'').trim().toUpperCase(),from:Number(r[5]),to:Number(r[6]),icpc:String(r[7]||'').trim(),applies:String(r[8]||'ALL').toUpperCase().replace(/\\s/g,'')})).filter(x=>x.zone&&x.icpc);
      const zoneSheetName=workbook.SheetNames.find(n=>norm(n)==='zone');
      const zoneGrid=zoneSheetName?XLSX.utils.sheet_to_json(workbook.Sheets[zoneSheetName],{defval:'',raw:true}):[];
-     auditSettings.zoneMap=new Map(zoneGrid.map(r=>[String(get(r,'ISO Code')||'').trim().toUpperCase(),String(get(r,'Zone')||'').trim().toUpperCase()]).filter(x=>x[0]));
+     auditSettings.zoneMap=new Map();
+     for(const zr of zoneGrid){
+       const z=String(get(zr,'Zone')||'').trim().toUpperCase();
+       const iso=String(get(zr,'ISO Code','ISO','Country Code')||'').trim().toUpperCase();
+       const countryName=String(get(zr,'Country','Country Name','Destination Country')||'').trim();
+       if(z&&iso)auditSettings.zoneMap.set(iso,z);
+       if(z&&countryName)auditSettings.zoneMap.set(norm(countryName),z);
+     }
+     // Also resolve ISO -> country name from ODA Map, so Challan country values
+     // work whether the source stores an ISO code or a full country name.
+     const odaMapName=workbook.SheetNames.find(n=>norm(n)==='oda map');
+     if(odaMapName){
+       const mg=XLSX.utils.sheet_to_json(workbook.Sheets[odaMapName],{header:1,defval:'',raw:true});
+       for(const mr of mg.slice(1)){
+         const iso=String(mr[0]??'').trim().toUpperCase(),nm=String(mr[1]??'').trim();
+         if(iso&&nm){const z=auditSettings.zoneMap.get(iso)||auditSettings.zoneMap.get(norm(nm));if(z)auditSettings.zoneMap.set(norm(nm),z);}
+       }
+     }
     if(!rowRecords.length)throw new Error('Fedex System / ROW DATA sheet পাওয়া যায়নি অথবা খালি।');
     const rowAwb=Object.keys(rowRecords[0]).some(k=>['tracking number','awbls','awb'].includes(norm(k)));
     if(!rowAwb)throw new Error('Fedex System sheet-এ Tracking Number / AWBLS column পাওয়া যায়নি।');
@@ -2987,48 +3028,66 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
   function buildAuditOdaIndex(){
     auditOdaCountryIndex=new Map();
     auditOdaNameByIso=new Map();
-
+  const auditOdaIsoAliases={"AL":"Albania","AD":"Andorra","AG":"Antigua","AR":"Argentina","AU":"Australia","AZ":"Azerbaijan","BS":"Bahamas","BH":"Bahrain","BY":"Belarus","BZ":"Belize","BO":"Bolivia","BA":"Bosnia-Herzegovina","BR":"Brazil","VG":"British Virgin Islands","BG":"Bulgaria","KH":"Cambodia","CA":"Canada","KY":"Cayman Islands","CL":"Chile","CN":"China","CO":"Colombia","CK":"Cook Islands","CR":"Costa Rica","HR":"Croatia","DK":"Denmark","DM":"Dominica","DO":"Dominican Republic","EC":"Ecuador","SV":"El Salvador","FJ":"Fiji","FR":"France","GF":"French Guiana","PF":"French Polynesia","GE":"Georgia","DE":"Germany","GR":"Greece","GD":"Grenada","GP":"Guadeloupe","GY":"Guyana","HT":"Haiti","HN":"Honduras","HK":"Hong Kong","IN":"India","ID":"Indonesia","IE":"Ireland","IL":"Israel","IT":"Italy","JM":"Jamaica","JP":"Japan","KZ":"Kazakhstan","KW":"Kuwait","MY":"Malaysia","MT":"Malta","MQ":"Martinique","MX":"Mexico","MD":"Moldova","ME":"Montenegro","NL":"Netherlands","NC":"New Caledonia","NZ":"New Zealand","NI":"Nicaragua","CW":"Netherlands Antilles","OM":"Oman","PS":"Palestinian Territory","PA":"Panama","PG":"Papua New Guinea","PY":"Paraguay","PE":"Peru","PH":"Philippines","PT":"Portugal","QA":"Qatar","RO":"Romania","RU":"Russia","RS":"Serbia","SK":"Slovak Republic","ZA":"South Africa","KR":"Korea, South","ES":"Spain","LC":"St. Lucia","VC":"St. Vincent","SR":"Suriname","SE":"Sweden","CH":"Switzerland","TW":"Taiwan","TZ":"Tanzania","TH":"Thailand","TT":"Trinidad and Tobago","TC":"Turks and Caicos Islands","AE":"U.A.E","US":"U.S.A","UA":"Ukraine","GB":"United Kingdom","UZ":"Uzbekistan","VU":"Vanuatu","VE":"Venezuela","VN":"Vietnam","VI":"Virgin Islands (U.S.)","ZM":"Zambia","MF":"Saint Martin"};
     if(workbook){
-      const mapSheetName=workbook.SheetNames.find(n=>norm(n)==='oda map');
+      // ISO -> country mapping: the supplied workbook stores this in "Zone"
+      // (Country | Zone | ISO Code), while older workbooks may use "ODA Map".
+      const mapSheetName=workbook.SheetNames.find(n=>['oda map','zone','iso','iso data'].includes(norm(n)));
       if(mapSheetName){
         const mapGrid=XLSX.utils.sheet_to_json(workbook.Sheets[mapSheetName],{header:1,defval:'',raw:true});
-        for(const r of mapGrid.slice(1)){
-          const iso=String(r[0]??'').trim().toUpperCase();
-          const countryName=String(r[1]??'').trim();
-          if(iso&&countryName)auditOdaNameByIso.set(iso,norm(countryName));
+        let headerAt=mapGrid.findIndex((r,i)=>i<15&&r.some(c=>keyNorm(c)==='isocode')&&r.some(c=>['country','countryname','odsheetcountryname'].includes(keyNorm(c))));
+        if(headerAt>=0){
+          const headers=mapGrid[headerAt].map(v=>keyNorm(v));
+          const ix=names=>names.map(n=>headers.indexOf(n)).find(i=>i>=0);
+          const isoI=ix(['isocode','iso','countrycode']);
+          const countryI=ix(['country','countryname','odsheetcountryname']);
+          for(const r of mapGrid.slice(headerAt+1)){
+            const iso=String(r[isoI]??'').trim().toUpperCase();
+            const name=String(r[countryI]??'').trim();
+            if(iso&&name){auditOdaNameByIso.set(iso,norm(auditOdaIsoAliases[iso]||name));}
+          }
+        }else{
+          // Legacy ODA Map format: first column ISO, second column country name.
+          for(const r of mapGrid.slice(1)){
+            const iso=String(r[0]??'').trim().toUpperCase();
+            const name=String(r[1]??'').trim();
+            if(iso&&name&&iso!=='ISO CODE')auditOdaNameByIso.set(iso,norm(auditOdaIsoAliases[iso]||name));
+          }
         }
       }
-
-      const odaSheetName=workbook.SheetNames.find(n=>norm(n)==='oda city & postal code');
+      // Accept both actual sheet title "ODA CITY & POSTAL" and older
+      // "ODA CITY & POSTAL CODE" / "ODA CITY AND POSTAL CODE".
+      const odaSheetName=workbook.SheetNames.find(n=>{
+        const k=keyNorm(n);
+        return k==='odacitypostal'||k==='odacitypostalcode'||k==='odacityandpostalcode';
+      });
       if(odaSheetName){
-        const odaRows=XLSX.utils.sheet_to_json(workbook.Sheets[odaSheetName],{range:6,defval:'',raw:true});
-        for(const x of odaRows){
-          const rawCountry=String(get(x,'Country','Country ')??'').trim();
-          if(!rawCountry)continue;
-          const countryKey=norm(auditOdaNameByIso.get(rawCountry.toUpperCase())||rawCountry);
-          if(!countryKey)continue;
-          if(!auditOdaCountryIndex.has(countryKey)){
-            auditOdaCountryIndex.set(countryKey,{cities:new Set(),postalRanges:[]});
-          }
-          const entry=auditOdaCountryIndex.get(countryKey);
-          const cityName=String(get(x,'City')??'').trim();
-          if(cityName)entry.cities.add(norm(cityName));
-          const begin=get(x,'Begin Postal Code');
-          const end=get(x,'End Postal Code');
-          if(begin!==''&&begin!==null&&begin!==undefined){
-            const b=String(begin).trim(),e=String(end??'').trim()||b;
-            const bn=Number(b),en=Number(e);
-            entry.postalRanges.push({
-              begin:b.toUpperCase(),end:e.toUpperCase(),
-              beginNum:b!==''&&Number.isFinite(bn)?bn:null,
-              endNum:e!==''&&Number.isFinite(en)?en:null
-            });
+        const grid=XLSX.utils.sheet_to_json(workbook.Sheets[odaSheetName],{header:1,defval:'',raw:true});
+        let headerAt=grid.findIndex((r,i)=>i<30&&r.some(c=>keyNorm(c)==='country')&&r.some(c=>keyNorm(c)==='city')&&r.some(c=>['beginpostalcode','beginpostal','postalcodebegin'].includes(keyNorm(c))));
+        if(headerAt<0)headerAt=0;
+        const headers=(grid[headerAt]||[]).map(v=>String(v??'').trim());
+        const col=(...names)=>{for(const name of names){const i=headers.findIndex(h=>keyNorm(h)===keyNorm(name));if(i>=0)return i;}return -1;};
+        const ci=col('Country'),cityi=col('City'),bi=col('Begin Postal Code','Begin Postal','Postal Code Begin'),ei=col('End Postal Code','End Postal','Postal Code End');
+        if(ci>=0&&cityi>=0){
+          for(const row of grid.slice(headerAt+1)){
+            const rawCountry=String(row[ci]??'').trim();
+            if(!rawCountry)continue;
+            const countryKey=norm(auditOdaNameByIso.get(rawCountry.toUpperCase())||rawCountry);
+            if(!countryKey)continue;
+            if(!auditOdaCountryIndex.has(countryKey))auditOdaCountryIndex.set(countryKey,{cities:new Set(),postalRanges:[]});
+            const entry=auditOdaCountryIndex.get(countryKey);
+            const cityName=String(row[cityi]??'').trim();
+            if(cityName)entry.cities.add(norm(cityName));
+            const begin=bi>=0?row[bi]:'',end=ei>=0?row[ei]:'';
+            if(begin!==''&&begin!==null&&begin!==undefined){
+              const b=String(begin).trim(),e=String(end??'').trim()||b,bn=Number(b),en=Number(e);
+              entry.postalRanges.push({begin:b.toUpperCase(),end:e.toUpperCase(),beginNum:b!==''&&Number.isFinite(bn)?bn:null,endNum:e!==''&&Number.isFinite(en)?en:null});
+            }
           }
         }
       }
     }
-
-    // Compatibility fallback for older workbooks without an ODA master sheet.
+    // Compatibility fallback for older embedded calculator ODA data.
     if(!auditOdaCountryIndex.size && typeof DATA!=='undefined' && Array.isArray(DATA.oda)){
       for(const x of DATA.oda){
         const rawCountry=String(x[0]??'').trim();
@@ -3046,7 +3105,6 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
       }
     }
   }
-
   function auditPostalMatches(postal,range){
     const p=String(postal??'').trim();
     if(!p)return false;
@@ -3153,7 +3211,10 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
     if(rexDimText!==''&&Number.isFinite(Number(rexDimText)))rexDimCandidates.push(Number(rexDimText));
     const calculatedDims=calcDimValues(dimensions); rexDimCandidates.push(...calculatedDims);
     const pkg=String(get(ch,'pkg')??'').trim(), service=String(get(row,'Service Type')??'').trim();
-    const dimNotRequired=(auditSettings.dimNotRequiredPackages||['FedEx Regular','Envelope']).some(x=>norm(x)===norm(pkg));
+    const pkgServiceKey=String(pkg+' '+service).normalize('NFKC').replace(/[\u00a0\u200b-\u200d\ufeff]/g,' ').toLowerCase();
+    // Pak and Envelope shipments do not require REX 82 dimensions.
+    const isPakEnvelopePackage=/pak|envelope|fedex regular/.test(pkgServiceKey);
+    const dimNotRequired=isPakEnvelopePackage||(auditSettings.dimNotRequiredPackages||['FedEx Regular','Envelope']).some(x=>norm(x)===norm(pkg));
     let dimCheck='',weightCheck='';
     // Apply one FedEx slab rule consistently to actual, dimensional and chargeable weights:
     // up to 10 kg = 0.5 kg slabs; above 10 kg = 1 kg slabs; always round UP.
@@ -3180,7 +3241,7 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
     const recipientCity=String(get(row,'Recip City')??'').trim();
     const recipientPostal=String(get(row,'Recip Postal')??'').trim();
     const {odaStatus,odaMatchType}=getAuditOdaMatch(recipCountry,recipientPostal,recipientCity);
-    const zone=(auditSettings.zoneMap&&auditSettings.zoneMap.get(country))||'';
+    const zone=(auditSettings.zoneMap&&(auditSettings.zoneMap.get(country)||auditSettings.zoneMap.get(norm(country))||auditSettings.zoneMap.get(norm(auditOdaNameByIso.get(country)||''))))||'';
     const roundedChallanWt=roundFedExAuditWt(challanWtNum);
     const roundedChallanDimWt=challanDim>0?roundFedExAuditWt(challanDim):0;
     const chargeableWt=Math.max(roundedChallanWt,roundedChallanDimWt);
@@ -3189,7 +3250,14 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
     const requiredIcpc=requiredRule?requiredRule.icpc:'';
     let icpcCheck='';
     if(ch&&row){
-      if(requiredIcpc)icpcCheck=challanIcpc===requiredIcpc?'OK':'MISMATCH';
+      if(isPakEnvelopePackage){
+        // For Pak/Envelope, all three account values must match: Challan C. ICPC,
+        // FedEx REV ICPC and FedEx Shipper Billing Account.
+        const icpcValues=[challanIcpc,revAcct,shipperAcct].map(v=>String(v||'').trim());
+        icpcCheck=icpcValues.every(Boolean)
+          ? (icpcValues.every(v=>v===icpcValues[0])?'OK':'MISMATCH')
+          : 'CHECK: ICPC value missing';
+      }else if(requiredIcpc)icpcCheck=challanIcpc===requiredIcpc?'OK':'MISMATCH';
       else icpcCheck=!shipperAcct?'CHECK: no shipper acct':challanIcpc===shipperAcct?(revAcct===shipperAcct?'OK':'CHECK: REV Earliest differs'):'MISMATCH';
     }
     // Package/service validation follows the user's approved matrix.
@@ -3242,7 +3310,20 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
     if(countryCheck==='MISMATCH')checkNotes.push('Country: Challan '+country+' vs Recip Cntry '+recipCountry);
     else if(countryCheck.startsWith('CHECK'))checkNotes.push('Country: '+countryCheck.replace(/^CHECK:\s*/,''));
     const missingRexData=ch&&row&&((!dimNotRequired&&!calculatedDims.length&&!rexDimCandidates.length)||!splitFormulaNums(get(row,'REX 83 Corr Pkg Wgt All')).length);
-    const remarks=(missingChallan||missingFedex||missingRexData||status==='CHECK')?'Please Check':'Checked Done';
+    // Remarks follow the attached audit examples; all existing audit calculations/status formulas remain unchanged.
+    const remarkFlags=[];
+    // User-approved remark order: Dim, ICPC, Pkg, Country.
+    if(dimCheck && !dimCheck.startsWith('OK') && !dimCheck.startsWith('N/A')) remarkFlags.push('Dim');
+    if(icpcCheck && !icpcCheck.startsWith('OK') && !icpcCheck.startsWith('N/A')) remarkFlags.push('ICPC');
+    if(pkgCheck && !pkgCheck.startsWith('OK') && !pkgCheck.startsWith('N/A')) remarkFlags.push('Pkg');
+    if(countryCheck && !countryCheck.startsWith('OK') && !countryCheck.startsWith('N/A')) remarkFlags.push('Country');
+    // Keep non-matrix exceptions visible rather than incorrectly marking them OKAY.
+    if(!remarkFlags.length && weightCheck && !weightCheck.startsWith('OK') && !weightCheck.startsWith('N/A')) remarkFlags.push('Weight');
+    if(!remarkFlags.length && missingChallan) remarkFlags.push('Challan');
+    if(!remarkFlags.length && missingFedex) remarkFlags.push('FedEx System');
+    if(!remarkFlags.length && missingRexData) remarkFlags.push('REX Data');
+    if(!remarkFlags.length && duplicateCount>1) remarkFlags.push('Duplicate AWB');
+    const remarks=remarkFlags.length?'Please Check '+[...new Set(remarkFlags)].join(', '):'OKAY';
     const pickupInfo=challanPickupDateTime(ch);
     return {awb,ch,row,status,issues:issues.join(', '),remarks,sl:0,packageGroup:'',
       pickupDate:get(ch,...PICKUP_DATE_KEYS),pickupISO:pickupInfo.date,pickupTime:pickupInfo.time,pickupDateTime:pickupInfo.formatted,courierName:get(ch,'courier_name','Courier Name'),wsc:get(ch,'wsc'),courierCode:get(ch,'courier_code'),
@@ -3263,22 +3344,13 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
   }
   function auditReportExportRows(){
     return filteredAuditRows.map((r,i)=>({
-      'SL':i+1,'Tracking Number (AWB)':r.awb,'Pcs Qty':r.pcs,
-      'Challan WT / Actual Wt Details':r.challanWt,'REX 83 Corr Pkg Wgt All / Weight Details':r.rexWeight,
-      'Challan Dim Wt / Accounts Details':r.challanDimWt,'Chargeable Wt (higher of WT & Dim)':r.chargeableWt,
-      'REX 82 Length Width Height All / Country Details':r.rexDimensions,'Dim Wt calc from LxWxH (per pkg) / Recipient Location':r.calculatedDimWeight,
-      'Challan ICPC / Remarks':r.challanIcpc,'REV Shipper Acct Earliest':r.revAccount,'Shipper Account':r.shipperAccount,
-      'Challan Pkg':r.challanPkg,'Service Type':r.serviceType,'Challan Dest (Country)':r.challanCountry,
-      'Recip Cntry':r.recipientCountry,'Recip City':r.recipientCity,'Recip Postal':r.recipientPostal,
-      'ODA':r.odaStatus,'ODA Match Type':r.odaMatchType,
-      'AUTO REMARKS — REMARKS (what matched / what to check)':r.remarks,
-      'Pickup Date':r.pickupISO||r.pickupDate,'Pickup Time':r.pickupTime||'','Pickup Date & Time':r.pickupDateTime||r.pickupISO||r.pickupDate,'Courier Name':r.courierName,'WSC':r.wsc,
-      'Challan No':r.challanNo,'Customer Name':r.customer,'Payment Type':r.paymentType,
-      'Courier Code':r.courierCode,'Reference':r.ref,'Route':r.route,'Lot':r.lot,'Vehicle No':r.vehicleNo,'Departure Time':r.departTime,
-      'Shipper Company':r.shipperCompany,'Shipper Address':r.shipperAddress,
-      'Recipient Name / Company':r.recipient,'Recipient Address':r.recipientAddress,'Recipient Address 2':r.recipientAddress2,
-      'Recipient Additional Address':r.recipientAddlAddress,'Dimension Check':r.dimCheck,'Weight Check':r.weightCheck,
-      'ICPC Check':r.icpcCheck,'Package Check':r.pkgCheck,'Country Check':r.countryCheck,'Audit Status':r.status,'Issues':r.issues
+      'SL':i+1,'AWB':r.awb,'PKG':r.pcs,'C.A WT':r.challanWt,'REX 83':r.rexWeight,
+      'C .D Wt':r.challanDimWt,'Rex 82 M':r.rexDimensions,'Rex 82 wt':r.calculatedDimWeight,
+      'CH WT':r.chargeableWt,'C. ICPC':r.challanIcpc,'REV ICPC':r.revAccount,
+      'S Billing A/C':r.shipperAccount,'Zone':r.zone,'C. Dest':r.challanCountry,
+      'F. Dest':r.recipientCountry,'Recip City':r.recipientCity,'Recip Postal':r.recipientPostal,
+      'C. Pkg':r.challanPkg,'Service Type':r.serviceType,'ODA':'ODA '+(r.odaStatus||'NO'),
+      'Pay_mode':r.paymentType,'Customer Name':r.customer,'REMARKS':r.remarks||'OKAY'
     }));
   }
   // Render only one page in the browser; exports still use the complete filteredAuditRows array.
@@ -3296,9 +3368,10 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
     const start=(auditCurrentPage-1)*AUDIT_PAGE_SIZE;
     const pageRows=filteredAuditRows.slice(start,start+AUDIT_PAGE_SIZE);
     const groups=groupedAuditRows(pageRows);
-    const tableHead='<table class="audit-history" style="min-width:2200px"><colgroup><col style="width:48px"><col style="width:135px"><col style="width:170px"><col style="width:58px"><col style="width:92px"><col style="width:118px"><col style="width:90px"><col style="width:105px"><col style="width:145px"><col style="width:145px"><col style="width:105px"><col style="width:145px"><col style="width:145px"><col style="width:100px"><col style="width:105px"><col style="width:115px"><col style="width:100px"><col style="width:105px"><col style="width:105px"><col style="width:105px"><col style="width:180px"></colgroup><thead><tr><th rowspan="2">SL</th><th rowspan="2">Tracking Number (AWB)</th><th colspan="2">CHALLAN</th><th colspan="2">CHALLAN / FEDEX SYSTEM</th><th colspan="2">CHALLAN</th><th colspan="2">FEDEX SYSTEM</th><th colspan="3">ACCOUNT DETAILS</th><th colspan="2">SERVICE / PACKAGE</th><th colspan="5">DESTINATION / RECIPIENT</th><th rowspan="2">AUTO REMARKS</th></tr><tr><th>Pcs Qty</th><th>Customer Name</th><th>Challan WT</th><th>REX 83 Corr Pkg Wgt All</th><th>Challan Dim Wt</th><th>Chargeable WT</th><th>REX 82 Length × Width × Height All</th><th>Dim Wt Calc from L×W×H</th><th>Challan ICPC</th><th>REV Shipper Acct Earliest</th><th>Shipper Account</th><th>Challan Pkg</th><th>Service Type</th><th>Challan Dest</th><th>Recip Cntry</th><th>Recip City</th><th>Recip Postal</th><th>ODA</th></tr></thead>';
+    const reportHeaders=['SL','AWB','PKG','C.A WT','REX 83','C .D Wt','Rex 82 M','Rex 82 wt','CH WT','C. ICPC','REV ICPC','S Billing A/C','Zone','C. Dest','F. Dest','Recip City','Recip Postal','C. Pkg','Service Type','ODA','Pay_mode','Customer Name','REMARKS'];
+    const tableHead='<table class="audit-history" style="min-width:2350px"><thead><tr>'+reportHeaders.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead>';
     const groupHtml=groups.map(g=>{
-      const body=g.rows.map(r=>'<tr style="'+(rowHasError(r)?'background:#fee2e2;color:#991b1b;':'')+'"><td>'+r.sl+'</td><td><b>'+esc(r.awb)+'</b></td><td>'+esc(display(r.pcs))+'</td><td>'+esc(display(r.customer))+'</td><td>'+esc(display(r.challanWt))+'</td><td>'+esc(display(r.rexWeight))+'</td><td>'+esc(display(r.challanDimWt))+'</td><td>'+esc(display(r.chargeableWt))+'</td><td>'+esc(display(r.rexDimensions))+'</td><td>'+esc(display(r.calculatedDimWeight))+'</td><td>'+esc(display(r.challanIcpc))+'</td><td>'+esc(display(r.revAccount))+'</td><td>'+esc(display(r.shipperAccount))+'</td><td>'+esc(display(r.challanPkg))+'</td><td>'+esc(display(r.serviceType))+'</td><td>'+esc(display(r.challanCountry))+'</td><td>'+esc(display(r.recipientCountry))+'</td><td>'+esc(display(r.recipientCity))+'</td><td>'+esc(display(r.recipientPostal))+'</td><td><b style="color:'+(r.odaStatus==='YES'?'#087f5b':'#c92a2a')+'">ODA '+esc(r.odaStatus||'NO')+'</b>'+(r.odaMatchType?'<div style="font-size:10px">'+esc(r.odaMatchType)+'</div>':'')+'</td><td><b>'+esc(r.status)+'</b> — '+esc(r.remarks||'—')+' '+esc(r.issues||'')+'</td></tr>').join('');
+      const body=g.rows.map(r=>{const vals=[r.sl,r.awb,display(r.pcs),display(r.challanWt),display(r.rexWeight),display(r.challanDimWt),display(r.rexDimensions),display(r.calculatedDimWeight),display(r.chargeableWt),display(r.challanIcpc),display(r.revAccount),display(r.shipperAccount),display(r.zone),display(r.challanCountry),display(r.recipientCountry),display(r.recipientCity),display(r.recipientPostal),display(r.challanPkg),display(r.serviceType),'ODA '+display(r.odaStatus||'NO'),display(r.paymentType),display(r.customer),r.remarks||'OKAY'];return '<tr style="'+(rowHasError(r)?'background:#fee2e2;color:#991b1b;':'')+'">'+vals.map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>';}).join('');
       return '<section style="margin:12px 0"><h3 style="margin:12px 0 6px;padding:9px;background:#dbeafe;color:#173b70;border:1px solid #93c5fd;border-radius:7px">'+g.name+' AWB — '+g.rows.length+' Shipments (এই পৃষ্ঠা)</h3><div style="overflow:auto;border:1px solid #dbe3ee;border-radius:9px;background:#fff">'+tableHead+'<tbody>'+body+'</tbody></table></div></section>';
     }).join('');
     const pager='<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;margin:8px 0;background:#fff;border:1px solid #dbe3ee;border-radius:9px"><b style="font-size:12px;color:#173b70">Showing '+(start+1)+'–'+Math.min(start+pageRows.length,total)+' of '+total.toLocaleString()+' AWB · Page '+auditCurrentPage+' / '+pageCount+' · '+AUDIT_PAGE_SIZE+' per page</b><div style="display:flex;gap:7px"><button type="button" class="btn secondary" data-audit-page="prev" '+(auditCurrentPage===1?'disabled':'')+'>← Previous</button><button type="button" class="btn primary" data-audit-page="next" '+(auditCurrentPage===pageCount?'disabled':'')+'>Next →</button></div></div>';
@@ -3381,7 +3454,7 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
       ws.getRow(1).font={bold:true,size:14,color:{argb:'FFFFFFFF'}};ws.getRow(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF173B70'}};
       ws.addRow(headers);const hr=ws.getRow(2);hr.font={bold:true,color:{argb:'FFFFFFFF'}};hr.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF2563EB'}};hr.alignment={vertical:'middle',horizontal:'center',wrapText:true};
       const groupByAwb=new Map(group.rows.map(r=>[String(r.awb),r]));
-      const awbColumnIndex=headers.indexOf('Tracking Number (AWB)');
+      const awbColumnIndex=headers.indexOf('AWB');
       const data=group.rows.map(r=>{const obj=exportByAwb.get(String(r.awb))||{};return headers.map(h=>obj[h]??'');});
       data.forEach(values=>{const row=ws.addRow(values);const awb=String(values[awbColumnIndex]||'');const rec=groupByAwb.get(awb);row.alignment={vertical:'middle',wrapText:true};if(rec&&rowHasError(rec)){row.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFE2E2'}};row.font={color:{argb:'FF991B1B'},bold:true};}});
       ws.columns=headers.map(h=>({header:h,key:h,width:/REMARKS|Issues/i.test(h)?42:Math.min(30,Math.max(14,h.length+2))}));
@@ -3401,8 +3474,8 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
     const auditDate=$('auditManualDate')?.value||new Date().toISOString().slice(0,10);
     const manualComments=$('auditManualComments')?.value.trim()||'Please manually verify all highlighted discrepancies and remarks against the original Challan and FedEx system records before final approval.';
     const groups=groupedAuditRows(filteredAuditRows);
-    const headers=['SL','Tracking Number (AWB)','Pcs','Customer Name','Challan WT','REX 83 Weight','Challan Dim WT','Chargeable WT','REX 82 Dimensions','Calculated Dim WT','Challan ICPC','REV Account','Shipper Account','Challan Pkg','Service Type','Challan Country','Recipient Country','Recipient City','Recipient Postal','ODA','Audit Status / Remarks'];
-    const sections=groups.map(g=>{const rows=g.rows.map((r,i)=>{const vals=[r.sl,r.awb,display(r.pcs),display(r.customer),display(r.challanWt),display(r.rexWeight),display(r.challanDimWt),display(r.chargeableWt),display(r.rexDimensions),display(r.calculatedDimWeight),display(r.challanIcpc),display(r.revAccount),display(r.shipperAccount),display(r.challanPkg),display(r.serviceType),display(r.challanCountry),display(r.recipientCountry),display(r.recipientCity),display(r.recipientPostal),'ODA '+display(r.odaStatus||'NO'),r.status+' — '+(r.remarks||'')+' '+(r.issues||'')];return '<tr class="'+(rowHasError(r)?'error':'ok')+'">'+vals.map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>';}).join('');return '<h2>'+g.name+' AWB — '+g.rows.length+' Shipments</h2><table><thead><tr>'+headers.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+rows+'</tbody></table>';}).join('');
+    const headers=['SL','AWB','PKG','C.A WT','REX 83','C .D Wt','Rex 82 M','Rex 82 wt','CH WT','C. ICPC','REV ICPC','S Billing A/C','Zone','C. Dest','F. Dest','Recip City','Recip Postal','C. Pkg','Service Type','ODA','Pay_mode','Customer Name','REMARKS'];
+    const sections=groups.map(g=>{const rows=g.rows.map((r,i)=>{const vals=[r.sl,r.awb,display(r.pcs),display(r.challanWt),display(r.rexWeight),display(r.challanDimWt),display(r.rexDimensions),display(r.calculatedDimWeight),display(r.chargeableWt),display(r.challanIcpc),display(r.revAccount),display(r.shipperAccount),display(r.zone),display(r.challanCountry),display(r.recipientCountry),display(r.recipientCity),display(r.recipientPostal),display(r.challanPkg),display(r.serviceType),'ODA '+display(r.odaStatus||'NO'),display(r.paymentType),display(r.customer),r.remarks||'OKAY'];return '<tr class="'+(rowHasError(r)?'error':'ok')+'">'+vals.map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>';}).join('');return '<h2>'+g.name+' AWB — '+g.rows.length+' Shipments</h2><table><thead><tr>'+headers.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+rows+'</tbody></table>';}).join('');
     const html='<!doctype html><html><head><meta charset="utf-8"><title>FedEx Challan + FedEx System Audit Report</title><style>@page{size:A3 landscape;margin:7mm}*{box-sizing:border-box}body{font:9px Arial,sans-serif;color:#111;margin:0;background:#fff}h1{font-size:18px;margin:0 0 7px;color:#111}h2{font-size:13px;margin:14px 0 5px;padding:7px;background:#fff;color:#111;border:1px solid #111;break-after:avoid}.meta{padding:8px 9px;background:#fff;border:1px solid #777;margin-bottom:8px}table{width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:12px;background:#fff}th,td{border:1px solid #555;padding:5px 3px;text-align:center;vertical-align:middle;overflow-wrap:anywhere;font-size:8px;font-weight:800;background:#fff;color:#111}th{background:#fff;color:#111;font-weight:900}thead{display:table-header-group}tr{break-inside:avoid}.error td{background:#fee2e2!important;color:#991b1b!important;font-weight:900}.ok td{background:#f0fdf4!important;color:#111}.legend{margin:7px 0;font-weight:bold}.foot{margin-top:8px;color:#333;font-size:8px}.review-box{border:1px solid #555;padding:9px;margin-top:12px;break-inside:avoid;background:#fff}.review-box h3{font-size:12px;margin:0 0 7px}.review-box p{margin:5px 0;line-height:1.4}.sign-row{display:flex;gap:30px;margin-top:22px}.sign-row span{display:inline-block;min-width:220px;border-top:1px solid #333;padding-top:5px}</style></head><body><h1>FedEx Challan &amp; FedEx System — AWB Audit Report</h1><div class="meta"><b>Courier:</b> '+esc(courier)+' | <b>WSC:</b> '+esc(wsc)+' | <b>Pickup Date:</b> '+esc(from)+' to '+esc(to)+' | <b>Pickup Time:</b> '+esc(fromTime)+' to '+esc(toTime)+'<br><b>Total AWB:</b> '+filteredAuditRows.length+' | <b>OK:</b> '+filteredAuditRows.filter(r=>r.status==='OK').length+' | <b>CHECK:</b> '+filteredAuditRows.filter(r=>r.status==='CHECK').length+' | <b>NOT FOUND:</b> '+filteredAuditRows.filter(r=>r.status==='NOT FOUND').length+' | <b>ODA YES:</b> '+filteredAuditRows.filter(r=>r.odaStatus==='YES').length+' | <b>ODA NO:</b> '+filteredAuditRows.filter(r=>r.odaStatus!=='YES').length+'<div class="legend">Red = Error / Mismatch / Missing Data &nbsp;&nbsp; Green = OK</div></div>'+sections+'<section class="review-box"><h3>MANUAL AUDIT REVIEW &amp; COMMENTS</h3><p><b>Auditor Name:</b> '+esc(auditor)+' &nbsp; <b>Audit Date:</b> '+esc(auditDate)+'</p><p><b>Auditor Comments:</b><br>'+esc(manualComments).replace(/\\n/g,'<br>')+'</p><div class="sign-row"><span>Auditor Signature</span><span>Reviewed / Approved By</span></div></section><div class="foot">Generated: '+esc(new Date().toLocaleString())+'</div></body></html>';
     const w=window.open('','_blank');if(!w){$('auditReportSummary').textContent+=' | Popup blocked — allow popups to save PDF.';return;}w.document.open();w.document.write(html);w.document.close();w.onload=()=>{w.focus();w.print();};
   });
