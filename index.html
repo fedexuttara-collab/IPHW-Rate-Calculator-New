@@ -3309,7 +3309,8 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
     else if(pkgCheck.startsWith('CHECK'))checkNotes.push('Pkg: '+pkgCheck.replace(/^CHECK:\s*/,''));
     if(countryCheck==='MISMATCH')checkNotes.push('Country: Challan '+country+' vs Recip Cntry '+recipCountry);
     else if(countryCheck.startsWith('CHECK'))checkNotes.push('Country: '+countryCheck.replace(/^CHECK:\s*/,''));
-    const missingRexData=ch&&row&&((!dimNotRequired&&!calculatedDims.length&&!rexDimCandidates.length)||!splitFormulaNums(get(row,'REX 83 Corr Pkg Wgt All')).length);
+    // REX 82 dimensions and REX 83 corrected package weight are optional for PAK / Envelope shipments.
+    const missingRexData=ch&&row&&!isPakEnvelopePackage&&((!dimNotRequired&&!calculatedDims.length&&!rexDimCandidates.length)||!splitFormulaNums(get(row,'REX 83 Corr Pkg Wgt All')).length);
     // Remarks follow the attached audit examples; all existing audit calculations/status formulas remain unchanged.
     const remarkFlags=[];
     // User-approved remark order: Dim, ICPC, Pkg, Country.
@@ -3429,6 +3430,15 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
     auditCurrentPage=1;
     renderAuditReportPage();
   }
+  // Keep the PDF sign-off courier name in sync with the selected courier.
+  $('auditCourierFilter')?.addEventListener('change',()=>{
+    const auditor=$('auditManualAuditor');
+    if(auditor) auditor.value=$('auditCourierFilter').value||'';
+  });
+  // Default the Audit Date to today's local date whenever it has not been selected.
+  function auditLocalToday(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+  const auditDateInput=$('auditManualDate');
+  if(auditDateInput&&!auditDateInput.value)auditDateInput.value=auditLocalToday();
   $('auditGenerateReportBtn')?.addEventListener('click',generateAuditReport);
   $('auditReportResetBtn')?.addEventListener('click',()=>{$('auditCourierFilter').value='';$('auditWscFilter').value='';$('auditDateFrom').value='';$('auditTimeFrom').value='';$('auditDateTo').value='';$('auditTimeTo').value='';generateAuditReport();});
   $('auditFullResetBtn')?.addEventListener('click',()=>{
@@ -3471,7 +3481,7 @@ document.getElementById('billingSaveEdit')?.addEventListener('click',saveBilling
     if(!filteredAuditRows.length)return;
     const courier=$('auditCourierFilter').value||'All Courier Names',wsc=$('auditWscFilter').value||'All WSC',from=$('auditDateFrom').value||'Start',to=$('auditDateTo').value||'End',fromTime=$('auditTimeFrom').value||'Start',toTime=$('auditTimeTo').value||'End';
     const auditor=$('auditManualAuditor')?.value.trim()||'Not specified';
-    const auditDate=$('auditManualDate')?.value||new Date().toISOString().slice(0,10);
+    const auditDate=$('auditManualDate')?.value||auditLocalToday();
     const manualComments=$('auditManualComments')?.value.trim()||'Please manually verify all highlighted discrepancies and remarks against the original Challan and FedEx system records before final approval.';
     const groups=groupedAuditRows(filteredAuditRows);
     const headers=['SL','AWB','PKG','C.A WT','REX 83','C .D Wt','Rex 82 M','Rex 82 wt','CH WT','C. ICPC','REV ICPC','S Billing A/C','Zone','C. Dest','F. Dest','Recip City','Recip Postal','C. Pkg','Service Type','ODA','Pay_mode','Customer Name','REMARKS'];
